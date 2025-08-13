@@ -1,3 +1,15 @@
+# 시작 방법
+```
+//설치
+> npm install
+// 파일 들어가서 안드 아요스 웹 선택 빌드
+- cd hanibi-app
+- npm run android
+- npm run ios
+- npm run web
+```
+
+
 # Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).

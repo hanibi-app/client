@@ -15,36 +15,74 @@ export default function TabLayout() {
 		<Tabs
 			initialRouteName="home"
 			screenOptions={{
-				tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+				tabBarActiveTintColor: '#4CAF50',
+				tabBarInactiveTintColor: '#999999',
 				headerShown: false,
 				tabBarButton: HapticTab,
 				tabBarBackground: TabBarBackground,
-				tabBarStyle: Platform.select({
-					ios: {
-						position: 'absolute',
+				tabBarStyle: {
+					backgroundColor: '#FFFFFF',
+					borderTopLeftRadius: 20,
+					borderTopRightRadius: 20,
+					height: 80,
+					paddingBottom: 20,
+					paddingTop: 10,
+					shadowColor: '#000',
+					shadowOffset: {
+						width: 0,
+						height: -2,
 					},
-					default: {},
-				}),
+					shadowOpacity: 0.1,
+					shadowRadius: 4,
+					elevation: 5,
+					position: 'absolute',
+					bottom: 0,
+					left: 0,
+					right: 0,
+				},
+				tabBarLabelStyle: {
+					fontSize: 12,
+					fontWeight: '500',
+					marginTop: 4,
+				},
 			}}>
 			<Tabs.Screen
 				name="home"
 				options={{
-					title: 'Home',
-					tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+					title: '홈',
+					tabBarIcon: ({ color, focused }) => (
+						<IconSymbol 
+							size={24} 
+							name="house.fill" 
+							color={color} 
+						/>
+					),
 				}}
 			/>
 			<Tabs.Screen
 				name="search"
 				options={{
-					title: 'Search',
-					tabBarIcon: ({ color }) => <IconSymbol size={28} name="magnifyingglass" color={color} />,
+					title: '대시보드',
+					tabBarIcon: ({ color, focused }) => (
+						<IconSymbol 
+							size={24} 
+							name="chart.bar.fill" 
+							color={color} 
+						/>
+					),
 				}}
 			/>
 			<Tabs.Screen
 				name="settings"
 				options={{
-					title: 'Settings',
-					tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
+					title: '설정',
+					tabBarIcon: ({ color, focused }) => (
+						<IconSymbol 
+							size={24} 
+							name="gearshape.fill" 
+							color={color} 
+						/>
+					),
 				}}
 			/>
 		</Tabs>

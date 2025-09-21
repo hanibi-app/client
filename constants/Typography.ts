@@ -61,15 +61,15 @@ export const FontSize = {
 
 // 폰트 굵기 정의
 export const FontWeight = {
-  thin: '100',
-  ultraLight: '200',
-  light: '300',
-  regular: '400',
-  medium: '500',
-  semibold: '600',
-  bold: '700',
-  heavy: '800',
-  black: '900',
+  thin: '100' as const,
+  ultraLight: '200' as const,
+  light: '300' as const,
+  regular: '400' as const,
+  medium: '500' as const,
+  semibold: '600' as const,
+  bold: '700' as const,
+  heavy: '800' as const,
+  black: '900' as const,
 };
 
 // 라인 높이 정의 (폰트 크기의 배수)

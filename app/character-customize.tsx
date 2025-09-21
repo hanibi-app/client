@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Pressable, Image } from 'react-native';
 import { router } from 'expo-router';
-import { Colors, Typography, Spacing, Shadows } from '../../constants/DesignSystem';
+import { Colors, Typography, Spacing, Shadows } from '../constants/DesignSystem';
 
-export default function HomeTabScreen() {
+export default function CharacterCustomizeScreen() {
   const [selectedColor, setSelectedColor] = useState('#4CAF50');
 
   const colorOptions = [
@@ -21,8 +21,7 @@ export default function HomeTabScreen() {
         <Pressable onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backText}>←</Text>
         </Pressable>
-        <Text style={styles.headerTitle}>꾸며주기</Text>
-        <View style={styles.placeholder} />
+        <Text style={styles.headerTitle}>캐릭터 꾸미기</Text>
       </View>
 
       <View style={styles.content}>
@@ -30,7 +29,7 @@ export default function HomeTabScreen() {
           <View style={[styles.characterCircle, { backgroundColor: selectedColor }]}>
             <View style={styles.characterContainer}>
               <Image 
-                source={require('../../assets/images/icon.png')} 
+                source={require('../assets/images/icon.png')} 
                 style={styles.characterImage}
                 resizeMode="contain"
               />
@@ -39,18 +38,8 @@ export default function HomeTabScreen() {
           </View>
         </View>
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>캐릭터 꾸며주기</Text>
-          <Pressable 
-            style={styles.completeButton}
-            onPress={() => router.push('/dashboard')}
-          >
-            <Text style={styles.completeText}>완성</Text>
-          </Pressable>
-        </View>
-
         <View style={styles.colorSection}>
-          <Text style={styles.colorLabel}>색상</Text>
+          <Text style={styles.sectionTitle}>색상 선택</Text>
           <View style={styles.colorGrid}>
             {colorOptions.map((color, index) => (
               <Pressable
@@ -71,6 +60,28 @@ export default function HomeTabScreen() {
             ))}
           </View>
         </View>
+
+        <View style={styles.actionSection}>
+          <Pressable 
+            style={styles.primaryButton}
+            onPress={() => router.replace('/(tabs)/home')}
+          >
+            <Text style={styles.primaryText}>완료</Text>
+          </Pressable>
+          <Pressable 
+            style={styles.secondaryButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.secondaryText}>취소</Text>
+          </Pressable>
+          
+          <Pressable 
+            style={styles.demoButton}
+            onPress={() => router.push('/dashboard')}
+          >
+            <Text style={styles.demoButtonText}>대시보드 보기</Text>
+          </Pressable>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -80,18 +91,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
-    paddingBottom: 100, // 하단 탭바를 위한 여백
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
   },
   backButton: {
-    padding: Spacing.sm,
+    marginRight: Spacing.md,
   },
   backText: {
     fontSize: 24,
@@ -101,9 +110,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#333333',
-  },
-  placeholder: {
-    width: 40,
   },
   content: {
     flex: 1,
@@ -141,34 +147,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '500',
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
+  colorSection: {
+    marginBottom: Spacing.xl,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333333',
-  },
-  completeButton: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: 8,
-    backgroundColor: '#4CAF50',
-  },
-  completeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  colorSection: {
-    marginBottom: Spacing.xl,
-  },
-  colorLabel: {
-    fontSize: 14,
-    color: '#666666',
     marginBottom: Spacing.md,
   },
   colorGrid: {
@@ -201,5 +186,46 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#333333',
     fontWeight: 'bold',
+  },
+  actionSection: {
+    gap: Spacing.md,
+    marginTop: 'auto',
+    marginBottom: Spacing.xl,
+  },
+  primaryButton: {
+    height: 52,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4CAF50',
+  },
+  primaryText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  secondaryButton: {
+    height: 48,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryText: {
+    fontSize: 16,
+    color: '#666666',
+  },
+  demoButton: {
+    height: 44,
+    backgroundColor: '#E3F2FD',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#2196F3',
+  },
+  demoButtonText: {
+    fontSize: 14,
+    color: '#1976D2',
+    fontWeight: '500',
   },
 });

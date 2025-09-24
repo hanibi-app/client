@@ -8,7 +8,13 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "validate": "npm run typecheck && npm run lint",
+    "prebuild:android": "npm run validate",
+    "prebuild:ios": "npm run validate"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",

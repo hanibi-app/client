@@ -104,9 +104,9 @@ export const AndroidElevations = {
 // 크로스 플랫폼 그림자 스타일
 export const Shadows = Platform.select({
   ios: iOSShadows,
-  android: AndroidElevations,
+  android: iOSShadows, // Android에서도 iOS 스타일 사용 (일관성 위해)
   default: iOSShadows,
-});
+}) ?? iOSShadows;
 
 // 컴포넌트별 그림자 스타일
 export const ComponentShadows = {

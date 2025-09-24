@@ -5,7 +5,7 @@ import type { NavigationProp } from '@react-navigation/native';
 import type { RootStackParamList } from '@/navigation/types';
 
 // Import design tokens
-import { Colors, Typography, Spacing, Shadows } from '@/styles/DesignSystem';
+import { Colors, Spacing, Shadows } from '@/styles/DesignSystem';
 
 type WelcomeScreenNavigationProp = NavigationProp<RootStackParamList, 'Welcome'>;
 

@@ -7,6 +7,24 @@
 // 상태 관리 도구 (Zustand 또는 Redux Toolkit)
 // TODO: 상태 관리 도구 도입 후 구현
 
+// 기본 타입 정의
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  avatar?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AppSettings {
+  notifications: boolean;
+  theme: 'light' | 'dark' | 'auto';
+  language: 'ko' | 'en';
+  fontSize: 'small' | 'medium' | 'large';
+  soundEnabled: boolean;
+}
+
 // 사용자 상태
 export interface UserState {
   user: User | null;

@@ -6,20 +6,16 @@
  */
 
 // 컬러 시스템
-export * from './Colors';
-export { default as Colors } from './Colors';
+export { Colors, ColorPalette, ColorUtils } from './colors';
 
 // 타이포그래피 시스템
-export * from './Typography';
-export { default as Typography } from './Typography';
+export { Typography } from './Typography';
 
 // 스페이싱 시스템
-export * from './Spacing';
-export { default as Spacing } from './Spacing';
+export { Spacing } from './Spacing';
 
 // 그림자 시스템
-export * from './Shadows';
-export { default as Shadows } from './Shadows';
+export { Shadows, ComponentShadows } from './Shadows';
 
 // 디자인 시스템 상수
 export const DesignSystem = {

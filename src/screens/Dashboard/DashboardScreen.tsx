@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, ScrollView, Pressable } from 'rea
 import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import type { RootStackParamList } from '@/navigation/types';
-import { Colors, Typography, Spacing, Shadows } from '@/styles/DesignSystem';
+import { Spacing, Shadows } from '@/styles/DesignSystem';
 
 type DashboardScreenNavigationProp = NavigationProp<RootStackParamList, 'Dashboard'>;
 

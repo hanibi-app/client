@@ -4,22 +4,22 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { RootStackParamList } from './types';
 import { useAuthStore } from '@/store/auth.store';
 
-// Screen imports will be added during migration
-const SignInScreen = () => require('@/screens/Auth/SignInScreen').default;
-const SignUpScreen = () => require('@/screens/Auth/SignUpScreen').default;
-const HomeScreen = () => require('@/screens/Home/HomeScreen').default;
-const DashboardScreen = () => require('@/screens/Dashboard/DashboardScreen').default;
-const WelcomeScreen = () => require('@/screens/Onboarding/WelcomeScreen').default;
-const NotifyPermissionScreen = () => require('@/screens/Onboarding/NotifyPermissionScreen').default;
-const CautionStep1Screen = () => require('@/screens/Onboarding/CautionStep1Screen').default;
-const CautionStep2Screen = () => require('@/screens/Onboarding/CautionStep2Screen').default;
-const CautionStep3Screen = () => require('@/screens/Onboarding/CautionStep3Screen').default;
-const CharacterCustomizeScreen = () => require('@/screens/Onboarding/CharacterCustomizeScreen').default;
-const ItemDetailScreen = () => require('@/screens/Item/ItemDetailScreen').default;
-const ItemNewScreen = () => require('@/screens/Item/ItemNewScreen').default;
-const ReportScreen = () => require('@/screens/Report/ReportScreen').default;
-const ModalScreen = () => require('@/screens/Modal/ModalScreen').default;
-const NotFoundScreen = () => require('@/screens/NotFound/NotFoundScreen').default;
+// Screen imports
+import SignInScreen from '@/screens/Auth/SignInScreen';
+import SignUpScreen from '@/screens/Auth/SignUpScreen';
+import HomeScreen from '@/screens/Home/HomeScreen';
+import DashboardScreen from '@/screens/Dashboard/DashboardScreen';
+import WelcomeScreen from '@/screens/Onboarding/WelcomeScreen';
+import NotifyPermissionScreen from '@/screens/Onboarding/NotifyPermissionScreen';
+import CautionStep1Screen from '@/screens/Onboarding/CautionStep1Screen';
+import CautionStep2Screen from '@/screens/Onboarding/CautionStep2Screen';
+import CautionStep3Screen from '@/screens/Onboarding/CautionStep3Screen';
+import CharacterCustomizeScreen from '@/screens/Onboarding/CharacterCustomizeScreen';
+import ItemDetailScreen from '@/screens/Item/ItemDetailScreen';
+import ItemNewScreen from '@/screens/Item/ItemNewScreen';
+import ReportScreen from '@/screens/Report/ReportScreen';
+import ModalScreen from '@/screens/Modal/ModalScreen';
+import NotFoundScreen from '@/screens/NotFound/NotFoundScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 

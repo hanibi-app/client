@@ -11,54 +11,115 @@
 
 ---
 
-## 폴더 구조 개요
+## 📁 폴더 구조 개요
+
 ```
-project-root/
-├─ app/                      # 라우트(화면) 파일 (Expo Router)
-│  ├─ _layout.tsx            # 상위 레이아웃(ThemeProvider, Stack) 공통 래퍼
-│  ├─ +not-found.tsx         # 404 화면
-│  ├─ index.tsx              # "/" 루트(웰컴/탐색 진입)
-│  ├─ (auth)/                # 인증 플로우 그룹
-│  │   ├─ _layout.tsx
-│  │   ├─ sign-in.tsx
-│  │   └─ sign-up.tsx
-│  ├─ (tabs)/                # 탭 네비게이션 그룹
-│  │   ├─ _layout.tsx        # 탭 설정 (Home/Search/Settings)
-│  │   ├─ home.tsx
-│  │   ├─ search.tsx
-│  │   └─ settings.tsx
-│  ├─ item/
-│  │   ├─ [id].tsx           # 동적 라우트: /item/123
-│  │   └─ new.tsx            # /item/new
-│  └─ modal.tsx              # 모달 라우트
+hanibi-app/
+├── 📱 app/                          # 라우트(화면) 파일 (Expo Router)
+│   ├── _layout.tsx                   # 최상위 레이아웃 (ThemeProvider, Stack)
+│   ├── index.tsx                     # 루트 (welcome으로 리다이렉트)
+│   ├── welcome.tsx                   # 웰컴 화면 (앱 진입점)
+│   ├── (tabs)/                       # 탭 네비게이션 그룹
+│   │   ├── _layout.tsx               # 탭 설정 (홈, 대시보드, 설정)
+│   │   ├── home.tsx                  # 홈 (캐릭터 꾸미기)
+│   │   ├── search.tsx                # 대시보드 (데이터 시각화)
+│   │   └── settings.tsx              # 설정
+│   ├── (auth)/                       # 인증 플로우 그룹
+│   │   ├── _layout.tsx
+│   │   ├── sign-in.tsx               # 로그인
+│   │   └── sign-up.tsx               # 회원가입
+│   ├── caution/                      # 주의사항 단계별 화면
+│   │   ├── step1.tsx                 # 1단계
+│   │   ├── step2.tsx                 # 2단계
+│   │   └── step3.tsx                 # 3단계
+│   ├── character-customize.tsx       # 캐릭터 커스터마이징
+│   ├── dashboard.tsx                 # 대시보드
+│   ├── notify-permission.tsx         # 알림 권한
+│   ├── report.tsx                    # 리포트
+│   ├── modal.tsx                     # 모달
+│   ├── item/                         # 아이템 관련
+│   │   ├── [id].tsx                  # 동적 라우트: /item/123
+│   │   └── new.tsx                   # /item/new
+│   ├── dev/                          # 개발용 화면
+│   │   └── design-system.tsx         # 디자인 시스템 테스트
+│   └── +not-found.tsx                # 404 화면
 │
-├─ src/                      # 라우트 외 모든 앱 로직 (UI, 상태, 서비스, 유틸)
-│  ├─ features/              # 기능(유스케이스) 단위: auth, nfc, chat 등
-│  ├─ entities/              # 도메인 객체(User, Item 등)
-│  ├─ widgets/               # 여러 기능을 합친 화면 조각(카드, 섹션 등)
-│  ├─ shared/                # 완전 범용 계층
-│  │   ├─ ui/                # 디자인 시스템 컴포넌트(Button, Card 등)
-│  │   ├─ lib/               # axiosClient, storage, 날짜 유틸 등
-│  │   ├─ hooks/             # 범용 훅(useBoolean 등)
-│  │   ├─ styles/            # theme, tokens(색/타이포/spacing)
-│  │   ├─ utils/             # 숫자/문자/날짜, 에러 핸들링 헬퍼
-│  │   └─ config/            # env 로딩, 상수, Feature Flags
-│  ├─ services/              # 외부 연동 레이어
-│  │   ├─ api/               # API 클라이언트/요청 래퍼
-│  │   ├─ ws/                # WebSocket 커넥터
-│  │   ├─ sse/               # Server-Sent Events
-│  │   ├─ ble/               # BLE 연결/특성 구독
-│  │   └─ nfc/               # NFC read/write 래퍼
-│  ├─ store/                 # 전역 상태(Zustand 등)
-│  ├─ i18n/                  # 번역 리소스, i18n 초기화
-│  └─ types/                 # 글로벌 타입(Env, API 공통 등)
+├── 🧩 src/                           # 앱 로직 (FSD 구조)
+│   ├── features/                     # 기능(유스케이스) 단위
+│   │   └── (auth, nfc, dashboard 등)
+│   ├── entities/                     # 도메인 객체
+│   │   └── (User, Item, Food 등)
+│   ├── widgets/                      # 화면 조각
+│   │   └── (카드, 섹션, 차트 등)
+│   ├── shared/                       # 완전 범용 계층
+│   │   ├── ui/                       # 디자인 시스템 컴포넌트
+│   │   │   └── (Button, Card, Input 등)
+│   │   ├── lib/                      # 공통 라이브러리
+│   │   │   ├── api-client.ts         # API 클라이언트
+│   │   │   ├── storage.ts            # 스토리지 유틸
+│   │   │   ├── date-utils.ts         # 날짜 유틸
+│   │   │   ├── validation.ts         # 유효성 검사
+│   │   │   └── error-handler.ts      # 에러 핸들링
+│   │   ├── hooks/                    # 범용 훅
+│   │   │   ├── useColorScheme.ts     # 테마 훅
+│   │   │   ├── useThemeColor.ts      # 컬러 훅
+│   │   │   └── useBoolean.ts         # 불린 훅
+│   │   ├── styles/                   # 스타일 시스템
+│   │   │   └── (theme, tokens 등)
+│   │   ├── utils/                    # 유틸리티 함수
+│   │   │   ├── number-utils.ts       # 숫자 유틸
+│   │   │   ├── string-utils.ts       # 문자열 유틸
+│   │   │   ├── array-utils.ts       # 배열 유틸
+│   │   │   ├── object-utils.ts      # 객체 유틸
+│   │   │   └── form-utils.ts         # 폼 유틸
+│   │   └── config/                   # 설정
+│   │       └── index.ts              # 환경 변수, 앱 설정
+│   ├── services/                     # 외부 연동 레이어
+│   │   ├── api/                      # API 클라이언트
+│   │   ├── ble/                       # BLE 연결
+│   │   ├── nfc/                       # NFC 기능
+│   │   ├── sse/                       # Server-Sent Events
+│   │   └── ws/                        # WebSocket
+│   ├── store/                        # 전역 상태
+│   │   └── index.ts                  # 상태 관리 설정
+│   ├── i18n/                         # 국제화
+│   │   └── index.ts                  # 번역 리소스
+│   └── types/                        # 타입 정의
+│       └── index.ts                  # 전역 타입
 │
-├─ assets/                   # 이미지, 아이콘, 폰트
-├─ scripts/                  # 빌드 전/후 스크립트, reset 등
-├─ app.json                  # Expo 앱 설정(현재 사용)
-├─ package.json
-├─ tsconfig.json             # TypeScript 및 경로 별칭 설정
-└─ README.md
+├── 🎨 constants/                     # 디자인 시스템
+│   ├── DesignSystem.ts              # 메인 디자인 시스템
+│   ├── Colors.ts                    # 컬러 팔레트
+│   ├── Typography.ts                 # 타이포그래피
+│   ├── Spacing.ts                   # 스페이싱
+│   └── Shadows.ts                   # 그림자
+│
+├── 🧩 components/                     # 공통 컴포넌트 (레거시)
+│   ├── ui/                           # UI 컴포넌트
+│   │   ├── Button.tsx
+│   │   ├── IconSymbol.tsx
+│   │   └── TabBarBackground.tsx
+│   ├── HapticTab.tsx
+│   ├── ThemedText.tsx
+│   └── ThemedView.tsx
+│
+├── 🎨 assets/                        # 정적 자원
+│   ├── fonts/                        # 폰트
+│   │   └── SpaceMono-Regular.ttf
+│   └── images/                       # 이미지
+│       ├── icon.png
+│       ├── splash-icon.png
+│       └── adaptive-icon.png
+│
+├── 📱 android/                       # Android 네이티브 빌드
+├── 📱 ios/                           # iOS 네이티브 빌드
+├── 📄 scripts/                       # 빌드 스크립트
+│   └── reset-project.js
+├── 📄 DESIGN_SYSTEM.md              # 디자인 시스템 문서
+├── 📄 app.json                      # Expo 앱 설정
+├── 📄 package.json                  # 의존성 관리
+├── 📄 tsconfig.json                 # TypeScript 설정
+└── 📄 README.md                     # 프로젝트 문서
 ```
 
 ---

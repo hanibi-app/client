@@ -66,14 +66,40 @@ hooks/                 # Empty folder (hooks moved to src/shared/hooks/)
 
 ## Migration Steps Overview
 
-1. **Snapshot & Analysis** ✓ (This document)
-2. **Directory Scaffold** - Create new structure without conflicts
-3. **Path Alias Consolidation** - Unify to @/* pattern
-4. **Environment Configuration** - Add .env + react-native-config
+1. **Snapshot & Analysis** ✅ (This document)
+2. **Directory Scaffold** ✅ - Create new structure without conflicts
+3. **Path Alias Consolidation** ✅ - Unify to @/* pattern
+4. **Environment Configuration** 🔄 - Add .env + react-native-config
 5. **App Entry Migration** - Replace Expo Router with React Navigation
 6. **Code Migration** - Move existing files to new structure
 7. **Shrimp Integration Verification** - Ensure compatibility
 8. **Quality Assurance** - Add scripts and validation
+
+## react-native-config Setup for Expo Projects
+
+⚠️ **Important**: This project uses Expo, which requires additional setup for react-native-config:
+
+### Option 1: Expo Development Build (Recommended)
+```bash
+# After ejecting or using development build
+npx expo run:android
+npx expo run:ios
+```
+
+### Option 2: Use expo-constants (Alternative)
+```typescript
+import Constants from 'expo-constants';
+
+export const Config = {
+  API_BASE_URL: Constants.expoConfig?.extra?.API_BASE_URL || 'https://api.example.com',
+  // ...
+};
+```
+
+### Native Configuration Required
+- **Android**: Add to `android/app/build.gradle`
+- **iOS**: Add to iOS project settings
+- See: https://github.com/luggit/react-native-config#setup
 
 ## Rollback Strategy
 - Git commits for each step

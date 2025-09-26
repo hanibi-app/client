@@ -24,10 +24,10 @@ export interface AuthResponse {
 export async function signInFlow(payload: SignInPayload): Promise<AuthResponse['user']> {
   const { data } = await api.post<AuthResponse>('/auth/sign-in', payload);
   useAuthStore.getState().setToken(data.token);
-  
+
   // 프로필 정보 저장
   useAuthStore.getState().setMe(data.user);
-  
+
   return data.user;
 }
 
@@ -35,7 +35,7 @@ export async function signUpFlow(payload: SignUpPayload): Promise<AuthResponse['
   const { data } = await api.post<AuthResponse>('/auth/sign-up', payload);
   useAuthStore.getState().setToken(data.token);
   useAuthStore.getState().setMe(data.user);
-  
+
   return data.user;
 }
 

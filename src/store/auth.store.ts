@@ -22,37 +22,37 @@ export const useAuthStore = create<AuthState>()(
       token: undefined,
       user: null,
       isAuthenticated: false,
-      
-      setToken: (token) => 
-        set({ 
-          token, 
-          isAuthenticated: Boolean(token) 
+
+      setToken: (token) =>
+        set({
+          token,
+          isAuthenticated: Boolean(token),
         }),
-        
-      setMe: (user) => 
-        set({ 
-          user, 
-          isAuthenticated: Boolean(get().token && user) 
+
+      setMe: (user) =>
+        set({
+          user,
+          isAuthenticated: Boolean(get().token && user),
         }),
-        
-      signOut: () => 
-        set({ 
-          token: undefined, 
-          user: null, 
-          isAuthenticated: false 
+
+      signOut: () =>
+        set({
+          token: undefined,
+          user: null,
+          isAuthenticated: false,
         }),
     }),
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => ({
-        getItem: (key) => {
+        getItem: (_key) => {
           // React Native AsyncStorage will be configured later
           return Promise.resolve(null);
         },
-        setItem: (key, value) => {
+        setItem: (_key, _value) => {
           return Promise.resolve();
         },
-        removeItem: (key) => {
+        removeItem: (_key) => {
           return Promise.resolve();
         },
       })),

@@ -1,6 +1,6 @@
 /**
  * 한니비 앱 디자인 시스템 - 타이포그래피
- * 
+ *
  * 이 파일은 앱에서 사용되는 모든 텍스트 스타일을 정의합니다.
  * 각 스타일은 의미와 용도에 따라 체계적으로 분류되어 있습니다.
  */
@@ -15,21 +15,21 @@ export const FontFamily = {
     android: 'Roboto',
     default: 'System',
   }),
-  
+
   // 굵은 폰트
   bold: Platform.select({
     ios: 'System',
     android: 'Roboto-Bold',
     default: 'System',
   }),
-  
+
   // 이탤릭 폰트
   italic: Platform.select({
     ios: 'System',
     android: 'Roboto-Italic',
     default: 'System',
   }),
-  
+
   // 모노스페이스 폰트 (코드나 숫자용)
   monospace: Platform.select({
     ios: 'Menlo',
@@ -44,15 +44,15 @@ export const FontSize = {
   h1: 32,        // 메인 타이틀 (Main Title)
   h2: 24,        // 섹션 제목 (Section Title)
   h3: 20,        // 카드 제목 (Card Title)
-  
+
   // 본문
   bodyLarge: 18, // 중요한 텍스트 (Important Text)
   bodyRegular: 16, // 일반 텍스트 (Regular Text)
   bodySmall: 14,  // 보조 텍스트 (Auxiliary Text)
-  
+
   // 캡션
   caption: 12,    // 설명 텍스트 (Description Text)
-  
+
   // 추가 크기
   tiny: 10,      // 매우 작은 텍스트
   large: 22,     // 큰 텍스트
@@ -98,7 +98,7 @@ export const Typography = {
     lineHeight: FontSize.h1 * LineHeight.tight,
     letterSpacing: LetterSpacing.tight,
   },
-  
+
   h2: {
     fontSize: FontSize.h2,
     fontFamily: FontFamily.bold,
@@ -106,7 +106,7 @@ export const Typography = {
     lineHeight: FontSize.h2 * LineHeight.tight,
     letterSpacing: LetterSpacing.normal,
   },
-  
+
   h3: {
     fontSize: FontSize.h3,
     fontFamily: FontFamily.bold,
@@ -114,7 +114,7 @@ export const Typography = {
     lineHeight: FontSize.h3 * LineHeight.normal,
     letterSpacing: LetterSpacing.normal,
   },
-  
+
   // 본문 스타일
   bodyLarge: {
     fontSize: FontSize.bodyLarge,
@@ -123,7 +123,7 @@ export const Typography = {
     lineHeight: FontSize.bodyLarge * LineHeight.normal,
     letterSpacing: LetterSpacing.normal,
   },
-  
+
   bodyRegular: {
     fontSize: FontSize.bodyRegular,
     fontFamily: FontFamily.regular,
@@ -131,7 +131,7 @@ export const Typography = {
     lineHeight: FontSize.bodyRegular * LineHeight.normal,
     letterSpacing: LetterSpacing.normal,
   },
-  
+
   bodySmall: {
     fontSize: FontSize.bodySmall,
     fontFamily: FontFamily.regular,
@@ -139,7 +139,7 @@ export const Typography = {
     lineHeight: FontSize.bodySmall * LineHeight.normal,
     letterSpacing: LetterSpacing.normal,
   },
-  
+
   // 캡션 스타일
   caption: {
     fontSize: FontSize.caption,
@@ -148,7 +148,7 @@ export const Typography = {
     lineHeight: FontSize.caption * LineHeight.normal,
     letterSpacing: LetterSpacing.wide,
   },
-  
+
   // 특수 스타일
   button: {
     fontSize: FontSize.bodyRegular,
@@ -157,7 +157,7 @@ export const Typography = {
     lineHeight: FontSize.bodyRegular * LineHeight.tight,
     letterSpacing: LetterSpacing.wide,
   },
-  
+
   label: {
     fontSize: FontSize.bodySmall,
     fontFamily: FontFamily.bold,
@@ -165,7 +165,7 @@ export const Typography = {
     lineHeight: FontSize.bodySmall * LineHeight.normal,
     letterSpacing: LetterSpacing.wide,
   },
-  
+
   code: {
     fontSize: FontSize.bodySmall,
     fontFamily: FontFamily.monospace,
@@ -179,17 +179,17 @@ export const Typography = {
 export const TypographyUtils = {
   // 폰트 크기 조절
   scale: (baseSize: number, scale: number) => baseSize * scale,
-  
+
   // 라인 높이 계산
-  getLineHeight: (fontSize: number, multiplier: number = LineHeight.normal) => 
+  getLineHeight: (fontSize: number, multiplier: number = LineHeight.normal) =>
     fontSize * multiplier,
-  
+
   // 폰트 스타일 병합
   merge: (baseStyle: any, overrideStyle: any) => ({
     ...baseStyle,
     ...overrideStyle,
   }),
-  
+
   // 반응형 폰트 크기 (화면 크기에 따라 조절)
   responsive: (baseSize: number, scale: number = 1) => {
     // 여기에 반응형 로직을 추가할 수 있습니다

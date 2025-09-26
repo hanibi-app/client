@@ -1,6 +1,6 @@
 /**
  * React Native App Entry Point
- * 
+ *
  * @format
  */
 

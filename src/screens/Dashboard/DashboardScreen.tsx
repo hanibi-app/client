@@ -9,7 +9,7 @@ type DashboardScreenNavigationProp = NavigationProp<RootStackParamList, 'Dashboa
 
 export default function DashboardScreen() {
   const navigation = useNavigation<DashboardScreenNavigationProp>();
-  
+
   const healthData = [
     { title: '생명 점수', value: '85', unit: '점', color: '#4CAF50', icon: '💚' },
     { title: '체온', value: '24.5', unit: '°C', color: '#FF9800', icon: '🌡️' },

@@ -28,17 +28,17 @@ export default function RootNavigator() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator 
-        screenOptions={{ 
+      <Stack.Navigator
+        screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
         }}
-        initialRouteName={isAuthenticated ? "Home" : "Welcome"}
+        initialRouteName={isAuthenticated ? 'Home' : 'Welcome'}
       >
         {/* Auth Screens */}
         <Stack.Screen name="SignIn" component={SignInScreen} />
         <Stack.Screen name="SignUp" component={SignUpScreen} />
-        
+
         {/* Onboarding Screens */}
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="NotifyPermission" component={NotifyPermissionScreen} />
@@ -46,23 +46,23 @@ export default function RootNavigator() {
         <Stack.Screen name="CautionStep2" component={CautionStep2Screen} />
         <Stack.Screen name="CautionStep3" component={CautionStep3Screen} />
         <Stack.Screen name="CharacterCustomize" component={CharacterCustomizeScreen} />
-        
+
         {/* Main Screens */}
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Dashboard" component={DashboardScreen} />
-        
+
         {/* Feature Screens */}
         <Stack.Screen name="ItemDetail" component={ItemDetailScreen} />
         <Stack.Screen name="ItemNew" component={ItemNewScreen} />
         <Stack.Screen name="Report" component={ReportScreen} />
-        
+
         {/* Modal */}
-        <Stack.Screen 
-          name="Modal" 
+        <Stack.Screen
+          name="Modal"
           component={ModalScreen}
           options={{ presentation: 'modal' }}
         />
-        
+
         {/* 404 */}
         <Stack.Screen name="NotFound" component={NotFoundScreen} />
       </Stack.Navigator>

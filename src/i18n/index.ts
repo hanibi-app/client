@@ -1,6 +1,6 @@
 /**
  * 국제화 (i18n) 설정
- * 
+ *
  * 이 파일은 앱의 다국어 지원을 관리합니다.
  */
 
@@ -57,11 +57,11 @@ export const translations = {
 export const t = (key: string, language: SupportedLanguage = DEFAULT_LANGUAGE): string => {
   const keys = key.split('.');
   let value: any = translations[language];
-  
+
   for (const k of keys) {
     value = value?.[k];
   }
-  
+
   return value || key;
 };
 

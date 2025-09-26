@@ -29,7 +29,7 @@ export default function WelcomeScreen() {
         <Pressable onPress={() => navigation.navigate('NotifyPermission')} style={styles.kakaoButton}>
           <Text style={styles.kakaoText}>카카오로 시작하기</Text>
         </Pressable>
-        
+
         <View style={styles.navigationButtons}>
           <Pressable onPress={() => navigation.navigate('CharacterCustomize')} style={styles.navButton}>
             <Text style={styles.navButtonText}>캐릭터 꾸미기</Text>

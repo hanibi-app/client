@@ -153,7 +153,7 @@ const primaryColoredShadow = SpecialShadows.colored.primary;
 ### Button 컴포넌트
 
 ```typescript
-import { Button } from '../components/ui/Button';
+import { Button } from '../shared/ui/Button';
 
 // 기본 사용법
 <Button 
@@ -181,7 +181,7 @@ import { Button } from '../components/ui/Button';
 ### 스타일 커스터마이징
 
 ```typescript
-import { Button } from '../components/ui/Button';
+import { Button } from '../shared/ui/Button';
 
 <Button 
   title="커스텀 스타일" 

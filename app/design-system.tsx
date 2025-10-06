@@ -7,7 +7,7 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
-import { Button } from '../components/ui/Button';
+import { Button } from '../shared/ui/Button';
 import {
   Colors,
   Typography,

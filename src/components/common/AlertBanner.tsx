@@ -1,0 +1,49 @@
+import { colors } from '@/theme/Colors';
+import { spacing } from '@/theme/spacing';
+import { typography } from '@/theme/typography';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+
+export type AlertType = 'info' | 'success' | 'warning' | 'error';
+
+export type AlertBannerProps = {
+  type?: AlertType;
+  message: string;
+  testID?: string;
+};
+
+export default function AlertBanner({ type = 'info', message, testID = 'alert-banner' }: AlertBannerProps) {
+  const styleByType = getStyle(type);
+  return (
+    <View style={[styles.container, styleByType.container]} testID={testID} accessibilityRole="alert" accessibilityLabel={message}>
+      <Text style={[styles.text, styleByType.text]}>{message}</Text>
+    </View>
+  );
+}
+
+function getStyle(type: AlertType) {
+  switch (type) {
+    case 'success':
+      return { container: { backgroundColor: '#ecfdf5', borderColor: colors.success }, text: { color: colors.success } };
+    case 'warning':
+      return { container: { backgroundColor: '#fffbeb', borderColor: colors.warning }, text: { color: colors.warning } };
+    case 'error':
+      return { container: { backgroundColor: '#fef2f2', borderColor: colors.danger }, text: { color: colors.danger } };
+    default:
+      return { container: { backgroundColor: '#eff6ff', borderColor: colors.info }, text: { color: colors.info } };
+  }
+}
+
+const styles = StyleSheet.create({
+  container: {
+    padding: spacing.md,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  text: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.md,
+  },
+});
+
+

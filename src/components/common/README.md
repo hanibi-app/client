@@ -42,6 +42,47 @@ const styles = StyleSheet.create({
 });
 ```
 
+## Variants & Sizes (AppButton)
+
+| Prop | Values | Default | Notes |
+| --- | --- | --- | --- |
+| `variant` | `primary` | `primary` | use semantic variant, colors from theme |
+|  | `secondary` |  | border/background uses `colors.secondary` |
+|  | `ghost` |  | transparent, text uses `colors.ghostForeground` |
+| `size` | `sm` | `md` | height/padding/radius scale with `spacing` |
+|  | `md` |  | balanced touch target (>=44px) |
+|  | `lg` |  | larger target and padding |
+| `loading` | `boolean` | `false` | disables press, shows spinner |
+| `leftIcon` | `ReactNode` | - | rendered before label |
+| `rightIcon` | `ReactNode` | - | rendered after label |
+
+Usage examples:
+```
+<AppButton label="저장" onPress={save} />
+<AppButton label="더보기" variant="ghost" size="sm" onPress={loadMore} />
+<AppButton label="제출" loading onPress={submit} />
+```
+
+## Migration Guide
+
+- Button → AppButton
+  - before: `AppButton label` only supported basic props
+  - now: add `size`, `variant`, `loading`, `leftIcon`, `rightIcon`
+  - replace any custom spinner/disabled logic with built-in `loading`
+
+- InputField
+  - add `label`, `helperText`, `errorText`, `isPassword`
+  - remove ad-hoc error labels near inputs; use `errorText`
+  - screen reader benefits from `accessibilityState.invalid`
+
+- SwitchRow
+  - row is now pressable; remove custom wrappers used to toggle
+  - rely on `accessibilityRole="switch"` and `accessibilityState.checked`
+
+- Layout & Keyboard
+  - use `KeyboardAwareContainer` with `contentPadding` and `extraKeyboardOffset`
+  - compute padding with `getContentPadding()` from `@/utils/layout`
+
 ---
 
 - AppButton:

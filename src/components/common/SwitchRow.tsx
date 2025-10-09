@@ -2,7 +2,7 @@ import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 import React from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 export type SwitchRowProps = {
   label: string;
@@ -12,11 +12,28 @@ export type SwitchRowProps = {
 };
 
 export default function SwitchRow({ label, value, onToggle, testID = 'switch-row' }: SwitchRowProps) {
+  const onPressRow = () => onToggle(!value);
+
   return (
-    <View style={styles.container} testID={testID} accessibilityRole="switch" accessibilityLabel={label}>
+    <Pressable
+      style={styles.container}
+      testID={testID}
+      onPress={onPressRow}
+      accessibilityRole="switch"
+      accessibilityLabel={label}
+      accessibilityState={{ checked: value }}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      pressRetentionOffset={{ top: 8, bottom: 8, left: 8, right: 8 }}
+    >
       <Text style={styles.label}>{label}</Text>
-      <Switch value={value} onValueChange={onToggle} />
-    </View>
+      <Switch
+        value={value}
+        onValueChange={onToggle}
+        accessibilityLabel={label}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: value }}
+      />
+    </Pressable>
   );
 }
 

@@ -17,6 +17,7 @@
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
     "@radix-ui/react-dialog": "^1.1.15",
+    "@react-navigation/elements": "^2.1.1",
     "@react-navigation/native": "^7.1.8",
     "expo": "~54.0.12",
     "expo-constants": "~18.0.9",

@@ -1,6 +1,6 @@
 ---
 name: "⭐️ Feature"
-about: 새로운 기능을 추가했어요
+about: 새로운 기능을 추가해요
 title: ''
 labels: ''
 assignees: ''

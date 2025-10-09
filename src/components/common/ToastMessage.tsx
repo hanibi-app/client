@@ -1,8 +1,10 @@
+import React from 'react';
+
+import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
-import React from 'react';
-import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 export type ToastType = 'success' | 'error' | 'info';
 
@@ -14,9 +16,17 @@ export type ToastMessageProps = {
   accessibilityLabel?: string;
 };
 
-function ToastMessageComponent({ message, type = 'info', testID = 'toast-message', style, accessibilityLabel }: ToastMessageProps) {
-  const backgroundStyle = type === 'success' ? styles.success : type === 'error' ? styles.error : styles.info;
-  const textColor = type === 'success' ? styles.successText : type === 'error' ? styles.errorText : styles.infoText;
+function ToastMessageComponent({
+  message,
+  type = 'info',
+  testID = 'toast-message',
+  style,
+  accessibilityLabel,
+}: ToastMessageProps) {
+  const backgroundStyle =
+    type === 'success' ? styles.success : type === 'error' ? styles.error : styles.info;
+  const textColor =
+    type === 'success' ? styles.successText : type === 'error' ? styles.errorText : styles.infoText;
   return (
     <View
       style={[styles.container, backgroundStyle, style]}
@@ -34,14 +44,12 @@ const ToastMessage = React.memo(ToastMessageComponent);
 export default ToastMessage;
 
 const styles = StyleSheet.create({
-  container: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: 8 },
-  text: { fontSize: typography.sizes.md },
-  success: { backgroundColor: '#ecfdf5' },
-  successText: { color: colors.success },
-  error: { backgroundColor: '#fef2f2' },
+  container: { borderRadius: 8, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  error: { backgroundColor: colors.danger + '20' }, // 12% opacity
   errorText: { color: colors.danger },
-  info: { backgroundColor: '#eff6ff' },
+  info: { backgroundColor: colors.info + '20' }, // 12% opacity
   infoText: { color: colors.info },
+  success: { backgroundColor: colors.success + '20' }, // 12% opacity
+  successText: { color: colors.success },
+  text: { fontSize: typography.sizes.md },
 });
-
-

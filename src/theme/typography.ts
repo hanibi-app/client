@@ -16,5 +16,3 @@ export const typography = {
 } as const;
 
 export type Typography = typeof typography;
-
-

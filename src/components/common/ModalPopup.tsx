@@ -1,9 +1,11 @@
+import React from 'react';
+
+import { Modal, StyleSheet, Text, View } from 'react-native';
+
 import AppButton from '@/components/common/AppButton';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
-import React from 'react';
-import { Modal, StyleSheet, Text, View } from 'react-native';
 
 export type ModalPopupProps = {
   visible: boolean;
@@ -14,11 +16,23 @@ export type ModalPopupProps = {
   testID?: string;
 };
 
-export default function ModalPopup({ visible, title, description, onConfirm, onCancel, testID = 'modal-popup' }: ModalPopupProps) {
+export default function ModalPopup({
+  visible,
+  title,
+  description,
+  onConfirm,
+  onCancel,
+  testID = 'modal-popup',
+}: ModalPopupProps) {
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.backdrop}>
-        <View style={styles.card} accessibilityRole="dialog" accessibilityLabel={title} testID={testID}>
+        <View
+          style={styles.card}
+          accessibilityRole="dialog"
+          accessibilityLabel={title}
+          testID={testID}
+        >
           <Text style={styles.title}>{title}</Text>
           {description ? <Text style={styles.description}>{description}</Text> : null}
           <View style={styles.row}>
@@ -32,11 +46,18 @@ export default function ModalPopup({ visible, title, description, onConfirm, onC
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' },
-  card: { width: '86%', borderRadius: 12, padding: spacing.lg, backgroundColor: colors.background },
-  title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginBottom: spacing.sm },
+  backdrop: {
+    alignItems: 'center',
+    backgroundColor: colors.text + '59', // 35% opacity
+    flex: 1,
+    justifyContent: 'center',
+  },
+  card: { backgroundColor: colors.background, borderRadius: 12, padding: spacing.lg, width: '86%' },
   description: { fontSize: typography.sizes.md, marginBottom: spacing.lg },
-  row: { flexDirection: 'row', justifyContent: 'flex-end', gap: spacing.md },
+  row: { flexDirection: 'row', gap: spacing.md, justifyContent: 'flex-end' },
+  title: {
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    marginBottom: spacing.sm,
+  },
 });
-
-

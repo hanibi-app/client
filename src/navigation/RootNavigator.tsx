@@ -1,6 +1,7 @@
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
 import TabsNavigator from '@/navigation/TabsNavigator';
 import ModalScreen from '@/screens/ModalScreen';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 export type RootStackParamList = {
   Tabs: undefined;
@@ -17,5 +18,3 @@ export default function RootNavigator() {
     </Stack.Navigator>
   );
 }
-
-

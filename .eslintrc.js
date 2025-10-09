@@ -24,24 +24,37 @@ module.exports = {
   settings: {
     react: { version: 'detect' },
     'import/resolver': {
-      typescript: {},
       node: { extensions: ['.js', '.jsx', '.ts', '.tsx'] },
     },
   },
   rules: {
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off',
-    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+    ],
     'import/order': [
       'warn',
       {
         'newlines-between': 'always',
         alphabetize: { order: 'asc', caseInsensitive: true },
-        groups: [['builtin', 'external'], 'internal', ['parent', 'sibling', 'index']],
+        groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+        pathGroups: [
+          {
+            pattern: 'react',
+            group: 'external',
+            position: 'before',
+          },
+          {
+            pattern: '@/**',
+            group: 'internal',
+            position: 'before',
+          },
+        ],
+        pathGroupsExcludedImportTypes: ['react'],
       },
     ],
   },
   ignorePatterns: ['node_modules/', 'dist/', 'build/', 'android/', 'ios/'],
 };
-
-

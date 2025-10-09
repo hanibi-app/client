@@ -1,6 +1,8 @@
-import AlertBanner from '@/components/common/AlertBanner';
-import { render } from '@testing-library/react-native';
 import React from 'react';
+
+import { render } from '@testing-library/react-native';
+
+import AlertBanner from '@/components/common/AlertBanner';
 
 describe('AlertBanner', () => {
   it('renders message and sets alert role', () => {
@@ -8,5 +10,3 @@ describe('AlertBanner', () => {
     expect(getByText('완료')).toBeTruthy();
   });
 });
-
-

@@ -1,11 +1,13 @@
+import React from 'react';
+
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { ColorSchemeName, Pressable, StyleSheet } from 'react-native';
+
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
 import TabOneScreen from '@/screens/TabOneScreen';
 import TabTwoScreen from '@/screens/TabTwoScreen';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import React from 'react';
-import { ColorSchemeName, Pressable } from 'react-native';
 
 type TabsParamList = {
   TabOne: undefined;
@@ -36,14 +38,14 @@ export default function TabsNavigator() {
           headerRight: () => (
             <Pressable
               onPress={() => navigation.navigate('Modal' as never)}
-              style={{ marginRight: 15 }}
+              style={styles.headerButton}
             >
               {({ pressed }) => (
                 <FontAwesome
                   name="info-circle"
                   size={24}
                   color={Colors[colorScheme ?? 'light'].text}
-                  style={{ opacity: pressed ? 0.5 : 1 }}
+                  style={[styles.icon, pressed && styles.pressed]}
                 />
               )}
             </Pressable>
@@ -62,4 +64,14 @@ export default function TabsNavigator() {
   );
 }
 
-
+const styles = StyleSheet.create({
+  headerButton: {
+    marginRight: 15,
+  },
+  icon: {
+    // Base icon styles
+  },
+  pressed: {
+    opacity: 0.5,
+  },
+});

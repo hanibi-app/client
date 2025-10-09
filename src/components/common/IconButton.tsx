@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
 
 export type IconButtonProps = {
@@ -16,7 +17,16 @@ export type IconButtonProps = {
 const HIT_SLOP = { top: 12, bottom: 12, left: 12, right: 12 } as const;
 const MIN_TOUCH = 44;
 
-function IconButtonComponent({ icon, onPress, size = 24, style, testID = 'icon-button', accessibilityLabel = '아이콘 버튼', accessibilityHint, disabled = false }: IconButtonProps) {
+function IconButtonComponent({
+  icon,
+  onPress,
+  size = 24,
+  style,
+  testID = 'icon-button',
+  accessibilityLabel = '아이콘 버튼',
+  accessibilityHint,
+  disabled = false,
+}: IconButtonProps) {
   return (
     <Pressable
       onPress={onPress}
@@ -27,7 +37,15 @@ function IconButtonComponent({ icon, onPress, size = 24, style, testID = 'icon-b
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled: disabled || undefined }}
       testID={testID}
-      style={[styles.base, { width: Math.max(size + 20, MIN_TOUCH), height: Math.max(size + 20, MIN_TOUCH), opacity: disabled ? 0.5 : 1 }, style]}
+      style={[
+        styles.base,
+        {
+          width: Math.max(size + 20, MIN_TOUCH),
+          height: Math.max(size + 20, MIN_TOUCH),
+        },
+        disabled && styles.disabled,
+        style,
+      ]}
       disabled={disabled}
     >
       {icon}
@@ -40,6 +58,5 @@ export default IconButton;
 
 const styles = StyleSheet.create({
   base: { alignItems: 'center', justifyContent: 'center' },
+  disabled: { opacity: 0.5 },
 });
-
-

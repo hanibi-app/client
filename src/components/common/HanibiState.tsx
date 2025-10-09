@@ -1,10 +1,12 @@
+import React from 'react';
+
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
+
 import { getHanibiLevel, HanibiMetric } from '@/constants/hanibiThresholds';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
-import React from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
 
 export type HanibiStateProps = {
   metric: HanibiMetric; // 'temp' | 'hum' | 'index'
@@ -110,15 +112,24 @@ export default function HanibiState({
   );
 }
 
-const AnimatedCircle = Animated.createAnimatedComponent(Circle as unknown as React.ComponentType<any>);
+const AnimatedCircle = Animated.createAnimatedComponent(
+  Circle as unknown as React.ComponentType<{ cx: number; cy: number; r: number; fill: string }>,
+);
 
 const styles = StyleSheet.create({
+  center: {
+    alignItems: 'center',
+    bottom: 0,
+    gap: spacing.xs,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
   container: { alignItems: 'center', justifyContent: 'center' },
-  center: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', gap: spacing.xs },
-  metric: { fontSize: typography.sizes.sm, color: '#6b7280' },
+  level: { color: colors.mutedText, fontSize: typography.sizes.sm },
+  metric: { color: colors.mutedText, fontSize: typography.sizes.sm },
+  unit: { color: colors.mutedText, fontSize: typography.sizes.md },
   value: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
-  unit: { fontSize: typography.sizes.md, color: '#6b7280' },
-  level: { fontSize: typography.sizes.sm, color: '#6b7280' },
 });
-
-

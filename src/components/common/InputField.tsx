@@ -2,7 +2,7 @@ import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 import React from 'react';
-import { Platform, StyleSheet, TextInput } from 'react-native';
+import { Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export type InputFieldProps = {
   value: string;
@@ -11,26 +11,64 @@ export type InputFieldProps = {
   keyboardType?: React.ComponentProps<typeof TextInput>['keyboardType'];
   testID?: string;
   accessibilityLabel?: string;
+  label?: string;
+  helperText?: string;
+  errorText?: string;
+  isPassword?: boolean;
 };
 
-export default function InputField({ value, onChangeText, placeholder, keyboardType, testID = 'input-field', accessibilityLabel }: InputFieldProps) {
+export default function InputField({ value, onChangeText, placeholder, keyboardType, testID = 'input-field', accessibilityLabel, label, helperText, errorText, isPassword = false }: InputFieldProps) {
+  const [focused, setFocused] = React.useState(false);
+
+  const a11yLabel = accessibilityLabel ?? label ?? placeholder ?? '입력';
+  const a11yHint = helperText;
+  const invalid = Boolean(errorText);
+
   return (
-    <TextInput
-      value={value}
-      onChangeText={onChangeText}
-      placeholder={placeholder}
-      keyboardType={keyboardType}
-      style={styles.input}
-      returnKeyType="done"
-      blurOnSubmit={Platform.OS === 'ios'}
-      keyboardAppearance={Platform.OS === 'ios' ? 'default' : undefined}
-      testID={testID}
-      accessibilityLabel={accessibilityLabel ?? placeholder ?? '입력'}
-    />
+    <View>
+      {label ? (
+        <Text style={styles.label} accessibilityElementsHidden>
+          {label}
+        </Text>
+      ) : null}
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        keyboardType={keyboardType}
+        style={[
+          styles.input,
+          focused ? styles.inputFocused : undefined,
+          invalid ? styles.inputError : undefined,
+        ]}
+        returnKeyType="done"
+        blurOnSubmit={Platform.OS === 'ios'}
+        keyboardAppearance={Platform.OS === 'ios' ? 'default' : undefined}
+        testID={testID}
+        accessibilityLabel={a11yLabel}
+        accessibilityHint={a11yHint}
+        accessibilityState={{ disabled: false, selected: false, invalid: invalid || undefined }}
+        secureTextEntry={isPassword}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+      />
+      {errorText ? (
+        <Text style={styles.errorText}>{errorText}</Text>
+      ) : helperText ? (
+        <Text style={styles.helperText}>{helperText}</Text>
+      ) : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  label: {
+    marginBottom: spacing.xs,
+    color: colors.mutedText,
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+  },
   input: {
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
@@ -39,6 +77,25 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     fontSize: typography.sizes.md,
     color: colors.text,
+  },
+  inputFocused: {
+    borderColor: colors.primary,
+  },
+  inputError: {
+    borderColor: colors.danger,
+  },
+  helperText: {
+    marginTop: spacing.xs,
+    color: colors.mutedText,
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.sm,
+  },
+  errorText: {
+    marginTop: spacing.xs,
+    color: colors.danger,
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
   },
 });
 

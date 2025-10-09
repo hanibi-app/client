@@ -2,16 +2,21 @@ import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 import React from 'react';
-import { Pressable, StyleSheet, Text, ViewStyle } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 export type AppButtonVariant = 'primary' | 'secondary' | 'ghost';
+export type AppButtonSize = 'sm' | 'md' | 'lg';
 
 export type AppButtonProps = {
   label: string;
   onPress: () => void;
   variant?: AppButtonVariant;
+  size?: AppButtonSize;
   disabled?: boolean;
+  loading?: boolean;
   style?: ViewStyle;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
   accessibilityLabel?: string;
   testID?: string;
 };
@@ -22,17 +27,22 @@ export default function AppButton({
   label,
   onPress,
   variant = 'primary',
+  size = 'md',
   disabled = false,
+  loading = false,
   style,
+  leftIcon,
+  rightIcon,
   accessibilityLabel,
   testID = 'app-button',
 }: AppButtonProps) {
   const { container, text } = getVariantStyles(variant, disabled);
+  const sizeStyle = getSizeStyle(size);
 
   const a11yLabel = accessibilityLabel ?? label;
 
   const handlePress = () => {
-    if (disabled) return;
+    if (disabled || loading) return;
     onPress();
   };
 
@@ -41,13 +51,22 @@ export default function AppButton({
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={a11yLabel}
+      accessibilityState={{ disabled: disabled || loading, busy: loading || undefined }}
       hitSlop={HIT_SLOP}
       pressRetentionOffset={HIT_SLOP}
-      style={[styles.base, container, style]}
+      style={[styles.base, sizeStyle, container, style]}
       onPress={handlePress}
-      disabled={disabled}
+      disabled={disabled || loading}
     >
-      <Text style={[styles.text, text]}>{label}</Text>
+      {loading ? (
+        <ActivityIndicator size="small" color={getSpinnerColor(variant)} />
+      ) : (
+        <View style={styles.contentRow}>
+          {leftIcon ? <View style={styles.leftIcon}>{leftIcon}</View> : null}
+          <Text style={[styles.text, text]}>{label}</Text>
+          {rightIcon ? <View style={styles.rightIcon}>{rightIcon}</View> : null}
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -77,23 +96,61 @@ function getVariantStyles(variant: AppButtonVariant, disabled: boolean) {
   };
 }
 
+function getSpinnerColor(variant: AppButtonVariant): string {
+  if (variant === 'primary') return colors.primaryForeground;
+  if (variant === 'secondary') return colors.secondaryForeground;
+  return colors.ghostForeground;
+}
+
+function getSizeStyle(size: AppButtonSize): ViewStyle {
+  if (size === 'sm') {
+    return {
+      minHeight: 36,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+      borderRadius: 6,
+    };
+  }
+  if (size === 'lg') {
+    return {
+      minHeight: 48,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.xl,
+      borderRadius: 10,
+    };
+  }
+  return {
+    minHeight: 44,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: 8,
+  };
+}
+
 const MIN_TOUCH_SIZE = 44;
 
 const styles = StyleSheet.create({
   base: {
     minWidth: MIN_TOUCH_SIZE,
-    minHeight: MIN_TOUCH_SIZE,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   text: {
     fontFamily: typography.fontFamily,
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.medium,
+  },
+  leftIcon: {
+    marginRight: spacing.xs,
+  },
+  rightIcon: {
+    marginLeft: spacing.xs,
   },
   primary: {
     backgroundColor: colors.primary,

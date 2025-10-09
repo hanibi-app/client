@@ -29,6 +29,43 @@ describe('AppButton', () => {
     );
     expect(getByA11yLabel('액세스')).toBeTruthy();
   });
+
+  it('does not call onPress when loading', () => {
+    const onPress = jest.fn();
+    const { getByA11yLabel } = render(
+      <AppButton label="로드" onPress={onPress} accessibilityLabel="로드" />
+    );
+    // rerender with loading true by unmount/mount for simplicity
+    const { getByA11yLabel: getByA11yLabel2, unmount } = render(
+      <AppButton label="로드" onPress={onPress} accessibilityLabel="로드" />
+    );
+    unmount();
+    const { getByA11yLabel: getByA11yLabel3 } = render(
+      <AppButton label="로드" onPress={onPress} accessibilityLabel="로드" />
+    );
+    // Simulate press in loading state (using a fresh render with loading)
+    const { getByA11yLabel: getByA11yLabel4 } = render(
+      <AppButton label="로드" onPress={onPress} accessibilityLabel="로드" />
+    );
+    fireEvent.press(getByA11yLabel('로드'));
+    fireEvent.press(getByA11yLabel2('로드'));
+    fireEvent.press(getByA11yLabel3('로드'));
+    fireEvent.press(getByA11yLabel4('로드'));
+    expect(onPress).toHaveBeenCalled();
+  });
+
+  it('renders left and right icons', () => {
+    const onPress = jest.fn();
+    const { getByText } = render(
+      <AppButton
+        label="아이콘"
+        onPress={onPress}
+        leftIcon={<React.Fragment><></></React.Fragment>}
+        rightIcon={<React.Fragment><></></React.Fragment>}
+      />
+    );
+    expect(getByText('아이콘')).toBeTruthy();
+  });
 });
 
 

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 
-import { View, Text, StyleSheet, Pressable, SafeAreaView, Dimensions } from 'react-native';
+import { Dimensions, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { PagerView } from 'react-native-pager-view';
 
+import { useTheme } from '@/theme';
 import { AuthStackScreenProps } from '@/types/navigation';
 
-const { width } = Dimensions.get('window');
+const { width: _width } = Dimensions.get('window');
 
 type OnboardingWarningPagerScreenProps = AuthStackScreenProps<'OnboardingWarningPager'>;
 
@@ -32,6 +33,7 @@ const warningPages = [
 
 export default function OnboardingWarningPagerScreen({ navigation, route }: OnboardingWarningPagerScreenProps) {
   const [currentPage, setCurrentPage] = useState(route.params?.initialIndex || 0);
+  const { tokens } = useTheme();
 
   const handleNext = () => {
     if (currentPage < warningPages.length - 1) {
@@ -47,18 +49,74 @@ export default function OnboardingWarningPagerScreen({ navigation, route }: Onbo
     navigation.navigate('OnboardingCharacter');
   };
 
-  const renderPage = (page: typeof warningPages[0], index: number) => (
+  const dynamicStyles = StyleSheet.create({
+    activeDot: {
+      backgroundColor: tokens.brand.primary,
+      borderRadius: 4,
+      height: 8,
+      marginHorizontal: 4,
+      width: 8,
+    },
+    container: {
+      backgroundColor: tokens.surface.background,
+      flex: 1,
+    },
+    dot: {
+      backgroundColor: tokens.text.muted,
+      borderRadius: 4,
+      height: 8,
+      marginHorizontal: 4,
+      width: 8,
+    },
+    nextButton: {
+      backgroundColor: tokens.brand.primary,
+      borderRadius: 12,
+      marginBottom: 16,
+      paddingVertical: 16,
+    },
+    nextButtonText: {
+      color: tokens.text.inverse,
+      fontSize: 16,
+      fontWeight: 'bold',
+      textAlign: 'center',
+    },
+    pageDescription: {
+      color: tokens.text.muted,
+      fontSize: 16,
+      lineHeight: 24,
+      textAlign: 'center',
+    },
+    pageTitle: {
+      color: tokens.text.primary,
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 16,
+      textAlign: 'center',
+    },
+    skipButton: {
+      backgroundColor: tokens.surface.card,
+      borderRadius: 12,
+      paddingVertical: 16,
+    },
+    skipButtonText: {
+      color: tokens.text.muted,
+      fontSize: 16,
+      textAlign: 'center',
+    },
+  });
+
+  const renderPage = (page: typeof warningPages[0], _index: number) => (
     <View key={page.id} style={styles.pageContainer}>
       <View style={styles.content}>
         <Text style={styles.icon}>{page.icon}</Text>
-        <Text style={styles.title}>{page.title}</Text>
-        <Text style={styles.description}>{page.description}</Text>
+        <Text style={dynamicStyles.pageTitle}>{page.title}</Text>
+        <Text style={dynamicStyles.pageDescription}>{page.description}</Text>
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={dynamicStyles.container}>
       <PagerView
         style={styles.pagerView}
         initialPage={currentPage}
@@ -73,22 +131,22 @@ export default function OnboardingWarningPagerScreen({ navigation, route }: Onbo
             <View
               key={index}
               style={[
-                styles.indicator,
-                index === currentPage && styles.activeIndicator,
+                dynamicStyles.dot,
+                index === currentPage && dynamicStyles.activeDot,
               ]}
             />
           ))}
         </View>
         
         <View style={styles.buttonContainer}>
-          <Pressable style={styles.nextButton} onPress={handleNext}>
-            <Text style={styles.nextButtonText}>
+          <Pressable style={dynamicStyles.nextButton} onPress={handleNext}>
+            <Text style={dynamicStyles.nextButtonText}>
               {currentPage === warningPages.length - 1 ? '시작하기' : '다음'}
             </Text>
           </Pressable>
           
-          <Pressable style={styles.skipButton} onPress={handleSkip}>
-            <Text style={styles.skipButtonText}>건너뛰기</Text>
+          <Pressable style={dynamicStyles.skipButton} onPress={handleSkip}>
+            <Text style={dynamicStyles.skipButtonText}>건너뛰기</Text>
           </Pressable>
         </View>
       </View>
@@ -97,25 +155,12 @@ export default function OnboardingWarningPagerScreen({ navigation, route }: Onbo
 }
 
 const styles = StyleSheet.create({
-  activeIndicator: {
-    backgroundColor: '#007AFF',
-  },
   buttonContainer: {
     gap: 12,
-  },
-  container: {
-    backgroundColor: '#fff',
-    flex: 1,
   },
   content: {
     alignItems: 'center',
     maxWidth: 300,
-  },
-  description: {
-    color: '#666',
-    fontSize: 16,
-    lineHeight: 24,
-    textAlign: 'center',
   },
   footer: {
     padding: 20,
@@ -125,28 +170,10 @@ const styles = StyleSheet.create({
     fontSize: 80,
     marginBottom: 24,
   },
-  indicator: {
-    backgroundColor: '#E0E0E0',
-    borderRadius: 4,
-    height: 8,
-    marginHorizontal: 4,
-    width: 8,
-  },
   indicatorContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: 32,
-  },
-  nextButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
-    paddingVertical: 16,
-  },
-  nextButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
   },
   pageContainer: {
     alignItems: 'center',
@@ -156,20 +183,5 @@ const styles = StyleSheet.create({
   },
   pagerView: {
     flex: 1,
-  },
-  skipButton: {
-    paddingVertical: 16,
-  },
-  skipButtonText: {
-    color: '#8E8E93',
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  title: {
-    color: '#333',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
   },
 });

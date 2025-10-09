@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -9,6 +8,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import RootNavigator from '@/navigation/RootNavigator';
+import { ThemeProvider } from '@/theme';
 
 // QueryClient 인스턴스 생성
 const queryClient = new QueryClient({
@@ -24,7 +24,7 @@ const queryClient = new QueryClient({
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
-  const colorScheme = useColorScheme();
+  const _colorScheme = useColorScheme();
 
   const [loaded, error] = useFonts({
     // Use a relative path so Metro resolves without alias configuration
@@ -48,7 +48,9 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <RootNavigator />
+      <ThemeProvider>
+        <RootNavigator />
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

@@ -1,8 +1,9 @@
 import React from 'react';
 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { useTheme } from '@/theme';
 import { MainTabParamList } from '@/types/navigation';
 
 import HomeNavigator from './HomeNavigator';
@@ -12,11 +13,22 @@ import SettingsNavigator from './SettingsNavigator';
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 // 임시 아이콘 컴포넌트 (실제로는 react-native-vector-icons 사용)
-const TabIcon = ({ name, focused }: { name: string; focused: boolean }) => (
-  <View style={[styles.iconContainer, focused && styles.focusedIcon]}>
-    <Text style={[styles.iconText, focused && styles.focusedText]}>{name}</Text>
-  </View>
-);
+const TabIcon = ({ name, focused }: { name: string; focused: boolean }) => {
+  const { tokens } = useTheme();
+  
+  const dynamicStyles = StyleSheet.create({
+    focusedIcon: {
+      backgroundColor: tokens.brand.primary + '20', // 12% 투명도
+      borderRadius: 12,
+    },
+  });
+
+  return (
+    <View style={[styles.iconContainer, focused && dynamicStyles.focusedIcon]}>
+      <Text style={[styles.iconText, focused && styles.focusedText]}>{name}</Text>
+    </View>
+  );
+};
 
 export default function MainTabs() {
   return (
@@ -68,10 +80,6 @@ export default function MainTabs() {
 }
 
 const styles = StyleSheet.create({
-  focusedIcon: {
-    backgroundColor: '#007AFF20',
-    borderRadius: 12,
-  },
   focusedText: {
     fontWeight: 'bold',
   },

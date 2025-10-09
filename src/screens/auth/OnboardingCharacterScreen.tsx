@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 
-import { View, Text, StyleSheet, Pressable, SafeAreaView, ScrollView } from 'react-native';
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useAuthStore } from '@/store/useAuthStore';
+import { useTheme } from '@/theme';
 import { AuthStackScreenProps } from '@/types/navigation';
 
 type OnboardingCharacterScreenProps = AuthStackScreenProps<'OnboardingCharacter'>;
@@ -16,9 +17,10 @@ const characterColors = [
   { id: 'yellow', name: '노랑', color: '#FFCC00', emoji: '🤖' },
 ];
 
-export default function OnboardingCharacterScreen({ navigation }: OnboardingCharacterScreenProps) {
+export default function OnboardingCharacterScreen({ navigation: _navigation }: OnboardingCharacterScreenProps) {
   const [selectedColor, setSelectedColor] = useState('blue');
   const { setOnboarded } = useAuthStore();
+  const { tokens } = useTheme();
 
   const handleComplete = () => {
     // TODO: 선택된 캐릭터 색상 저장
@@ -32,12 +34,83 @@ export default function OnboardingCharacterScreen({ navigation }: OnboardingChar
 
   const selectedColorData = characterColors.find(color => color.id === selectedColor);
 
+  const dynamicStyles = StyleSheet.create({
+    characterName: {
+      color: tokens.text.primary,
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginTop: 16,
+      textAlign: 'center',
+    },
+    colorOption: {
+      backgroundColor: tokens.surface.card,
+      borderRadius: 12,
+      elevation: 1,
+      marginBottom: 12,
+      shadowColor: tokens.surface.shadow,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+    },
+    colorOptionSelected: {
+      backgroundColor: tokens.brand.primary,
+      borderRadius: 12,
+      elevation: 2,
+      marginBottom: 12,
+      shadowColor: tokens.surface.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    },
+    completeButton: {
+      backgroundColor: tokens.brand.primary,
+      borderRadius: 12,
+      marginTop: 20,
+      paddingVertical: 16,
+    },
+    completeButton: {
+      backgroundColor: tokens.brand.primary,
+      borderRadius: 12,
+      marginTop: 20,
+      paddingVertical: 16,
+    },
+    completeButtonText: {
+      color: tokens.text.inverse,
+      fontSize: 16,
+      fontWeight: 'bold',
+      textAlign: 'center',
+    },
+    completeButtonText: {
+      color: tokens.text.inverse,
+      fontSize: 16,
+      fontWeight: 'bold',
+      textAlign: 'center',
+    },
+    container: {
+      backgroundColor: tokens.surface.background,
+      flex: 1,
+    },
+    description: {
+      color: tokens.text.muted,
+      fontSize: 16,
+      lineHeight: 24,
+      textAlign: 'center',
+    },
+    title: {
+      color: tokens.text.primary,
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 12,
+      textAlign: 'center',
+    },
+  });
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={dynamicStyles.container}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>캐릭터를 꾸며보세요</Text>
-          <Text style={styles.description}>
+          <Text style={dynamicStyles.title}>캐릭터를 꾸며보세요</Text>
+          <Text style={dynamicStyles.description}>
             한니비의 색상을 선택해주세요. 언제든지 변경할 수 있어요.
           </Text>
         </View>
@@ -46,7 +119,7 @@ export default function OnboardingCharacterScreen({ navigation }: OnboardingChar
           <View style={[styles.characterContainer, { backgroundColor: selectedColorData?.color }]}>
             <Text style={styles.characterEmoji}>{selectedColorData?.emoji}</Text>
           </View>
-          <Text style={styles.characterName}>한니비</Text>
+          <Text style={dynamicStyles.characterName}>한니비</Text>
         </View>
         
         <ScrollView style={styles.colorSelector} showsVerticalScrollIndicator={false}>
@@ -56,9 +129,8 @@ export default function OnboardingCharacterScreen({ navigation }: OnboardingChar
               <Pressable
                 key={color.id}
                 style={[
-                  styles.colorOption,
+                  selectedColor === color.id ? dynamicStyles.colorOptionSelected : dynamicStyles.colorOption,
                   { backgroundColor: color.color },
-                  selectedColor === color.id && styles.selectedColorOption,
                 ]}
                 onPress={() => setSelectedColor(color.id)}
               >
@@ -74,8 +146,8 @@ export default function OnboardingCharacterScreen({ navigation }: OnboardingChar
         </ScrollView>
         
         <View style={styles.buttonContainer}>
-          <Pressable style={styles.completeButton} onPress={handleComplete}>
-            <Text style={styles.completeButtonText}>완료</Text>
+          <Pressable style={dynamicStyles.completeButton} onPress={handleComplete}>
+            <Text style={dynamicStyles.completeButtonText}>완료</Text>
           </Pressable>
         </View>
       </View>
@@ -94,7 +166,7 @@ const styles = StyleSheet.create({
     height: 120,
     justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: 'transparent', // 테마 토큰으로 대체
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -103,18 +175,13 @@ const styles = StyleSheet.create({
   characterEmoji: {
     fontSize: 60,
   },
-  characterName: {
-    color: '#333',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
   characterPreview: {
     alignItems: 'center',
     marginBottom: 40,
   },
   checkmark: {
     alignItems: 'center',
-    backgroundColor: '#007AFF',
+    backgroundColor: 'transparent', // 테마 토큰으로 대체
     borderRadius: 10,
     height: 20,
     justifyContent: 'center',
@@ -124,7 +191,7 @@ const styles = StyleSheet.create({
     width: 20,
   },
   checkmarkText: {
-    color: '#fff',
+    color: 'transparent', // 테마 토큰으로 대체
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -136,65 +203,23 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  colorOption: {
-    alignItems: 'center',
-    aspectRatio: 1,
-    borderColor: 'transparent',
-    borderRadius: 12,
-    borderWidth: 2,
-    justifyContent: 'center',
-    marginBottom: 16,
-    width: '30%',
-  },
   colorSelector: {
     flex: 1,
     marginBottom: 20,
   },
-  completeButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
-    paddingVertical: 16,
-  },
-  completeButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  container: {
-    backgroundColor: '#fff',
-    flex: 1,
-  },
   content: {
     flex: 1,
     padding: 20,
-  },
-  description: {
-    color: '#666',
-    fontSize: 16,
-    lineHeight: 24,
-    textAlign: 'center',
   },
   header: {
     alignItems: 'center',
     marginBottom: 40,
     marginTop: 20,
   },
-  selectedColorOption: {
-    borderColor: '#007AFF',
-    borderWidth: 3,
-  },
   selectorTitle: {
-    color: '#333',
+    color: 'transparent', // 테마 토큰으로 대체
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
-  },
-  title: {
-    color: '#333',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    textAlign: 'center',
   },
 });

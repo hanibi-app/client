@@ -1,7 +1,8 @@
 import React from 'react';
 
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Pressable } from 'react-native';
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { useTheme } from '@/theme';
 import { SettingsStackScreenProps } from '@/types/navigation';
 
 type SettingsIndexScreenProps = SettingsStackScreenProps<'SettingsIndex'>;
@@ -55,37 +56,89 @@ const settingsSections = [
 ];
 
 export default function SettingsIndexScreen({ navigation }: SettingsIndexScreenProps) {
+  const { tokens } = useTheme();
+
   const handleSettingPress = (screen: keyof typeof settingsSections[0]['items'][0]) => {
     navigation.navigate(screen);
   };
 
+  const dynamicStyles = StyleSheet.create({
+    chevron: {
+      color: tokens.text.muted,
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    container: {
+      backgroundColor: tokens.surface.background,
+      flex: 1,
+    },
+    sectionTitle: {
+      color: tokens.text.primary,
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginBottom: 12,
+    },
+    settingItem: {
+      backgroundColor: tokens.surface.card,
+      borderRadius: 12,
+      elevation: 1,
+      marginBottom: 8,
+      shadowColor: tokens.surface.shadow,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+    },
+    settingSubtitle: {
+      color: tokens.text.muted,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    settingTitle: {
+      color: tokens.text.primary,
+      fontSize: 16,
+      fontWeight: '500',
+      marginBottom: 4,
+    },
+    subtitle: {
+      color: tokens.text.muted,
+      fontSize: 16,
+      lineHeight: 24,
+    },
+    title: {
+      color: tokens.text.primary,
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 8,
+    },
+  });
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={dynamicStyles.container}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
-          <Text style={styles.title}>설정</Text>
-          <Text style={styles.subtitle}>
+          <Text style={dynamicStyles.title}>설정</Text>
+          <Text style={dynamicStyles.subtitle}>
             앱을 원하는 대로 맞춤 설정하세요.
           </Text>
         </View>
 
         {settingsSections.map((section, sectionIndex) => (
           <View key={sectionIndex} style={styles.section}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
+            <Text style={dynamicStyles.sectionTitle}>{section.title}</Text>
             <View style={styles.sectionContent}>
               {section.items.map((item, itemIndex) => (
                 <Pressable
                   key={itemIndex}
-                  style={styles.settingItem}
+                  style={dynamicStyles.settingItem}
                   onPress={() => handleSettingPress(item.screen)}
                 >
                   <View style={styles.settingContent}>
                     <Text style={styles.settingIcon}>{item.icon}</Text>
                     <View style={styles.settingInfo}>
-                      <Text style={styles.settingTitle}>{item.title}</Text>
-                      <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
+                      <Text style={dynamicStyles.settingTitle}>{item.title}</Text>
+                      <Text style={dynamicStyles.settingSubtitle}>{item.subtitle}</Text>
                     </View>
-                    <Text style={styles.chevron}>›</Text>
+                    <Text style={dynamicStyles.chevron}>›</Text>
                   </View>
                 </Pressable>
               ))}
@@ -103,26 +156,17 @@ export default function SettingsIndexScreen({ navigation }: SettingsIndexScreenP
 }
 
 const styles = StyleSheet.create({
-  chevron: {
-    color: '#C7C7CC',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  container: {
-    backgroundColor: '#F2F2F7',
-    flex: 1,
-  },
   footer: {
     alignItems: 'center',
     padding: 20,
     paddingBottom: 40,
   },
   footerSubtext: {
-    color: '#C7C7CC',
+    color: 'transparent', // 테마 토큰으로 대체
     fontSize: 12,
   },
   footerText: {
-    color: '#8E8E93',
+    color: 'transparent', // 테마 토큰으로 대체
     fontSize: 14,
     marginBottom: 4,
   },
@@ -137,21 +181,14 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionContent: {
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent', // 테마 토큰으로 대체
     borderRadius: 12,
     elevation: 1,
     marginHorizontal: 20,
-    shadowColor: '#000',
+    shadowColor: 'transparent', // 테마 토큰으로 대체
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
-  },
-  sectionTitle: {
-    color: '#333',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    paddingHorizontal: 20,
   },
   settingContent: {
     alignItems: 'center',
@@ -166,28 +203,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   settingItem: {
-    borderBottomColor: '#F2F2F7',
+    borderBottomColor: 'transparent', // 테마 토큰으로 대체
     borderBottomWidth: 1,
-  },
-  settingSubtitle: {
-    color: '#666',
-    fontSize: 14,
-  },
-  settingTitle: {
-    color: '#333',
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  subtitle: {
-    color: '#666',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  title: {
-    color: '#333',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
   },
 });

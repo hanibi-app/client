@@ -1,14 +1,16 @@
 import React from 'react';
 
-import { View, Text, StyleSheet, Pressable, SafeAreaView } from 'react-native';
+import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 import { useAuthStore } from '@/store/useAuthStore';
+import { useTheme } from '@/theme';
 import { AuthStackScreenProps } from '@/types/navigation';
 
 type LoginScreenProps = AuthStackScreenProps<'Login'>;
 
 export default function LoginScreen({ navigation }: LoginScreenProps) {
   const { setSignedIn, setUser } = useAuthStore();
+  const { tokens } = useTheme();
 
   const handleKakaoLogin = async () => {
     // TODO: 카카오 로그인 구현
@@ -27,25 +29,69 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     navigation.navigate('OnboardingAlertRequest');
   };
 
+  const dynamicStyles = StyleSheet.create({
+    characterName: {
+      color: tokens.brand.primary,
+      fontSize: 24,
+      fontWeight: 'bold',
+    },
+    container: {
+      backgroundColor: tokens.surface.background,
+      flex: 1,
+    },
+    kakaoButton: {
+      backgroundColor: '#FEE500', // 카카오 브랜드 색상 유지
+      borderRadius: 12,
+      marginBottom: 20,
+      paddingVertical: 16,
+    },
+    kakaoButtonText: {
+      color: tokens.text.inverse,
+      fontSize: 16,
+      fontWeight: 'bold',
+      textAlign: 'center',
+    },
+    subtitle: {
+      color: tokens.text.muted,
+      fontSize: 16,
+      lineHeight: 24,
+      textAlign: 'center',
+    },
+    termsText: {
+      color: tokens.text.muted,
+      fontSize: 12,
+      lineHeight: 18,
+      textAlign: 'center',
+    },
+    title: {
+      color: tokens.text.primary,
+      fontSize: 28,
+      fontWeight: 'bold',
+      lineHeight: 36,
+      marginBottom: 16,
+      textAlign: 'center',
+    },
+  });
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={dynamicStyles.container}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>지금부터 음식물 쓰레기 고민 STOP!</Text>
-          <Text style={styles.subtitle}>한니비와 함께 스마트하게 관리하세요</Text>
+          <Text style={dynamicStyles.title}>지금부터 음식물 쓰레기 고민 STOP!</Text>
+          <Text style={dynamicStyles.subtitle}>한니비와 함께 스마트하게 관리하세요</Text>
         </View>
         
         <View style={styles.characterContainer}>
           <Text style={styles.character}>🤖</Text>
-          <Text style={styles.characterName}>한니비</Text>
+          <Text style={dynamicStyles.characterName}>한니비</Text>
         </View>
         
         <View style={styles.buttonContainer}>
-          <Pressable style={styles.kakaoButton} onPress={handleKakaoLogin}>
-            <Text style={styles.kakaoButtonText}>카카오로 시작하기</Text>
+          <Pressable style={dynamicStyles.kakaoButton} onPress={handleKakaoLogin}>
+            <Text style={dynamicStyles.kakaoButtonText}>카카오로 시작하기</Text>
           </Pressable>
           
-          <Text style={styles.termsText}>
+          <Text style={dynamicStyles.termsText}>
             로그인 시 개인정보 처리방침 및 이용약관에 동의하게 됩니다.
           </Text>
         </View>
@@ -66,15 +112,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 40,
   },
-  characterName: {
-    color: '#007AFF',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  container: {
-    backgroundColor: '#fff',
-    flex: 1,
-  },
   content: {
     flex: 1,
     justifyContent: 'space-between',
@@ -83,37 +120,5 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginTop: 60,
-  },
-  kakaoButton: {
-    backgroundColor: '#FEE500',
-    borderRadius: 12,
-    marginBottom: 20,
-    paddingVertical: 16,
-  },
-  kakaoButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  subtitle: {
-    color: '#666',
-    fontSize: 16,
-    lineHeight: 24,
-    textAlign: 'center',
-  },
-  termsText: {
-    color: '#8E8E93',
-    fontSize: 12,
-    lineHeight: 18,
-    textAlign: 'center',
-  },
-  title: {
-    color: '#333',
-    fontSize: 28,
-    fontWeight: 'bold',
-    lineHeight: 36,
-    marginBottom: 16,
-    textAlign: 'center',
   },
 });

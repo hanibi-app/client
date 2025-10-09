@@ -1,8 +1,9 @@
 import React from 'react';
 
-import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useReportData } from '@/hooks/useReportQuery';
+import { useTheme } from '@/theme';
 import { ReportStackScreenProps } from '@/types/navigation';
 
 type ReportMetricScreenProps = ReportStackScreenProps<'ReportMetric'>;
@@ -10,6 +11,7 @@ type ReportMetricScreenProps = ReportStackScreenProps<'ReportMetric'>;
 export default function ReportMetricScreen({ route }: ReportMetricScreenProps) {
   const { metric } = route.params;
   const { data: reportData, isLoading } = useReportData(metric);
+  const { tokens } = useTheme();
 
   const getMetricName = (metric: string) => {
     switch (metric) {
@@ -49,22 +51,65 @@ export default function ReportMetricScreen({ route }: ReportMetricScreenProps) {
     }
   };
 
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      backgroundColor: tokens.surface.background,
+      flex: 1,
+    },
+    loadingText: {
+      color: tokens.text.muted,
+      fontSize: 16,
+      textAlign: 'center',
+    },
+    subtitle: {
+      color: tokens.text.muted,
+      fontSize: 16,
+      lineHeight: 24,
+    },
+    summaryCard: {
+      backgroundColor: tokens.surface.card,
+      borderRadius: 12,
+      elevation: 1,
+      padding: 16,
+      shadowColor: tokens.surface.shadow,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+    },
+    summaryLabel: {
+      color: tokens.text.muted,
+      fontSize: 14,
+      marginBottom: 8,
+    },
+    summaryValue: {
+      color: tokens.text.primary,
+      fontSize: 24,
+      fontWeight: 'bold',
+    },
+    title: {
+      color: tokens.text.primary,
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 8,
+    },
+  });
+
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={dynamicStyles.container}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>리포트를 불러오는 중...</Text>
+          <Text style={dynamicStyles.loadingText}>리포트를 불러오는 중...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={dynamicStyles.container}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
-          <Text style={styles.title}>{getMetricName(metric)} 리포트</Text>
-          <Text style={styles.subtitle}>
+          <Text style={dynamicStyles.title}>{getMetricName(metric)} 리포트</Text>
+          <Text style={dynamicStyles.subtitle}>
             최근 24시간 데이터 기준
           </Text>
         </View>
@@ -73,27 +118,27 @@ export default function ReportMetricScreen({ route }: ReportMetricScreenProps) {
           <>
             <View style={styles.summarySection}>
               <View style={styles.summaryGrid}>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>현재 값</Text>
-                  <Text style={styles.summaryValue}>
+                <View style={dynamicStyles.summaryCard}>
+                  <Text style={dynamicStyles.summaryLabel}>현재 값</Text>
+                  <Text style={dynamicStyles.summaryValue}>
                     {reportData.current}{getMetricUnit(metric)}
                   </Text>
                 </View>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>평균</Text>
-                  <Text style={styles.summaryValue}>
+                <View style={dynamicStyles.summaryCard}>
+                  <Text style={dynamicStyles.summaryLabel}>평균</Text>
+                  <Text style={dynamicStyles.summaryValue}>
                     {reportData.average}{getMetricUnit(metric)}
                   </Text>
                 </View>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>최소</Text>
-                  <Text style={styles.summaryValue}>
+                <View style={dynamicStyles.summaryCard}>
+                  <Text style={dynamicStyles.summaryLabel}>최소</Text>
+                  <Text style={dynamicStyles.summaryValue}>
                     {reportData.min}{getMetricUnit(metric)}
                   </Text>
                 </View>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>최대</Text>
-                  <Text style={styles.summaryValue}>
+                <View style={dynamicStyles.summaryCard}>
+                  <Text style={dynamicStyles.summaryLabel}>최대</Text>
+                  <Text style={dynamicStyles.summaryValue}>
                     {reportData.max}{getMetricUnit(metric)}
                   </Text>
                 </View>

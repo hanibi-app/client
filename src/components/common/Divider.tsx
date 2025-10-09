@@ -12,7 +12,7 @@ export type DividerProps = {
   style?: ViewStyle;
 };
 
-export default function Divider({ color = colors.border, margin = spacing.md, thickness = StyleSheet.hairlineWidth, inset = 0, style, testID = 'divider' }: DividerProps) {
+function DividerComponent({ color = colors.border, margin = spacing.md, thickness = StyleSheet.hairlineWidth, inset = 0, style, testID = 'divider' }: DividerProps) {
   return (
     <View
       style={[styles.line, { backgroundColor: color, marginVertical: margin, height: thickness, marginLeft: inset }, style]}
@@ -27,5 +27,8 @@ export default function Divider({ color = colors.border, margin = spacing.md, th
 const styles = StyleSheet.create({
   line: { height: StyleSheet.hairlineWidth, width: '100%' },
 });
+
+const Divider = React.memo(DividerComponent);
+export default Divider;
 
 

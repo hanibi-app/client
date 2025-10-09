@@ -14,7 +14,7 @@ export type AlertBannerProps = {
   accessibilityLabel?: string;
 };
 
-export default function AlertBanner({ type = 'info', message, testID = 'alert-banner', style, accessibilityLabel }: AlertBannerProps) {
+function AlertBannerComponent({ type = 'info', message, testID = 'alert-banner', style, accessibilityLabel }: AlertBannerProps) {
   const styleByType = getStyle(type);
   return (
     <View
@@ -28,6 +28,9 @@ export default function AlertBanner({ type = 'info', message, testID = 'alert-ba
     </View>
   );
 }
+
+const AlertBanner = React.memo(AlertBannerComponent);
+export default AlertBanner;
 
 function getStyle(type: AlertType) {
   switch (type) {

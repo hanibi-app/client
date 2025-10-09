@@ -14,12 +14,12 @@ export type ToastMessageProps = {
   accessibilityLabel?: string;
 };
 
-export default function ToastMessage({ message, type = 'info', testID = 'toast-message', style, accessibilityLabel }: ToastMessageProps) {
-  const style = type === 'success' ? styles.success : type === 'error' ? styles.error : styles.info;
+function ToastMessageComponent({ message, type = 'info', testID = 'toast-message', style, accessibilityLabel }: ToastMessageProps) {
+  const backgroundStyle = type === 'success' ? styles.success : type === 'error' ? styles.error : styles.info;
   const textColor = type === 'success' ? styles.successText : type === 'error' ? styles.errorText : styles.infoText;
   return (
     <View
-      style={[styles.container, style, style]}
+      style={[styles.container, backgroundStyle, style]}
       testID={testID}
       accessibilityRole="status"
       accessibilityLiveRegion="polite"
@@ -29,6 +29,9 @@ export default function ToastMessage({ message, type = 'info', testID = 'toast-m
     </View>
   );
 }
+
+const ToastMessage = React.memo(ToastMessageComponent);
+export default ToastMessage;
 
 const styles = StyleSheet.create({
   container: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: 8 },

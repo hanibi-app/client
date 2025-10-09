@@ -16,7 +16,7 @@ export type IconButtonProps = {
 const HIT_SLOP = { top: 12, bottom: 12, left: 12, right: 12 } as const;
 const MIN_TOUCH = 44;
 
-export default function IconButton({ icon, onPress, size = 24, style, testID = 'icon-button', accessibilityLabel = '아이콘 버튼', accessibilityHint, disabled = false }: IconButtonProps) {
+function IconButtonComponent({ icon, onPress, size = 24, style, testID = 'icon-button', accessibilityLabel = '아이콘 버튼', accessibilityHint, disabled = false }: IconButtonProps) {
   return (
     <Pressable
       onPress={onPress}
@@ -34,6 +34,9 @@ export default function IconButton({ icon, onPress, size = 24, style, testID = '
     </Pressable>
   );
 }
+
+const IconButton = React.memo(IconButtonComponent);
+export default IconButton;
 
 const styles = StyleSheet.create({
   base: { alignItems: 'center', justifyContent: 'center' },

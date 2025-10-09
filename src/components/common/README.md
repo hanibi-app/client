@@ -1,4 +1,48 @@
-# Common Components Usage
+# Common Components
+
+## Principles
+- Consistency first: follow shared API patterns for props, events, and naming.
+- Accessibility by default: provide labels, roles, and focus behavior out of the box.
+- Theme-driven: use tokens from `src/theme` for colors, spacing, and typography.
+- Minimal surface: keep required props small; sensible defaults for the rest.
+- Testable: expose stable `testID` on the outermost interactive/root element.
+
+## Folder Structure & Naming
+- Location
+  - `src/components/common`: domain-agnostic, app-specific primitives/compounds
+  - `src/components/ui`: low-level primitives that may be purely presentational
+- Filenames: `ComponentName.tsx`
+- Tests: `ComponentName.test.tsx` in `__tests__` sibling folder
+- Exports: default export for component, named exports for types/helpers
+
+## Props Conventions
+- Required vs optional: keep required minimal; document defaults in JSDoc
+- Event handlers: `onPress`, `onChange`, `onToggle`, `onConfirm` (present tense)
+- Visual variants: `variant` (e.g., `primary`, `secondary`, `ghost`, `destructive`)
+- Size: `size` (e.g., `sm`, `md`, `lg`)
+- Accessibility: `accessibilityLabel`, `accessibilityHint`, keyboard focus support
+- Testing: `testID` on the outermost element; forward to underlying native element if needed
+- Styling: no inline magic values; consume tokens from `src/theme`
+
+## Theme Tokens Usage
+- Colors: import from `src/theme/Colors.ts` and reference by semantic keys (e.g., `colors.primary`, `colors.text`)
+- Spacing: import `spacing` and use scale values (`spacing.sm`, `spacing.md`)
+- Typography: use `typography.sizes` and `typography.weights`; avoid hard-coded font sizes
+- Dark/High-contrast: prefer semantic color keys to enable future theme switching
+
+Example:
+```
+import { colors } from '@/theme/Colors';
+import { spacing } from '@/theme/spacing';
+import { typography } from '@/theme/typography';
+
+const styles = StyleSheet.create({
+  container: { padding: spacing.md, backgroundColor: colors.background },
+  label: { color: colors.text, fontSize: typography.sizes.sm },
+});
+```
+
+---
 
 - AppButton:
 ```

@@ -3,8 +3,11 @@ import { Platform, StyleSheet } from 'react-native';
 
 import EditScreenInfo from '@/components/EditScreenInfo';
 import { Text, View } from '@/components/Themed';
+import { RootStackScreenProps } from '@/types/navigation';
 
-export default function ModalScreen() {
+type ModalScreenProps = RootStackScreenProps<'Modal'>;
+
+export default function ModalScreen({ navigation: _navigation }: ModalScreenProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Modal</Text>

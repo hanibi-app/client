@@ -8,11 +8,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
 import TabOneScreen from '@/screens/TabOneScreen';
 import TabTwoScreen from '@/screens/TabTwoScreen';
-
-type TabsParamList = {
-  TabOne: undefined;
-  TabTwo: undefined;
-};
+import { TabsParamList } from '@/types/navigation';
 
 const Tab = createBottomTabNavigator<TabsParamList>();
 

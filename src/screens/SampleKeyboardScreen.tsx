@@ -4,8 +4,13 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import InputField from '@/components/common/InputField';
 import KeyboardAwareContainer from '@/components/common/KeyboardAwareContainer';
+import { RootStackScreenProps } from '@/types/navigation';
 
-export default function SampleKeyboardScreen() {
+type SampleKeyboardScreenProps = RootStackScreenProps<'SampleKeyboard'>;
+
+export default function SampleKeyboardScreen({
+  navigation: _navigation,
+}: SampleKeyboardScreenProps) {
   const [value, setValue] = React.useState('');
   return (
     <KeyboardAwareContainer contentContainerStyle={styles.container}>

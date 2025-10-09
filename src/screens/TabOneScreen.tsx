@@ -2,8 +2,11 @@ import { StyleSheet } from 'react-native';
 
 import EditScreenInfo from '@/components/EditScreenInfo';
 import { Text, View } from '@/components/Themed';
+import { TabsScreenProps } from '@/types/navigation';
 
-export default function TabOneScreen() {
+type TabOneScreenProps = TabsScreenProps<'TabOne'>;
+
+export default function TabOneScreen({ navigation: _navigation }: TabOneScreenProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Tab One</Text>

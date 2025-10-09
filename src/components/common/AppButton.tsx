@@ -1,8 +1,10 @@
+import React from 'react';
+
+import { ActivityIndicator, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
+
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
-import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 export type AppButtonVariant = 'primary' | 'secondary' | 'ghost';
 export type AppButtonSize = 'sm' | 'md' | 'lg';
@@ -74,19 +76,13 @@ export default function AppButton({
 function getVariantStyles(variant: AppButtonVariant, disabled: boolean) {
   if (variant === 'secondary') {
     return {
-      container: [
-        styles.secondary,
-        disabled ? styles.disabled : undefined,
-      ] as ViewStyle[],
+      container: [styles.secondary, disabled ? styles.disabled : undefined] as ViewStyle[],
       text: styles.secondaryText,
     };
   }
   if (variant === 'ghost') {
     return {
-      container: [
-        styles.ghost,
-        disabled ? styles.disabledGhost : undefined,
-      ] as ViewStyle[],
+      container: [styles.ghost, disabled ? styles.disabledGhost : undefined] as ViewStyle[],
       text: styles.ghostText,
     };
   }
@@ -131,26 +127,31 @@ const MIN_TOUCH_SIZE = 44;
 
 const styles = StyleSheet.create({
   base: {
-    minWidth: MIN_TOUCH_SIZE,
     alignItems: 'center',
-    justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: 'center',
+    minWidth: MIN_TOUCH_SIZE,
   },
   contentRow: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'center',
   },
-  text: {
-    fontFamily: typography.fontFamily,
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.medium,
+  disabled: {
+    opacity: 0.5,
+  },
+  disabledGhost: {
+    opacity: 0.5,
+  },
+  ghost: {
+    backgroundColor: colors.background,
+    borderColor: colors.border,
+  },
+  ghostText: {
+    color: colors.ghostForeground,
   },
   leftIcon: {
     marginRight: spacing.xs,
-  },
-  rightIcon: {
-    marginLeft: spacing.xs,
   },
   primary: {
     backgroundColor: colors.primary,
@@ -159,6 +160,9 @@ const styles = StyleSheet.create({
   primaryText: {
     color: colors.primaryForeground,
   },
+  rightIcon: {
+    marginLeft: spacing.xs,
+  },
   secondary: {
     backgroundColor: colors.secondary,
     borderColor: colors.border,
@@ -166,19 +170,9 @@ const styles = StyleSheet.create({
   secondaryText: {
     color: colors.secondaryForeground,
   },
-  ghost: {
-    backgroundColor: 'transparent',
-    borderColor: 'transparent',
-  },
-  ghostText: {
-    color: colors.ghostForeground,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  disabledGhost: {
-    opacity: 0.5,
+  text: {
+    fontFamily: typography.fontFamily,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.medium,
   },
 });
-
-

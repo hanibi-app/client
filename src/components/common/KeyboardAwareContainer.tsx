@@ -1,6 +1,14 @@
-import { getContentPadding, useKeyboardOffsets } from '@/utils/layout';
 import React from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, ScrollViewProps } from 'react-native';
+
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  ScrollViewProps,
+  StyleSheet,
+} from 'react-native';
+
+import { getContentPadding, useKeyboardOffsets } from '@/utils/layout';
 
 export type KeyboardAwareContainerProps = Omit<ScrollViewProps, 'keyboardShouldPersistTaps'> & {
   children: React.ReactNode;
@@ -8,11 +16,24 @@ export type KeyboardAwareContainerProps = Omit<ScrollViewProps, 'keyboardShouldP
   extraKeyboardOffset?: number;
 };
 
-export default function KeyboardAwareContainer({ children, contentContainerStyle, contentPadding = 'md', extraKeyboardOffset = 0, ...rest }: KeyboardAwareContainerProps) {
-  const { keyboardVerticalOffset } = useKeyboardOffsets({ includeBottomInset: true, extraOffset: extraKeyboardOffset });
+export default function KeyboardAwareContainer({
+  children,
+  contentContainerStyle,
+  contentPadding = 'md',
+  extraKeyboardOffset = 0,
+  ...rest
+}: KeyboardAwareContainerProps) {
+  const { keyboardVerticalOffset } = useKeyboardOffsets({
+    includeBottomInset: true,
+    extraOffset: extraKeyboardOffset,
+  });
   const paddingBottom = getContentPadding(contentPadding);
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={keyboardVerticalOffset} style={{ flex: 1 }}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={keyboardVerticalOffset}
+      style={styles.container}
+    >
       <ScrollView
         contentContainerStyle={[{ paddingBottom }, contentContainerStyle]}
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
@@ -25,4 +46,8 @@ export default function KeyboardAwareContainer({ children, contentContainerStyle
   );
 }
 
-
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});

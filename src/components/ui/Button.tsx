@@ -1,13 +1,8 @@
 import React from 'react';
-import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  ViewStyle,
-  TextStyle,
-  ActivityIndicator,
-} from 'react-native';
-import { Colors, Typography, Spacing, Shadows, ComponentShadows } from '../../constants/DesignSystem';
+
+import { ActivityIndicator, Text, TextStyle, TouchableOpacity, ViewStyle } from 'react-native';
+
+import { Colors, ComponentShadows, Spacing, Typography } from '../../constants/DesignSystem';
 
 export interface ButtonProps {
   title: string;
@@ -160,9 +155,8 @@ export const Button: React.FC<ButtonProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  // 추가 스타일이 필요한 경우 여기에 정의
-});
+// const styles = StyleSheet.create({
+//   // 추가 스타일이 필요한 경우 여기에 정의
+// });
 
 export default Button;
-

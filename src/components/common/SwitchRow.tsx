@@ -1,8 +1,10 @@
+import React from 'react';
+
+import { Pressable, StyleSheet, Switch, Text } from 'react-native';
+
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
-import React from 'react';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 export type SwitchRowProps = {
   label: string;
@@ -11,7 +13,12 @@ export type SwitchRowProps = {
   testID?: string;
 };
 
-export default function SwitchRow({ label, value, onToggle, testID = 'switch-row' }: SwitchRowProps) {
+export default function SwitchRow({
+  label,
+  value,
+  onToggle,
+  testID = 'switch-row',
+}: SwitchRowProps) {
   const onPressRow = () => onToggle(!value);
 
   return (
@@ -38,8 +45,11 @@ export default function SwitchRow({ label, value, onToggle, testID = 'switch-row
 }
 
 const styles = StyleSheet.create({
-  container: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.md },
-  label: { fontSize: typography.sizes.md, color: colors.text },
+  container: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+  },
+  label: { color: colors.text, fontSize: typography.sizes.md },
 });
-
-

@@ -1,6 +1,8 @@
-import HanibiState from '@/components/common/HanibiState';
-import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
+
+import { fireEvent, render } from '@testing-library/react-native';
+
+import HanibiState from '@/components/common/HanibiState';
 
 describe('HanibiState', () => {
   it('renders with correct unit for temp', () => {
@@ -17,10 +19,10 @@ describe('HanibiState', () => {
 
   it('calls onPress when provided', () => {
     const onPress = jest.fn();
-    const { getByTestId } = render(<HanibiState metric="index" value={5} progress={0.3} onPress={onPress} />);
+    const { getByTestId } = render(
+      <HanibiState metric="index" value={5} progress={0.3} onPress={onPress} />,
+    );
     fireEvent.press(getByTestId('hanibi-state'));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 });
-
-

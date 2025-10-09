@@ -1,5 +1,6 @@
-import * as WebBrowser from 'expo-web-browser';
 import React from 'react';
+
+import * as WebBrowser from 'expo-web-browser';
 import { Linking, Platform, Text, TextProps } from 'react-native';
 
 type ExternalLinkProps = TextProps & { href: string };

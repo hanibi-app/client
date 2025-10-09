@@ -1,13 +1,18 @@
-import { spacing } from '@/theme/spacing';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export function useKeyboardOffsets(options?: { includeBottomInset?: boolean; extraOffset?: number }): { keyboardVerticalOffset: number } {
+import { spacing } from '@/theme/spacing';
+
+export function useKeyboardOffsets(options?: {
+  includeBottomInset?: boolean;
+  extraOffset?: number;
+}): { keyboardVerticalOffset: number } {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const includeBottomInset = options?.includeBottomInset ?? false;
   const extraOffset = options?.extraOffset ?? 0;
-  const keyboardVerticalOffset = headerHeight + (includeBottomInset ? insets.bottom : 0) + extraOffset;
+  const keyboardVerticalOffset =
+    headerHeight + (includeBottomInset ? insets.bottom : 0) + extraOffset;
   return { keyboardVerticalOffset };
 }
 
@@ -25,5 +30,3 @@ export function getContentPadding(preset: PaddingPreset = 'md'): number {
       return spacing.md;
   }
 }
-
-

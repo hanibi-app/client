@@ -8,11 +8,26 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest --runInBand",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx,json,md}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
     "@radix-ui/react-dialog": "^1.1.15",
+    "@react-navigation/elements": "^2.1.1",
     "@react-navigation/native": "^7.1.8",
     "expo": "~54.0.12",
     "expo-constants": "~18.0.9",
@@ -32,12 +47,25 @@
     "victory-native": "^41.20.1"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^12.9.0",
     "@types/jest": "^29.5.14",
     "@types/react": "~19.1.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-react": "^7.34.3",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-native": "^4.1.0",
+    "husky": "^9.1.7",
     "jest-expo": "^51.0.4",
-    "react-test-renderer": "^19.1.0",
+    "lint-staged": "^16.2.3",
+    "prettier": "^3.3.3",
+    "react-test-renderer": "^19.2.0",
     "ts-jest": "^29.4.4",
     "typescript": "~5.9.2"
   },

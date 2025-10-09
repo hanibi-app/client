@@ -1,6 +1,8 @@
-import DataChart from '@/components/common/DataChart';
-import { render } from '@testing-library/react-native';
 import React from 'react';
+
+import { render } from '@testing-library/react-native';
+
+import DataChart from '@/components/common/DataChart';
 
 jest.mock('victory-native');
 
@@ -12,10 +14,13 @@ describe('DataChart', () => {
 
   it('renders chart when data exists', () => {
     const { getByTestId } = render(
-      <DataChart data={[{ x: new Date(), y: 1 }, { x: new Date(), y: 2 }]} />
+      <DataChart
+        data={[
+          { x: new Date(), y: 1 },
+          { x: new Date(), y: 2 },
+        ]}
+      />,
     );
     expect(getByTestId('data-chart')).toBeTruthy();
   });
 });
-
-

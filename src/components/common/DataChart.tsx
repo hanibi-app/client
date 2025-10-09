@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { Text, View } from 'react-native';
 import { VictoryAxis, VictoryChart, VictoryLine } from 'victory-native';
 
@@ -36,9 +37,7 @@ export default function DataChart({ data, testID = 'data-chart' }: DataChartProp
     <VictoryChart testID={testID}>
       <VictoryAxis tickFormat={(t) => formatTick(t as Date | number)} />
       <VictoryAxis dependentAxis />
-      <VictoryLine data={data as any} interpolation="monotoneX" />
+      <VictoryLine data={data} interpolation="monotoneX" />
     </VictoryChart>
   );
 }
-
-

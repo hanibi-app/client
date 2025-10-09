@@ -1,6 +1,6 @@
+import { spacing } from '@/theme/spacing';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { spacing } from '@/theme/spacing';
 
 export function useKeyboardOffsets(options?: { includeBottomInset?: boolean; extraOffset?: number }): { keyboardVerticalOffset: number } {
   const insets = useSafeAreaInsets();

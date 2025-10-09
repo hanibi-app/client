@@ -1,0 +1,119 @@
+import React from 'react';
+
+import { View, Text, StyleSheet, Pressable, SafeAreaView } from 'react-native';
+
+import { useAuthStore } from '@/store/useAuthStore';
+import { AuthStackScreenProps } from '@/types/navigation';
+
+type LoginScreenProps = AuthStackScreenProps<'Login'>;
+
+export default function LoginScreen({ navigation }: LoginScreenProps) {
+  const { setSignedIn, setUser } = useAuthStore();
+
+  const handleKakaoLogin = async () => {
+    // TODO: 카카오 로그인 구현
+    console.log('카카오 로그인 시도');
+    
+    // 더미 로그인 성공 처리
+    setUser({
+      id: 'user-001',
+      name: '한니비 사용자',
+      email: 'user@hanibi.com',
+      profileImage: undefined,
+    });
+    setSignedIn(true);
+    
+    // 온보딩으로 이동
+    navigation.navigate('OnboardingAlertRequest');
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.title}>지금부터 음식물 쓰레기 고민 STOP!</Text>
+          <Text style={styles.subtitle}>한니비와 함께 스마트하게 관리하세요</Text>
+        </View>
+        
+        <View style={styles.characterContainer}>
+          <Text style={styles.character}>🤖</Text>
+          <Text style={styles.characterName}>한니비</Text>
+        </View>
+        
+        <View style={styles.buttonContainer}>
+          <Pressable style={styles.kakaoButton} onPress={handleKakaoLogin}>
+            <Text style={styles.kakaoButtonText}>카카오로 시작하기</Text>
+          </Pressable>
+          
+          <Text style={styles.termsText}>
+            로그인 시 개인정보 처리방침 및 이용약관에 동의하게 됩니다.
+          </Text>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  buttonContainer: {
+    marginBottom: 40,
+  },
+  character: {
+    fontSize: 120,
+    marginBottom: 16,
+  },
+  characterContainer: {
+    alignItems: 'center',
+    marginVertical: 40,
+  },
+  characterName: {
+    color: '#007AFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  container: {
+    backgroundColor: '#fff',
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'space-between',
+    padding: 20,
+  },
+  header: {
+    alignItems: 'center',
+    marginTop: 60,
+  },
+  kakaoButton: {
+    backgroundColor: '#FEE500',
+    borderRadius: 12,
+    marginBottom: 20,
+    paddingVertical: 16,
+  },
+  kakaoButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  subtitle: {
+    color: '#666',
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: 'center',
+  },
+  termsText: {
+    color: '#8E8E93',
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+  title: {
+    color: '#333',
+    fontSize: 28,
+    fontWeight: 'bold',
+    lineHeight: 36,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+});

@@ -1,13 +1,25 @@
 import { useEffect } from 'react';
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme } from '@react-navigation/native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import RootNavigator from '@/navigation/RootNavigator';
+
+// QueryClient 인스턴스 생성
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 5 * 60 * 1000, // 5분
+      gcTime: 10 * 60 * 1000, // 10분 (이전 cacheTime)
+    },
+  },
+});
 
 SplashScreen.preventAutoHideAsync();
 
@@ -35,8 +47,8 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <QueryClientProvider client={queryClient}>
       <RootNavigator />
-    </NavigationContainer>
+    </QueryClientProvider>
   );
 }

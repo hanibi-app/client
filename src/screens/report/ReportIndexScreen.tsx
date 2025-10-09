@@ -162,7 +162,7 @@ export default function ReportIndexScreen({ navigation }: ReportIndexScreenProps
 
 const styles = StyleSheet.create({
   chevron: {
-    color: 'transparent', // 테마 토큰으로 대체
+    color: tokens.text.muted,
     fontSize: 20,
     fontWeight: 'bold',
   },
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionTitle: {
-    color: 'transparent', // 테마 토큰으로 대체
+    color: tokens.text.primary,
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
@@ -199,11 +199,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statLabel: {
-    color: 'transparent', // 테마 토큰으로 대체
+    color: tokens.text.muted,
     fontSize: 12,
   },
   statValue: {
-    color: 'transparent', // 테마 토큰으로 대체
+    color: tokens.brand.primary,
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 4,

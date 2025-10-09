@@ -40,7 +40,8 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       flex: 1,
     },
     kakaoButton: {
-      backgroundColor: '#FEE500', // 카카오 브랜드 색상 유지
+      // eslint-disable-next-line react-native/no-color-literals
+      backgroundColor: '#FEE500', // 카카오 공식 브랜드 색상
       borderRadius: 12,
       marginBottom: 20,
       paddingVertical: 16,

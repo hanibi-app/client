@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 
-import { View, Text, StyleSheet, Pressable, Image, Alert } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { lightTheme } from '@/theme/light';
 import { HomeStackScreenProps } from '@/types/navigation';
+
+const tokens = lightTheme;
 
 type CameraScreenProps = HomeStackScreenProps<'CameraScreen'>;
 
-export default function CameraScreen({ route, navigation }: CameraScreenProps) {
+export default function CameraScreen({ route, navigation: _navigation }: CameraScreenProps) {
   const [isConnected, setIsConnected] = useState(route.params?.connected || false);
   const [isStreaming, setIsStreaming] = useState(false);
   
@@ -111,20 +114,20 @@ export default function CameraScreen({ route, navigation }: CameraScreenProps) {
 
 const styles = StyleSheet.create({
   cameraPreview: {
-    backgroundColor: '#000',
+    backgroundColor: tokens.surface.overlay,
     borderRadius: 12,
     flex: 1,
     marginBottom: 20,
     overflow: 'hidden',
   },
   connectButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: tokens.brand.primary,
     borderRadius: 8,
     paddingHorizontal: 32,
     paddingVertical: 16,
   },
   connectButtonText: {
-    color: '#fff',
+    color: tokens.text.inverse,
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -133,7 +136,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   container: {
-    backgroundColor: '#fff',
+    backgroundColor: tokens.surface.background,
     flex: 1,
   },
   controlButton: {
@@ -143,7 +146,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   controlButtonText: {
-    color: '#fff',
+    color: tokens.text.inverse,
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -159,7 +162,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   disconnectedDescription: {
-    color: '#666',
+    color: tokens.text.muted,
     fontSize: 16,
     lineHeight: 24,
     marginBottom: 32,
@@ -170,53 +173,53 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   disconnectedTitle: {
-    color: '#333',
+    color: tokens.text.primary,
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 12,
     textAlign: 'center',
   },
   infoContainer: {
-    backgroundColor: '#F2F2F7',
+    backgroundColor: tokens.surface.card,
     borderRadius: 8,
     padding: 16,
   },
   infoText: {
-    color: '#666',
+    color: tokens.text.muted,
     fontSize: 14,
     marginBottom: 4,
   },
   infoTitle: {
-    color: '#333',
+    color: tokens.text.primary,
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 8,
   },
   placeholderImage: {
     alignItems: 'center',
-    backgroundColor: '#333',
+    backgroundColor: tokens.surface.overlay,
     borderRadius: 8,
     height: 200,
     justifyContent: 'center',
     width: '80%',
   },
   placeholderText: {
-    color: '#fff',
+    color: tokens.text.inverse,
     fontSize: 16,
   },
   placeholderVideo: {
     alignItems: 'center',
-    backgroundColor: '#333',
+    backgroundColor: tokens.surface.overlay,
     borderRadius: 8,
     height: 200,
     justifyContent: 'center',
     width: '80%',
   },
   primaryButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: tokens.brand.primary,
   },
   secondaryButton: {
-    backgroundColor: '#8E8E93',
+    backgroundColor: tokens.text.muted,
   },
   staticContainer: {
     alignItems: 'center',
@@ -224,7 +227,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   staticText: {
-    color: '#fff',
+    color: tokens.text.inverse,
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 20,
@@ -235,7 +238,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   streamingText: {
-    color: '#fff',
+    color: tokens.text.inverse,
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 20,

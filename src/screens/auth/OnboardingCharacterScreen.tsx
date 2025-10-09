@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     height: 120,
     justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: 'transparent', // 테마 토큰으로 대체
+    shadowColor: tokens.surface.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     alignItems: 'center',
-    backgroundColor: 'transparent', // 테마 토큰으로 대체
+    backgroundColor: tokens.brand.primary,
     borderRadius: 10,
     height: 20,
     justifyContent: 'center',
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     width: 20,
   },
   checkmarkText: {
-    color: 'transparent', // 테마 토큰으로 대체
+    color: tokens.text.inverse,
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   selectorTitle: {
-    color: 'transparent', // 테마 토큰으로 대체
+    color: tokens.text.primary,
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,

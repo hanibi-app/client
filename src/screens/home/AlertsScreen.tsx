@@ -3,19 +3,22 @@ import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, Pressable } from 'react-native';
 
 import { useAlertsData } from '@/hooks/useReportQuery';
+import { lightTheme } from '@/theme/light';
 import { HomeStackScreenProps } from '@/types/navigation';
+
+const tokens = lightTheme;
 
 type AlertsScreenProps = HomeStackScreenProps<'Alerts'>;
 
-export default function AlertsScreen({ navigation }: AlertsScreenProps) {
+export default function AlertsScreen({ navigation: _navigation }: AlertsScreenProps) {
   const { data: alerts, isLoading } = useAlertsData();
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'high': return '#FF3B30';
-      case 'medium': return '#FF9500';
-      case 'low': return '#FFCC00';
-      default: return '#8E8E93';
+      case 'high': return tokens.signal.danger;
+      case 'medium': return tokens.signal.warning;
+      case 'low': return tokens.signal.caution;
+      default: return tokens.text.muted;
     }
   };
 
@@ -109,12 +112,12 @@ export default function AlertsScreen({ navigation }: AlertsScreenProps) {
 
 const styles = StyleSheet.create({
   alertCard: {
-    backgroundColor: '#fff',
+    backgroundColor: tokens.surface.card,
     borderRadius: 12,
     elevation: 1,
     marginBottom: 12,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: tokens.surface.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -132,18 +135,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   alertMessage: {
-    color: '#333',
+    color: tokens.text.primary,
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 8,
   },
   alertTime: {
-    color: '#666',
+    color: tokens.text.muted,
     fontSize: 12,
     marginTop: 2,
   },
   alertType: {
-    color: '#333',
+    color: tokens.text.primary,
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -151,7 +154,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   container: {
-    backgroundColor: '#F2F2F7',
+    backgroundColor: tokens.surface.background,
     flex: 1,
   },
   emptyContainer: {
@@ -161,7 +164,7 @@ const styles = StyleSheet.create({
     padding: 40,
   },
   emptyDescription: {
-    color: '#666',
+    color: tokens.text.muted,
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
@@ -171,7 +174,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   emptyTitle: {
-    color: '#333',
+    color: tokens.text.primary,
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 8,
@@ -186,7 +189,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   loadingText: {
-    color: '#666',
+    color: tokens.text.muted,
     fontSize: 16,
   },
   scrollView: {
@@ -198,29 +201,29 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   severityText: {
-    color: '#fff',
+    color: tokens.text.inverse,
     fontSize: 12,
     fontWeight: 'bold',
   },
   subtitle: {
-    color: '#666',
+    color: tokens.text.muted,
     fontSize: 14,
   },
   title: {
-    color: '#333',
+    color: tokens.text.primary,
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 8,
   },
   unreadIndicator: {
     alignSelf: 'flex-start',
-    backgroundColor: '#007AFF',
+    backgroundColor: tokens.brand.primary,
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   unreadText: {
-    color: '#fff',
+    color: tokens.text.inverse,
     fontSize: 10,
     fontWeight: 'bold',
   },

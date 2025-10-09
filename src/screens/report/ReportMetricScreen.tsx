@@ -4,7 +4,10 @@ import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useReportData } from '@/hooks/useReportQuery';
 import { useTheme } from '@/theme';
+import { lightTheme } from '@/theme/light';
 import { ReportStackScreenProps } from '@/types/navigation';
+
+const tokens = lightTheme;
 
 type ReportMetricScreenProps = ReportStackScreenProps<'ReportMetric'>;
 
@@ -183,9 +186,9 @@ export default function ReportMetricScreen({ route }: ReportMetricScreenProps) {
                   <View style={[
                     styles.statusBadge,
                     { backgroundColor: 
-                      reportData.status === 'normal' ? '#34C759' :
-                      reportData.status === 'warning' ? '#FF9500' :
-                      reportData.status === 'danger' ? '#FF3B30' : '#8E8E93'
+                      reportData.status === 'normal' ? tokens.signal.success :
+                      reportData.status === 'warning' ? tokens.signal.warning :
+                      reportData.status === 'danger' ? tokens.signal.danger : tokens.text.muted
                     }
                   ]}>
                     <Text style={styles.statusBadgeText}>
@@ -215,22 +218,22 @@ export default function ReportMetricScreen({ route }: ReportMetricScreenProps) {
 
 const styles = StyleSheet.create({
   chartDescription: {
-    color: '#666',
+    color: tokens.text.muted,
     fontSize: 14,
     marginBottom: 8,
   },
   chartNote: {
-    color: '#8E8E93',
+    color: tokens.text.muted,
     fontSize: 12,
     fontStyle: 'italic',
   },
   chartPlaceholder: {
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: tokens.surface.card,
     borderRadius: 16,
     elevation: 2,
     padding: 40,
-    shadowColor: '#000',
+    shadowColor: tokens.surface.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -243,10 +246,6 @@ const styles = StyleSheet.create({
     fontSize: 48,
     marginBottom: 16,
   },
-  container: {
-    backgroundColor: '#F2F2F7',
-    flex: 1,
-  },
   header: {
     padding: 20,
     paddingBottom: 16,
@@ -256,15 +255,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  loadingText: {
-    color: '#666',
-    fontSize: 16,
-  },
   scrollView: {
     flex: 1,
   },
   sectionTitle: {
-    color: '#333',
+    color: tokens.text.primary,
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
@@ -275,22 +270,22 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   statusBadgeText: {
-    color: '#fff',
+    color: tokens.text.inverse,
     fontSize: 12,
     fontWeight: 'bold',
   },
   statusCard: {
-    backgroundColor: '#fff',
+    backgroundColor: tokens.surface.card,
     borderRadius: 16,
     elevation: 2,
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: tokens.surface.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   statusDescription: {
-    color: '#666',
+    color: tokens.text.muted,
     fontSize: 14,
     lineHeight: 20,
   },
@@ -305,21 +300,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   statusTitle: {
-    color: '#333',
+    color: tokens.text.primary,
     fontSize: 16,
     fontWeight: 'bold',
   },
   subtitle: {
-    color: '#666',
+    color: tokens.text.muted,
     fontSize: 14,
   },
   summaryCard: {
-    backgroundColor: '#fff',
+    backgroundColor: tokens.surface.card,
     borderRadius: 12,
     elevation: 1,
     marginBottom: 12,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: tokens.surface.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -331,7 +326,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   summaryLabel: {
-    color: '#666',
+    color: tokens.text.muted,
     fontSize: 12,
     marginBottom: 4,
   },
@@ -340,28 +335,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   summaryValue: {
-    color: '#333',
+    color: tokens.text.primary,
     fontSize: 20,
     fontWeight: 'bold',
   },
   title: {
-    color: '#333',
+    color: tokens.text.primary,
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 8,
   },
   trendCard: {
-    backgroundColor: '#fff',
+    backgroundColor: tokens.surface.card,
     borderRadius: 16,
     elevation: 2,
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: tokens.surface.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   trendDescription: {
-    color: '#666',
+    color: tokens.text.muted,
     fontSize: 14,
     lineHeight: 20,
   },
@@ -379,7 +374,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   trendText: {
-    color: '#333',
+    color: tokens.text.primary,
     fontSize: 16,
     fontWeight: 'bold',
   },

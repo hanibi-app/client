@@ -2,7 +2,7 @@ import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 export type AlertType = 'info' | 'success' | 'warning' | 'error';
 
@@ -10,12 +10,20 @@ export type AlertBannerProps = {
   type?: AlertType;
   message: string;
   testID?: string;
+  style?: ViewStyle;
+  accessibilityLabel?: string;
 };
 
-export default function AlertBanner({ type = 'info', message, testID = 'alert-banner' }: AlertBannerProps) {
+export default function AlertBanner({ type = 'info', message, testID = 'alert-banner', style, accessibilityLabel }: AlertBannerProps) {
   const styleByType = getStyle(type);
   return (
-    <View style={[styles.container, styleByType.container]} testID={testID} accessibilityRole="alert" accessibilityLabel={message}>
+    <View
+      style={[styles.container, styleByType.container, style]}
+      testID={testID}
+      accessibilityRole="alert"
+      accessibilityLiveRegion="polite"
+      accessibilityLabel={accessibilityLabel ?? message}
+    >
       <Text style={[styles.text, styleByType.text]}>{message}</Text>
     </View>
   );

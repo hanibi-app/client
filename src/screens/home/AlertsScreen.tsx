@@ -15,29 +15,42 @@ export default function AlertsScreen({ navigation: _navigation }: AlertsScreenPr
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'high': return tokens.signal.danger;
-      case 'medium': return tokens.signal.warning;
-      case 'low': return tokens.signal.caution;
-      default: return tokens.text.muted;
+      case 'high':
+        return tokens.signal.danger;
+      case 'medium':
+        return tokens.signal.warning;
+      case 'low':
+        return tokens.signal.caution;
+      default:
+        return tokens.text.muted;
     }
   };
 
   const getSeverityText = (severity: string) => {
     switch (severity) {
-      case 'high': return '높음';
-      case 'medium': return '보통';
-      case 'low': return '낮음';
-      default: return '알 수 없음';
+      case 'high':
+        return '높음';
+      case 'medium':
+        return '보통';
+      case 'low':
+        return '낮음';
+      default:
+        return '알 수 없음';
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'temperature': return '🌡️';
-      case 'humidity': return '💧';
-      case 'metal': return '⚡';
-      case 'voc': return '🌬️';
-      default: return '⚠️';
+      case 'temperature':
+        return '🌡️';
+      case 'humidity':
+        return '💧';
+      case 'metal':
+        return '⚡';
+      case 'voc':
+        return '🌬️';
+      default:
+        return '⚠️';
     }
   };
 
@@ -56,35 +69,38 @@ export default function AlertsScreen({ navigation: _navigation }: AlertsScreenPr
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <Text style={styles.title}>알림 내역</Text>
-          <Text style={styles.subtitle}>
-            총 {alerts?.length || 0}개의 알림이 있습니다.
-          </Text>
+          <Text style={styles.subtitle}>총 {alerts?.length || 0}개의 알림이 있습니다.</Text>
         </View>
 
         {alerts && alerts.length > 0 ? (
           <View style={styles.alertsList}>
-            {alerts.map((alert) => (
+            {alerts.map(alert => (
               <Pressable key={alert.id} style={styles.alertCard}>
                 <View style={styles.alertHeader}>
                   <Text style={styles.alertIcon}>{getTypeIcon(alert.type)}</Text>
                   <View style={styles.alertInfo}>
                     <Text style={styles.alertType}>
-                      {alert.type === 'temperature' ? '온도' :
-                       alert.type === 'humidity' ? '습도' :
-                       alert.type === 'metal' ? '금속' :
-                       alert.type === 'voc' ? 'VOC' : alert.type}
+                      {alert.type === 'temperature'
+                        ? '온도'
+                        : alert.type === 'humidity'
+                          ? '습도'
+                          : alert.type === 'metal'
+                            ? '금속'
+                            : alert.type === 'voc'
+                              ? 'VOC'
+                              : alert.type}
                     </Text>
                     <Text style={styles.alertTime}>
                       {new Date(alert.timestamp).toLocaleString('ko-KR')}
                     </Text>
                   </View>
-                  <View style={[
-                    styles.severityBadge,
-                    { backgroundColor: getSeverityColor(alert.severity) }
-                  ]}>
-                    <Text style={styles.severityText}>
-                      {getSeverityText(alert.severity)}
-                    </Text>
+                  <View
+                    style={[
+                      styles.severityBadge,
+                      { backgroundColor: getSeverityColor(alert.severity) },
+                    ]}
+                  >
+                    <Text style={styles.severityText}>{getSeverityText(alert.severity)}</Text>
                   </View>
                 </View>
                 <Text style={styles.alertMessage}>{alert.message}</Text>
@@ -100,9 +116,7 @@ export default function AlertsScreen({ navigation: _navigation }: AlertsScreenPr
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>🔔</Text>
             <Text style={styles.emptyTitle}>알림이 없습니다</Text>
-            <Text style={styles.emptyDescription}>
-              새로운 알림이 있으면 여기에 표시됩니다.
-            </Text>
+            <Text style={styles.emptyDescription}>새로운 알림이 있으면 여기에 표시됩니다.</Text>
           </View>
         )}
       </ScrollView>

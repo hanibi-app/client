@@ -8,7 +8,12 @@ import { HomeStackScreenProps, Metric } from '@/types/navigation';
 
 type DashboardScreenProps = HomeStackScreenProps<'Dashboard'>;
 
-const metrics: Array<{ key: Metric; name: string; icon: string; unit: string }> = [
+const metrics: Array<{
+  key: Metric;
+  name: string;
+  icon: string;
+  unit: string;
+}> = [
   { key: 'temperature', name: '온도', icon: '🌡️', unit: '°C' },
   { key: 'humidity', name: '습도', icon: '💧', unit: '%' },
   { key: 'metal', name: '금속', icon: '⚡', unit: 'mg/kg' },
@@ -26,11 +31,16 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const getMetricValue = (metric: Metric) => {
     if (!sensorData) return '--';
     switch (metric) {
-      case 'temperature': return sensorData.temperature;
-      case 'humidity': return sensorData.humidity;
-      case 'metal': return sensorData.metal;
-      case 'voc': return sensorData.voc;
-      default: return '--';
+      case 'temperature':
+        return sensorData.temperature;
+      case 'humidity':
+        return sensorData.humidity;
+      case 'metal':
+        return sensorData.metal;
+      case 'voc':
+        return sensorData.voc;
+      default:
+        return '--';
     }
   };
 
@@ -123,13 +133,11 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <Text style={dynamicStyles.title}>대시보드</Text>
-          <Text style={dynamicStyles.subtitle}>
-            각 지표를 클릭하면 상세 정보를 볼 수 있습니다.
-          </Text>
+          <Text style={dynamicStyles.subtitle}>각 지표를 클릭하면 상세 정보를 볼 수 있습니다.</Text>
         </View>
 
         <View style={styles.metricsGrid}>
-          {metrics.map((metric) => (
+          {metrics.map(metric => (
             <Pressable
               key={metric.key}
               style={dynamicStyles.metricCard}
@@ -143,15 +151,24 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
                 {isLoading ? '--' : `${getMetricValue(metric.key)}${metric.unit}`}
               </Text>
               <View style={styles.metricStatus}>
-                <View style={[
-                  styles.statusIndicator,
-                  { backgroundColor: getStatusColor(sensorData?.status || 'normal') }
-                ]} />
+                <View
+                  style={[
+                    styles.statusIndicator,
+                    {
+                      backgroundColor: getStatusColor(sensorData?.status || 'normal'),
+                    },
+                  ]}
+                />
                 <Text style={dynamicStyles.statusText}>
-                  {isLoading ? '확인 중...' : 
-                   sensorData?.status === 'normal' ? '정상' :
-                   sensorData?.status === 'warning' ? '주의' :
-                   sensorData?.status === 'danger' ? '위험' : '알 수 없음'}
+                  {isLoading
+                    ? '확인 중...'
+                    : sensorData?.status === 'normal'
+                      ? '정상'
+                      : sensorData?.status === 'warning'
+                        ? '주의'
+                        : sensorData?.status === 'danger'
+                          ? '위험'
+                          : '알 수 없음'}
                 </Text>
               </View>
             </Pressable>
@@ -163,24 +180,37 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
           <View style={dynamicStyles.summaryCard}>
             <View style={styles.summaryHeader}>
               <Text style={dynamicStyles.summaryTitle}>현재 상태</Text>
-              <View style={[
-                styles.summaryStatus,
-                { backgroundColor: getStatusColor(sensorData?.status || 'normal') }
-              ]}>
+              <View
+                style={[
+                  styles.summaryStatus,
+                  {
+                    backgroundColor: getStatusColor(sensorData?.status || 'normal'),
+                  },
+                ]}
+              >
                 <Text style={dynamicStyles.summaryStatusText}>
-                  {isLoading ? '확인 중...' : 
-                   sensorData?.status === 'normal' ? '정상' :
-                   sensorData?.status === 'warning' ? '주의' :
-                   sensorData?.status === 'danger' ? '위험' : '알 수 없음'}
+                  {isLoading
+                    ? '확인 중...'
+                    : sensorData?.status === 'normal'
+                      ? '정상'
+                      : sensorData?.status === 'warning'
+                        ? '주의'
+                        : sensorData?.status === 'danger'
+                          ? '위험'
+                          : '알 수 없음'}
                 </Text>
               </View>
             </View>
             <Text style={dynamicStyles.summaryDescription}>
-              {isLoading ? '센서 데이터를 확인하고 있습니다...' :
-               sensorData?.status === 'normal' ? '모든 센서가 정상 범위 내에 있습니다.' :
-               sensorData?.status === 'warning' ? '일부 센서에서 주의가 필요한 수치가 감지되었습니다.' :
-               sensorData?.status === 'danger' ? '위험한 수치가 감지되었습니다. 즉시 확인이 필요합니다.' :
-               '센서 상태를 확인할 수 없습니다.'}
+              {isLoading
+                ? '센서 데이터를 확인하고 있습니다...'
+                : sensorData?.status === 'normal'
+                  ? '모든 센서가 정상 범위 내에 있습니다.'
+                  : sensorData?.status === 'warning'
+                    ? '일부 센서에서 주의가 필요한 수치가 감지되었습니다.'
+                    : sensorData?.status === 'danger'
+                      ? '위험한 수치가 감지되었습니다. 즉시 확인이 필요합니다.'
+                      : '센서 상태를 확인할 수 없습니다.'}
             </Text>
           </View>
         </View>

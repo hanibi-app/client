@@ -12,7 +12,7 @@ type CameraScreenProps = HomeStackScreenProps<'CameraScreen'>;
 export default function CameraScreen({ route, navigation: _navigation }: CameraScreenProps) {
   const [isConnected, setIsConnected] = useState(route.params?.connected || false);
   const [isStreaming, setIsStreaming] = useState(false);
-  
+
   const handleConnectCamera = async () => {
     // TODO: 실제 카메라 연결 로직 구현
     try {
@@ -24,24 +24,24 @@ export default function CameraScreen({ route, navigation: _navigation }: CameraS
       Alert.alert('연결 실패', 'CCTV 연결에 실패했습니다. 다시 시도해주세요.');
     }
   };
-  
+
   const handleStartStream = () => {
     // TODO: 실제 스트림 시작 로직 구현
     setIsStreaming(true);
     Alert.alert('스트림 시작', '실시간 영상 스트림이 시작되었습니다.');
   };
-  
+
   const handleStopStream = () => {
     // TODO: 실제 스트림 중지 로직 구현
     setIsStreaming(false);
     Alert.alert('스트림 중지', '실시간 영상 스트림이 중지되었습니다.');
   };
-  
+
   const handleRefresh = () => {
     // TODO: 실제 새로고침 로직 구현
     Alert.alert('새로고침', '영상이 새로고침되었습니다.');
   };
-  
+
   if (!isConnected) {
     return (
       <View style={styles.container}>
@@ -51,7 +51,7 @@ export default function CameraScreen({ route, navigation: _navigation }: CameraS
           <Text style={styles.disconnectedDescription}>
             사료 상태를 확인하려면 CCTV를 연결해주세요.
           </Text>
-          
+
           <Pressable style={styles.connectButton} onPress={handleConnectCamera}>
             <Text style={styles.connectButtonText}>CCTV 연결하기</Text>
           </Pressable>
@@ -59,7 +59,7 @@ export default function CameraScreen({ route, navigation: _navigation }: CameraS
       </View>
     );
   }
-  
+
   return (
     <View style={styles.container}>
       <View style={styles.connectedContainer}>
@@ -82,7 +82,7 @@ export default function CameraScreen({ route, navigation: _navigation }: CameraS
             </View>
           )}
         </View>
-        
+
         <View style={styles.controlsContainer}>
           <Pressable
             style={[styles.controlButton, styles.primaryButton]}
@@ -92,15 +92,12 @@ export default function CameraScreen({ route, navigation: _navigation }: CameraS
               {isStreaming ? '스트림 중지' : '스트림 시작'}
             </Text>
           </Pressable>
-          
-          <Pressable
-            style={[styles.controlButton, styles.secondaryButton]}
-            onPress={handleRefresh}
-          >
+
+          <Pressable style={[styles.controlButton, styles.secondaryButton]} onPress={handleRefresh}>
             <Text style={styles.controlButtonText}>새로고침</Text>
           </Pressable>
         </View>
-        
+
         <View style={styles.infoContainer}>
           <Text style={styles.infoTitle}>연결 정보</Text>
           <Text style={styles.infoText}>상태: {isStreaming ? '스트리밍 중' : '대기 중'}</Text>

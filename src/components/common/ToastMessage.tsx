@@ -44,7 +44,11 @@ const ToastMessage = React.memo(ToastMessageComponent);
 export default ToastMessage;
 
 const styles = StyleSheet.create({
-  container: { borderRadius: 8, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  container: {
+    borderRadius: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
   error: { backgroundColor: colors.danger + '20' }, // 12% opacity
   errorText: { color: colors.danger },
   info: { backgroundColor: colors.info + '20' }, // 12% opacity

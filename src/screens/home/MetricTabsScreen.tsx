@@ -4,17 +4,17 @@ import { createMaterialTopTabNavigator } from '@react-navigation/material-top-ta
 import { View, Text, StyleSheet } from 'react-native';
 
 import { useSensorQuery } from '@/hooks/useSensorQuery';
-import { HomeStackScreenProps, Metric } from '@/types/navigation';
+import { HomeStackScreenProps } from '@/types/navigation';
 
 const TopTab = createMaterialTopTabNavigator();
 
 // 개별 지표 화면 컴포넌트들
 function TemperatureScreen() {
   const { data, isLoading, error } = useSensorQuery();
-  
+
   if (isLoading) return <Text style={styles.loading}>로딩 중...</Text>;
   if (error) return <Text style={styles.error}>데이터를 불러올 수 없습니다.</Text>;
-  
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>온도</Text>
@@ -26,10 +26,10 @@ function TemperatureScreen() {
 
 function HumidityScreen() {
   const { data, isLoading, error } = useSensorQuery();
-  
+
   if (isLoading) return <Text style={styles.loading}>로딩 중...</Text>;
   if (error) return <Text style={styles.error}>데이터를 불러올 수 없습니다.</Text>;
-  
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>습도</Text>
@@ -41,10 +41,10 @@ function HumidityScreen() {
 
 function MetalScreen() {
   const { data, isLoading, error } = useSensorQuery();
-  
+
   if (isLoading) return <Text style={styles.loading}>로딩 중...</Text>;
   if (error) return <Text style={styles.error}>데이터를 불러올 수 없습니다.</Text>;
-  
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>금속</Text>
@@ -56,10 +56,10 @@ function MetalScreen() {
 
 function VocScreen() {
   const { data, isLoading, error } = useSensorQuery();
-  
+
   if (isLoading) return <Text style={styles.loading}>로딩 중...</Text>;
   if (error) return <Text style={styles.error}>데이터를 불러올 수 없습니다.</Text>;
-  
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>VOC</Text>
@@ -73,7 +73,7 @@ type MetricTabsScreenProps = HomeStackScreenProps<'MetricTabs'>;
 
 export default function MetricTabsScreen({ route }: MetricTabsScreenProps) {
   const initialRoute = route.params?.initial || 'temperature';
-  
+
   return (
     <TopTab.Navigator
       initialRouteName={initialRoute}

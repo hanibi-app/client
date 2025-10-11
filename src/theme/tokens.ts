@@ -1,6 +1,6 @@
 /**
  * 한니비 앱 테마 토큰 시스템
- * 
+ *
  * 원색 팔레트와 세맨틱 토큰을 정의하여 일관된 디자인 시스템을 제공합니다.
  * 접근성 기준(AA 4.5:1)을 만족하는 색상 조합을 자동으로 생성합니다.
  */
@@ -206,11 +206,11 @@ export const colorUtils = {
     const r = parseInt(hex.slice(1, 3), 16) / 255;
     const g = parseInt(hex.slice(3, 5), 16) / 255;
     const b = parseInt(hex.slice(5, 7), 16) / 255;
-    
-    const [rs, gs, bs] = [r, g, b].map(c => 
-      c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+
+    const [rs, gs, bs] = [r, g, b].map(c =>
+      c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4),
     );
-    
+
     return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
   },
 
@@ -231,10 +231,10 @@ export const colorUtils = {
   getAccessibleTextColor: (backgroundColor: string): string => {
     const lightText = neutralColors.gray[0];
     const darkText = neutralColors.gray[900];
-    
+
     const lightContrast = colorUtils.getContrast(backgroundColor, lightText);
     const darkContrast = colorUtils.getContrast(backgroundColor, darkText);
-    
+
     return lightContrast > darkContrast ? lightText : darkText;
   },
 

@@ -18,22 +18,22 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    set => ({
       isSignedIn: false,
       isOnboarded: false,
       user: null,
-      setSignedIn: (signedIn) => set({ isSignedIn: signedIn }),
-      setOnboarded: (onboarded) => set({ isOnboarded: onboarded }),
-      setUser: (user) => set({ user }),
+      setSignedIn: signedIn => set({ isSignedIn: signedIn }),
+      setOnboarded: onboarded => set({ isOnboarded: onboarded }),
+      setUser: user => set({ user }),
       logout: () => set({ isSignedIn: false, isOnboarded: false, user: null }),
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({
+      partialize: state => ({
         isSignedIn: state.isSignedIn,
         isOnboarded: state.isOnboarded,
         user: state.user,
       }),
-    }
-  )
+    },
+  ),
 );

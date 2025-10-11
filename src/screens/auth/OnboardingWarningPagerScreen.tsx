@@ -31,7 +31,10 @@ const warningPages = [
   },
 ];
 
-export default function OnboardingWarningPagerScreen({ navigation, route }: OnboardingWarningPagerScreenProps) {
+export default function OnboardingWarningPagerScreen({
+  navigation,
+  route,
+}: OnboardingWarningPagerScreenProps) {
   const [currentPage, setCurrentPage] = useState(route.params?.initialIndex || 0);
   const { tokens } = useTheme();
 
@@ -105,7 +108,7 @@ export default function OnboardingWarningPagerScreen({ navigation, route }: Onbo
     },
   });
 
-  const renderPage = (page: typeof warningPages[0], _index: number) => (
+  const renderPage = (page: (typeof warningPages)[0], _index: number) => (
     <View key={page.id} style={styles.pageContainer}>
       <View style={styles.content}>
         <Text style={styles.icon}>{page.icon}</Text>
@@ -120,31 +123,28 @@ export default function OnboardingWarningPagerScreen({ navigation, route }: Onbo
       <PagerView
         style={styles.pagerView}
         initialPage={currentPage}
-        onPageSelected={(e) => setCurrentPage(e.nativeEvent.position)}
+        onPageSelected={e => setCurrentPage(e.nativeEvent.position)}
       >
         {warningPages.map((page, index) => renderPage(page, index))}
       </PagerView>
-      
+
       <View style={styles.footer}>
         <View style={styles.indicatorContainer}>
           {warningPages.map((_, index) => (
             <View
               key={index}
-              style={[
-                dynamicStyles.dot,
-                index === currentPage && dynamicStyles.activeDot,
-              ]}
+              style={[dynamicStyles.dot, index === currentPage && dynamicStyles.activeDot]}
             />
           ))}
         </View>
-        
+
         <View style={styles.buttonContainer}>
           <Pressable style={dynamicStyles.nextButton} onPress={handleNext}>
             <Text style={dynamicStyles.nextButtonText}>
               {currentPage === warningPages.length - 1 ? '시작하기' : '다음'}
             </Text>
           </Pressable>
-          
+
           <Pressable style={dynamicStyles.skipButton} onPress={handleSkip}>
             <Text style={dynamicStyles.skipButtonText}>건너뛰기</Text>
           </Pressable>

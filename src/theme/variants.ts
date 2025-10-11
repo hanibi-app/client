@@ -1,6 +1,6 @@
 /**
  * 상태별 UI 변형 규칙
- * 
+ *
  * 안전/주의/위험 등의 상태에 따른 색상 조합을 자동으로 생성합니다.
  * 대시보드, 알림, 토스트 등에서 일관된 상태 표시를 위해 사용됩니다.
  */
@@ -19,12 +19,9 @@ export interface StatusColors {
 /**
  * 상태 레벨에 따른 색상 조합을 반환합니다.
  */
-export function getStatusColors(
-  level: StatusLevel,
-  theme: SemanticTokens
-): StatusColors {
+export function getStatusColors(level: StatusLevel, theme: SemanticTokens): StatusColors {
   const baseColor = theme.state[level];
-  
+
   return {
     background: `${baseColor}20`, // 12% 투명도
     text: baseColor,
@@ -45,7 +42,7 @@ export function getMetricColors(metric: string, theme: SemanticTokens): StatusCo
   };
 
   const color = metricColorMap[metric] || theme.text.primary;
-  
+
   return {
     background: `${color}20`,
     text: color,
@@ -60,7 +57,7 @@ export function getMetricColors(metric: string, theme: SemanticTokens): StatusCo
  */
 export function getHomeBackgroundGradient(
   status: 'normal' | 'warning' | 'danger',
-  theme: SemanticTokens
+  theme: SemanticTokens,
 ): string[] {
   switch (status) {
     case 'normal':
@@ -79,7 +76,7 @@ export function getHomeBackgroundGradient(
  */
 export function getButtonColors(
   variant: 'primary' | 'secondary' | 'ghost' | 'danger',
-  theme: SemanticTokens
+  theme: SemanticTokens,
 ): StatusColors {
   switch (variant) {
     case 'primary':
@@ -125,10 +122,10 @@ export function getButtonColors(
  */
 export function getToastColors(
   type: 'success' | 'warning' | 'error' | 'info',
-  theme: SemanticTokens
+  theme: SemanticTokens,
 ): StatusColors {
   const stateColor = theme.state[type];
-  
+
   return {
     background: `${stateColor}20`,
     text: stateColor,
@@ -140,10 +137,7 @@ export function getToastColors(
 /**
  * 탭 인디케이터 색상
  */
-export function getTabIndicatorColors(
-  isActive: boolean,
-  theme: SemanticTokens
-): StatusColors {
+export function getTabIndicatorColors(isActive: boolean, theme: SemanticTokens): StatusColors {
   if (isActive) {
     return {
       background: theme.brand.primary,
@@ -152,7 +146,7 @@ export function getTabIndicatorColors(
       icon: theme.brand.primary,
     };
   }
-  
+
   return {
     background: 'transparent',
     text: theme.text.muted,

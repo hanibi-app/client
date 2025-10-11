@@ -23,7 +23,7 @@ export default function BottomTabBar({
 }: BottomTabBarProps) {
   return (
     <View style={styles.container} testID={testID} accessibilityRole="tablist">
-      {tabs.map((tab) => {
+      {tabs.map(tab => {
         const focused = tab === activeTab;
         return (
           <Pressable

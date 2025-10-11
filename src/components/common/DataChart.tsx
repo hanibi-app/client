@@ -35,7 +35,7 @@ export default function DataChart({ data, testID = 'data-chart' }: DataChartProp
 
   return (
     <VictoryChart testID={testID}>
-      <VictoryAxis tickFormat={(t) => formatTick(t as Date | number)} />
+      <VictoryAxis tickFormat={t => formatTick(t as Date | number)} />
       <VictoryAxis dependentAxis />
       <VictoryLine data={data} interpolation="monotoneX" />
     </VictoryChart>

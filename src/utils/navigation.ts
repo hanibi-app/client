@@ -72,7 +72,9 @@ export function validateRoute(route: string, params?: Record<string, unknown>): 
  */
 export function handleDeepLink(
   url: string,
-  navigation: { navigate: (screen: string, params?: Record<string, unknown>) => void },
+  navigation: {
+    navigate: (screen: string, params?: Record<string, unknown>) => void;
+  },
 ) {
   const deepLinkParams = parseDeepLink(url);
 

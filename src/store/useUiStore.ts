@@ -22,7 +22,7 @@ interface UiState {
   setDashboard: (key: keyof UiState['dashboard'], value: boolean) => void;
 }
 
-export const useUiStore = create<UiState>((set) => ({
+export const useUiStore = create<UiState>(set => ({
   theme: 'system',
   language: 'ko',
   notifications: {
@@ -38,14 +38,14 @@ export const useUiStore = create<UiState>((set) => ({
     showMetal: true,
     showVoc: true,
   },
-  setTheme: (theme) => set({ theme }),
-  setLanguage: (language) => set({ language }),
+  setTheme: theme => set({ theme }),
+  setLanguage: language => set({ language }),
   setNotification: (key, value) =>
-    set((state) => ({
+    set(state => ({
       notifications: { ...state.notifications, [key]: value },
     })),
   setDashboard: (key, value) =>
-    set((state) => ({
+    set(state => ({
       dashboard: { ...state.dashboard, [key]: value },
     })),
 }));

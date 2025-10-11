@@ -15,7 +15,7 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 // 임시 아이콘 컴포넌트 (실제로는 react-native-vector-icons 사용)
 const TabIcon = ({ name, focused }: { name: string; focused: boolean }) => {
   const { tokens } = useTheme();
-  
+
   const dynamicStyles = StyleSheet.create({
     focusedIcon: {
       backgroundColor: tokens.brand.primary + '20', // 12% 투명도

@@ -35,10 +35,14 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'normal': return '정상';
-      case 'warning': return '주의';
-      case 'danger': return '위험';
-      default: return '알 수 없음';
+      case 'normal':
+        return '정상';
+      case 'warning':
+        return '주의';
+      case 'danger':
+        return '위험';
+      default:
+        return '알 수 없음';
     }
   };
 
@@ -208,12 +212,12 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             <Text style={styles.actionButtonIcon}>📊</Text>
             <Text style={dynamicStyles.actionButtonText}>상세 대시보드</Text>
           </Pressable>
-          
+
           <Pressable style={dynamicStyles.actionButton} onPress={handleNavigateToAlerts}>
             <Text style={styles.actionButtonIcon}>🔔</Text>
             <Text style={dynamicStyles.actionButtonText}>알림 내역</Text>
           </Pressable>
-          
+
           <Pressable style={dynamicStyles.actionButton} onPress={handleNavigateToCamera}>
             <Text style={styles.actionButtonIcon}>📹</Text>
             <Text style={dynamicStyles.actionButtonText}>카메라 보기</Text>
@@ -223,10 +227,14 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         {/* 상태 표시 */}
         <View style={styles.statusSection}>
           <View style={dynamicStyles.statusCard}>
-            <View style={[
-              styles.statusIndicator,
-              { backgroundColor: getStatusColor(sensorData?.status || 'normal') }
-            ]} />
+            <View
+              style={[
+                styles.statusIndicator,
+                {
+                  backgroundColor: getStatusColor(sensorData?.status || 'normal'),
+                },
+              ]}
+            />
             <Text style={dynamicStyles.statusText}>
               전체 상태: {isLoading ? '확인 중...' : getStatusText(sensorData?.status || 'normal')}
             </Text>

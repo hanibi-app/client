@@ -1,5 +1,5 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
+import { CompositeScreenProps } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 // 지표 타입 정의
@@ -52,14 +52,20 @@ export type SettingsStackParamList = {
 };
 
 // Props 타입 정의
-export type RootStackScreenProps<T extends keyof RootStackParamList> =
-  NativeStackScreenProps<RootStackParamList, T>;
+export type RootStackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<
+  RootStackParamList,
+  T
+>;
 
-export type AuthStackScreenProps<T extends keyof AuthStackParamList> =
-  NativeStackScreenProps<AuthStackParamList, T>;
+export type AuthStackScreenProps<T extends keyof AuthStackParamList> = NativeStackScreenProps<
+  AuthStackParamList,
+  T
+>;
 
-export type MainTabScreenProps<T extends keyof MainTabParamList> =
-  BottomTabScreenProps<MainTabParamList, T>;
+export type MainTabScreenProps<T extends keyof MainTabParamList> = BottomTabScreenProps<
+  MainTabParamList,
+  T
+>;
 
 export type HomeStackScreenProps<T extends keyof HomeStackParamList> = CompositeScreenProps<
   NativeStackScreenProps<HomeStackParamList, T>,

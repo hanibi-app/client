@@ -6,15 +6,15 @@ import { SettingsStackScreenProps } from '@/types/navigation';
 
 type SettingsControlScreenProps = SettingsStackScreenProps<'SettingsControl'>;
 
-export default function SettingsControlScreen({ navigation }: SettingsControlScreenProps) {
+export default function SettingsControlScreen({
+  navigation: _navigation,
+}: SettingsControlScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <Text style={styles.title}>캐릭터 제어</Text>
-          <Text style={styles.subtitle}>
-            한니비 캐릭터의 동작과 표시를 설정하세요.
-          </Text>
+          <Text style={styles.subtitle}>한니비 캐릭터의 동작과 표시를 설정하세요.</Text>
         </View>
 
         <View style={styles.placeholder}>

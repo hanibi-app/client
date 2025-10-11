@@ -67,7 +67,10 @@ describe('Navigation Utils', () => {
     });
 
     it('should create internal link with parameters', () => {
-      const result = createInternalLink('Tabs', { param1: 'value1', param2: 'value2' });
+      const result = createInternalLink('Tabs', {
+        param1: 'value1',
+        param2: 'value2',
+      });
 
       expect(result).toBe('hanibi://tabs?param1=value1&param2=value2');
     });

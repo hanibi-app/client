@@ -113,7 +113,12 @@ export default function HanibiState({
 }
 
 const AnimatedCircle = Animated.createAnimatedComponent(
-  Circle as unknown as React.ComponentType<{ cx: number; cy: number; r: number; fill: string }>,
+  Circle as unknown as React.ComponentType<{
+    cx: number;
+    cy: number;
+    r: number;
+    fill: string;
+  }>,
 );
 
 const styles = StyleSheet.create({

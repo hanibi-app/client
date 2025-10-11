@@ -52,7 +52,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  card: { backgroundColor: colors.background, borderRadius: 12, padding: spacing.lg, width: '86%' },
+  card: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: spacing.lg,
+    width: '86%',
+  },
   description: { fontSize: typography.sizes.md, marginBottom: spacing.lg },
   row: { flexDirection: 'row', gap: spacing.md, justifyContent: 'flex-end' },
   title: {

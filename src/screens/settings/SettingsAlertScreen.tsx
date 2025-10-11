@@ -6,15 +6,13 @@ import { SettingsStackScreenProps } from '@/types/navigation';
 
 type SettingsAlertScreenProps = SettingsStackScreenProps<'SettingsAlert'>;
 
-export default function SettingsAlertScreen({ navigation }: SettingsAlertScreenProps) {
+export default function SettingsAlertScreen({ navigation: _navigation }: SettingsAlertScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <Text style={styles.title}>알림 설정</Text>
-          <Text style={styles.subtitle}>
-            푸시 알림 및 알림음 설정을 관리하세요.
-          </Text>
+          <Text style={styles.subtitle}>푸시 알림 및 알림음 설정을 관리하세요.</Text>
         </View>
 
         <View style={styles.placeholder}>

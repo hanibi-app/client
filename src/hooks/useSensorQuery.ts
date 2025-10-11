@@ -18,7 +18,7 @@ export function useSensorData() {
     queryFn: async (): Promise<SensorData> => {
       // TODO: 실제 API 호출로 교체
       await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 지연 시뮬레이션
-      
+
       return {
         id: 'sensor-001',
         timestamp: new Date().toISOString(),
@@ -38,17 +38,21 @@ export function useSensorData() {
 export function useMetricData(metric: 'temperature' | 'humidity' | 'metal' | 'voc') {
   return useQuery({
     queryKey: ['sensor', 'metric', metric],
-    queryFn: async (): Promise<{ value: number; unit: string; status: string }> => {
+    queryFn: async (): Promise<{
+      value: number;
+      unit: string;
+      status: string;
+    }> => {
       // TODO: 실제 API 호출로 교체
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       const mockData = {
         temperature: { value: 25.3, unit: '°C', status: 'normal' },
         humidity: { value: 65.2, unit: '%', status: 'normal' },
         metal: { value: 0.8, unit: 'mg/kg', status: 'normal' },
         voc: { value: 120.5, unit: 'ppb', status: 'normal' },
       };
-      
+
       return mockData[metric];
     },
     refetchInterval: 30000,
@@ -63,7 +67,7 @@ export function useSensorHistory(metric: string, days: number = 7) {
     queryFn: async (): Promise<Array<{ timestamp: string; value: number }>> => {
       // TODO: 실제 API 호출로 교체
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // 최근 7일간의 더미 데이터 생성
       const data = [];
       const now = new Date();
@@ -75,7 +79,7 @@ export function useSensorHistory(metric: string, days: number = 7) {
           value: Math.random() * 50 + 20, // 20-70 사이의 랜덤 값
         });
       }
-      
+
       return data;
     },
     refetchInterval: 60000, // 1분마다 갱신

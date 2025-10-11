@@ -1,6 +1,6 @@
 /**
  * 색상 유틸리티 함수들
- * 
+ *
  * 색상 변환, 투명도 조절, 대비 계산 등의 기능을 제공합니다.
  */
 
@@ -12,7 +12,7 @@ export function hexToRgba(hex: string, alpha: number = 1): string {
   const r = parseInt(cleanHex.substr(0, 2), 16);
   const g = parseInt(cleanHex.substr(2, 2), 16);
   const b = parseInt(cleanHex.substr(4, 2), 16);
-  
+
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
@@ -22,11 +22,11 @@ export function hexToRgba(hex: string, alpha: number = 1): string {
 export function rgbaToHex(rgba: string): string {
   const values = rgba.match(/\d+/g);
   if (!values || values.length < 3) return '#000000';
-  
+
   const r = parseInt(values[0]);
   const g = parseInt(values[1]);
   const b = parseInt(values[2]);
-  
+
   return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 }
 
@@ -37,11 +37,11 @@ export function withOpacity(color: string, opacity: number): string {
   if (color.startsWith('#')) {
     return hexToRgba(color, opacity);
   }
-  
+
   if (color.startsWith('rgb(')) {
     return color.replace('rgb(', 'rgba(').replace(')', `, ${opacity})`);
   }
-  
+
   if (color.startsWith('rgba(')) {
     const values = color.match(/\d+/g);
     if (values && values.length >= 4) {
@@ -49,7 +49,7 @@ export function withOpacity(color: string, opacity: number): string {
       return `rgba(${r}, ${g}, ${b}, ${opacity})`;
     }
   }
-  
+
   return color;
 }
 
@@ -61,11 +61,11 @@ export function getLuminance(color: string): number {
   const r = parseInt(hex.substr(0, 2), 16) / 255;
   const g = parseInt(hex.substr(2, 2), 16) / 255;
   const b = parseInt(hex.substr(4, 2), 16) / 255;
-  
-  const [rs, gs, bs] = [r, g, b].map(c => 
-    c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+
+  const [rs, gs, bs] = [r, g, b].map(c =>
+    c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4),
   );
-  
+
   return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
 }
 
@@ -75,10 +75,10 @@ export function getLuminance(color: string): number {
 export function getContrastRatio(color1: string, color2: string): number {
   const lum1 = getLuminance(color1);
   const lum2 = getLuminance(color2);
-  
+
   const lighter = Math.max(lum1, lum2);
   const darker = Math.min(lum1, lum2);
-  
+
   return (lighter + 0.05) / (darker + 0.05);
 }
 
@@ -112,7 +112,7 @@ export function adjustBrightness(color: string, amount: number): string {
   const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
   const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
   const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
-  
+
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
@@ -125,11 +125,11 @@ export function adjustSaturation(color: string, amount: number): string {
   const r = parseInt(hex.substr(0, 2), 16);
   const g = parseInt(hex.substr(2, 2), 16);
   const b = parseInt(hex.substr(4, 2), 16);
-  
+
   const gray = (r + g + b) / 3;
   const newR = Math.max(0, Math.min(255, gray + (r - gray) * amount));
   const newG = Math.max(0, Math.min(255, gray + (g - gray) * amount));
   const newB = Math.max(0, Math.min(255, gray + (b - gray) * amount));
-  
+
   return `#${Math.round(newR).toString(16).padStart(2, '0')}${Math.round(newG).toString(16).padStart(2, '0')}${Math.round(newB).toString(16).padStart(2, '0')}`;
 }

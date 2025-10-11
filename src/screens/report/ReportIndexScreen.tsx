@@ -7,30 +7,35 @@ import { Metric, ReportStackScreenProps } from '@/types/navigation';
 
 type ReportIndexScreenProps = ReportStackScreenProps<'ReportIndex'>;
 
-const reportMetrics: Array<{ key: Metric; name: string; icon: string; description: string }> = [
-  { 
-    key: 'temperature', 
-    name: '온도 리포트', 
-    icon: '🌡️', 
-    description: '온도 변화 추이를 확인하세요' 
+const reportMetrics: Array<{
+  key: Metric;
+  name: string;
+  icon: string;
+  description: string;
+}> = [
+  {
+    key: 'temperature',
+    name: '온도 리포트',
+    icon: '🌡️',
+    description: '온도 변화 추이를 확인하세요',
   },
-  { 
-    key: 'humidity', 
-    name: '습도 리포트', 
-    icon: '💧', 
-    description: '습도 변화 추이를 확인하세요' 
+  {
+    key: 'humidity',
+    name: '습도 리포트',
+    icon: '💧',
+    description: '습도 변화 추이를 확인하세요',
   },
-  { 
-    key: 'metal', 
-    name: '금속 리포트', 
-    icon: '⚡', 
-    description: '금속 함량 변화를 확인하세요' 
+  {
+    key: 'metal',
+    name: '금속 리포트',
+    icon: '⚡',
+    description: '금속 함량 변화를 확인하세요',
   },
-  { 
-    key: 'voc', 
-    name: 'VOC 리포트', 
-    icon: '🌬️', 
-    description: 'VOC 농도 변화를 확인하세요' 
+  {
+    key: 'voc',
+    name: 'VOC 리포트',
+    icon: '🌬️',
+    description: 'VOC 농도 변화를 확인하세요',
   },
 ];
 
@@ -108,13 +113,11 @@ export default function ReportIndexScreen({ navigation }: ReportIndexScreenProps
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <Text style={dynamicStyles.title}>리포트</Text>
-          <Text style={dynamicStyles.subtitle}>
-            과거 데이터를 통해 패턴을 분석해보세요.
-          </Text>
+          <Text style={dynamicStyles.subtitle}>과거 데이터를 통해 패턴을 분석해보세요.</Text>
         </View>
 
         <View style={styles.metricsList}>
-          {reportMetrics.map((metric) => (
+          {reportMetrics.map(metric => (
             <Pressable
               key={metric.key}
               style={dynamicStyles.metricCard}

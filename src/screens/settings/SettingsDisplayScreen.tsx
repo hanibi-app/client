@@ -6,15 +6,15 @@ import { SettingsStackScreenProps } from '@/types/navigation';
 
 type SettingsDisplayScreenProps = SettingsStackScreenProps<'SettingsDisplay'>;
 
-export default function SettingsDisplayScreen({ navigation }: SettingsDisplayScreenProps) {
+export default function SettingsDisplayScreen({
+  navigation: _navigation,
+}: SettingsDisplayScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <Text style={styles.title}>대시보드 표시</Text>
-          <Text style={styles.subtitle}>
-            화면에 표시할 지표를 선택하세요.
-          </Text>
+          <Text style={styles.subtitle}>화면에 표시할 지표를 선택하세요.</Text>
         </View>
 
         <View style={styles.placeholder}>

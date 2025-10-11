@@ -54,5 +54,9 @@ const styles = StyleSheet.create({
   icon: { marginRight: spacing.md },
   title: { color: colors.mutedText, fontSize: typography.sizes.sm },
   unit: { color: colors.mutedText, fontSize: typography.sizes.md },
-  value: { color: colors.text, fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  value: {
+    color: colors.text,
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.bold,
+  },
 });

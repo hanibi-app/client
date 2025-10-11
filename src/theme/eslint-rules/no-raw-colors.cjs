@@ -1,6 +1,6 @@
 /**
  * ESLint 규칙: 원시 색상 리터럴 금지
- * 
+ *
  * hex, rgb, rgba 등의 원시 색상 리터럴 사용을 금지하고
  * 테마 토큰 사용을 강제합니다.
  */
@@ -31,17 +31,13 @@ module.exports = {
     ];
 
     // 허용된 색상들 (예외 처리)
-    const allowedColors = [
-      'transparent',
-      'inherit',
-      'currentColor',
-    ];
+    const allowedColors = ['transparent', 'inherit', 'currentColor'];
 
     function checkStringLiteral(node) {
       if (typeof node.value !== 'string') return;
 
       const value = node.value;
-      
+
       // 허용된 색상인지 확인
       if (allowedColors.includes(value.toLowerCase())) return;
 

@@ -21,7 +21,7 @@ export function useReportData(metric: Metric) {
     queryFn: async (): Promise<ReportData> => {
       // TODO: 실제 API 호출로 교체
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       const mockData = {
         temperature: {
           current: 25.3,
@@ -56,9 +56,9 @@ export function useReportData(metric: Metric) {
           status: 'normal' as const,
         },
       };
-      
+
       const baseData = mockData[metric];
-      
+
       // 차트 데이터 생성 (최근 24시간)
       const chartData = [];
       const now = new Date();
@@ -70,7 +70,7 @@ export function useReportData(metric: Metric) {
           value: baseData.current + (Math.random() - 0.5) * 10,
         });
       }
-      
+
       return {
         metric,
         ...baseData,
@@ -86,17 +86,19 @@ export function useReportData(metric: Metric) {
 export function useAlertsData() {
   return useQuery({
     queryKey: ['alerts'],
-    queryFn: async (): Promise<Array<{
-      id: string;
-      type: 'temperature' | 'humidity' | 'metal' | 'voc';
-      message: string;
-      timestamp: string;
-      read: boolean;
-      severity: 'low' | 'medium' | 'high';
-    }>> => {
+    queryFn: async (): Promise<
+      Array<{
+        id: string;
+        type: 'temperature' | 'humidity' | 'metal' | 'voc';
+        message: string;
+        timestamp: string;
+        read: boolean;
+        severity: 'low' | 'medium' | 'high';
+      }>
+    > => {
       // TODO: 실제 API 호출로 교체
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       return [
         {
           id: 'alert-001',

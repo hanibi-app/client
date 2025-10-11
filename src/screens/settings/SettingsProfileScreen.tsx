@@ -7,7 +7,9 @@ import { SettingsStackScreenProps } from '@/types/navigation';
 
 type SettingsProfileScreenProps = SettingsStackScreenProps<'SettingsProfile'>;
 
-export default function SettingsProfileScreen({ navigation }: SettingsProfileScreenProps) {
+export default function SettingsProfileScreen({
+  navigation: _navigation,
+}: SettingsProfileScreenProps) {
   const { user, logout } = useAuthStore();
 
   const handleLogout = () => {

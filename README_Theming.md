@@ -9,16 +9,19 @@
 ### 1. 색상 팔레트 (`src/theme/tokens.ts`)
 
 #### 브랜드 색상
+
 - **Primary**: `#007AFF` - 메인 브랜드 색상
 - **Secondary**: `#FF6B35` - 보조 브랜드 색상
 - **Accent**: `#34C759` - 강조 색상
 
 #### 중성 색상
+
 - **Gray 0-1000**: 50부터 900까지의 회색 톤
 - **Text**: Primary, Secondary, Muted, Disabled
 - **Surface**: Background, Card, Border, Shadow
 
 #### 신호 색상
+
 - **Success**: `#34C759` - 성공 상태
 - **Warning**: `#FF9500` - 경고 상태
 - **Error**: `#FF3B30` - 오류 상태
@@ -59,10 +62,12 @@ interface SemanticTokens {
 ### 3. 테마 변형
 
 #### 라이트 테마 (`src/theme/light.ts`)
+
 - 밝은 배경과 어두운 텍스트
 - 높은 대비율로 가독성 최적화
 
 #### 다크 테마 (`src/theme/dark.ts`)
+
 - 어두운 배경과 밝은 텍스트
 - 눈의 피로를 줄이는 색상 조합
 
@@ -75,7 +80,7 @@ import { useTheme } from '@/theme';
 
 function MyComponent() {
   const { tokens, mode, setMode } = useTheme();
-  
+
   return (
     <View style={{ backgroundColor: tokens.surface.background }}>
       <Text style={{ color: tokens.text.primary }}>
@@ -94,7 +99,7 @@ import { getStatusColors } from '@/theme/variants';
 function StatusIndicator({ status }: { status: 'success' | 'warning' | 'error' }) {
   const { tokens } = useTheme();
   const colors = getStatusColors(status, tokens);
-  
+
   return (
     <View style={{ backgroundColor: colors.background }}>
       <Text style={{ color: colors.text }}>
@@ -110,7 +115,7 @@ function StatusIndicator({ status }: { status: 'success' | 'warning' | 'error' }
 ```typescript
 function ThemedComponent() {
   const { tokens } = useTheme();
-  
+
   const dynamicStyles = StyleSheet.create({
     container: {
       backgroundColor: tokens.surface.background,
@@ -120,7 +125,7 @@ function ThemedComponent() {
       color: tokens.text.primary,
     },
   });
-  
+
   return (
     <View style={dynamicStyles.container}>
       <Text style={dynamicStyles.text}>테마 적용된 텍스트</Text>
@@ -132,35 +137,39 @@ function ThemedComponent() {
 ## 색상 토큰 매핑표
 
 ### 브랜드 색상
-| 토큰 | 라이트 모드 | 다크 모드 | 용도 |
-|------|-------------|-----------|------|
-| `brand.primary` | `#007AFF` | `#0A84FF` | 메인 버튼, 링크 |
-| `brand.secondary` | `#FF6B35` | `#FF8A65` | 보조 버튼, 강조 |
-| `brand.accent` | `#34C759` | `#30D158` | 성공, 확인 |
+
+| 토큰              | 라이트 모드 | 다크 모드 | 용도            |
+| ----------------- | ----------- | --------- | --------------- |
+| `brand.primary`   | `#007AFF`   | `#0A84FF` | 메인 버튼, 링크 |
+| `brand.secondary` | `#FF6B35`   | `#FF8A65` | 보조 버튼, 강조 |
+| `brand.accent`    | `#34C759`   | `#30D158` | 성공, 확인      |
 
 ### 텍스트 색상
-| 토큰 | 라이트 모드 | 다크 모드 | 용도 |
-|------|-------------|-----------|------|
-| `text.primary` | `#000000` | `#FFFFFF` | 제목, 주요 텍스트 |
-| `text.secondary` | `#666666` | `#CCCCCC` | 부제목, 설명 |
-| `text.muted` | `#8E8E93` | `#8E8E93` | 보조 정보 |
-| `text.disabled` | `#C7C7CC` | `#48484A` | 비활성 텍스트 |
+
+| 토큰             | 라이트 모드 | 다크 모드 | 용도              |
+| ---------------- | ----------- | --------- | ----------------- |
+| `text.primary`   | `#000000`   | `#FFFFFF` | 제목, 주요 텍스트 |
+| `text.secondary` | `#666666`   | `#CCCCCC` | 부제목, 설명      |
+| `text.muted`     | `#8E8E93`   | `#8E8E93` | 보조 정보         |
+| `text.disabled`  | `#C7C7CC`   | `#48484A` | 비활성 텍스트     |
 
 ### 표면 색상
-| 토큰 | 라이트 모드 | 다크 모드 | 용도 |
-|------|-------------|-----------|------|
-| `surface.background` | `#F2F2F7` | `#000000` | 메인 배경 |
-| `surface.card` | `#FFFFFF` | `#1C1C1E` | 카드, 모달 |
-| `surface.border` | `#E5E5EA` | `#38383A` | 테두리, 구분선 |
-| `surface.shadow` | `#000000` | `#000000` | 그림자 |
+
+| 토큰                 | 라이트 모드 | 다크 모드 | 용도           |
+| -------------------- | ----------- | --------- | -------------- |
+| `surface.background` | `#F2F2F7`   | `#000000` | 메인 배경      |
+| `surface.card`       | `#FFFFFF`   | `#1C1C1E` | 카드, 모달     |
+| `surface.border`     | `#E5E5EA`   | `#38383A` | 테두리, 구분선 |
+| `surface.shadow`     | `#000000`   | `#000000` | 그림자         |
 
 ### 상태 색상
-| 토큰 | 라이트 모드 | 다크 모드 | 용도 |
-|------|-------------|-----------|------|
-| `state.success` | `#34C759` | `#30D158` | 성공, 정상 |
-| `state.warning` | `#FF9500` | `#FF9F0A` | 경고, 주의 |
-| `state.error` | `#FF3B30` | `#FF453A` | 오류, 위험 |
-| `state.info` | `#5AC8FA` | `#64D2FF` | 정보, 알림 |
+
+| 토큰            | 라이트 모드 | 다크 모드 | 용도       |
+| --------------- | ----------- | --------- | ---------- |
+| `state.success` | `#34C759`   | `#30D158` | 성공, 정상 |
+| `state.warning` | `#FF9500`   | `#FF9F0A` | 경고, 주의 |
+| `state.error`   | `#FF3B30`   | `#FF453A` | 오류, 위험 |
+| `state.info`    | `#5AC8FA`   | `#64D2FF` | 정보, 알림 |
 
 ## 개발 가이드라인
 
@@ -177,7 +186,7 @@ import { useColorMode } from '@/theme/useColorMode';
 
 function ThemeToggle() {
   const { mode, setMode } = useColorMode();
-  
+
   return (
     <Button
       title={mode === 'light' ? '다크 모드' : '라이트 모드'}
@@ -209,14 +218,14 @@ const styles = StyleSheet.create({
 // ✅ 올바른 방법
 function MyComponent() {
   const { tokens } = useTheme();
-  
+
   const dynamicStyles = StyleSheet.create({
     text: {
       color: tokens.text.primary,
       backgroundColor: tokens.surface.background,
     },
   });
-  
+
   return <Text style={dynamicStyles.text}>텍스트</Text>;
 }
 ```
@@ -242,13 +251,13 @@ import { useMemo } from 'react';
 
 function OptimizedComponent() {
   const { tokens } = useTheme();
-  
+
   const styles = useMemo(() => StyleSheet.create({
     container: {
       backgroundColor: tokens.surface.background,
     },
   }), [tokens.surface.background]);
-  
+
   return <View style={styles.container} />;
 }
 ```

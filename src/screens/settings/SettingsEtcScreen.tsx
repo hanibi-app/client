@@ -6,15 +6,13 @@ import { SettingsStackScreenProps } from '@/types/navigation';
 
 type SettingsEtcScreenProps = SettingsStackScreenProps<'SettingsEtc'>;
 
-export default function SettingsEtcScreen({ navigation }: SettingsEtcScreenProps) {
+export default function SettingsEtcScreen({ navigation: _navigation }: SettingsEtcScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <Text style={styles.title}>기타</Text>
-          <Text style={styles.subtitle}>
-            앱 정보, 버전, 문의하기 등
-          </Text>
+          <Text style={styles.subtitle}>앱 정보, 버전, 문의하기 등</Text>
         </View>
 
         <View style={styles.placeholder}>

@@ -17,7 +17,9 @@ const characterColors = [
   { id: 'yellow', name: '노랑', color: '#FFCC00', emoji: '🤖' },
 ];
 
-export default function OnboardingCharacterScreen({ navigation: _navigation }: OnboardingCharacterScreenProps) {
+export default function OnboardingCharacterScreen({
+  navigation: _navigation,
+}: OnboardingCharacterScreenProps) {
   const [selectedColor, setSelectedColor] = useState('blue');
   const { setOnboarded } = useAuthStore();
   const { tokens } = useTheme();
@@ -25,10 +27,10 @@ export default function OnboardingCharacterScreen({ navigation: _navigation }: O
   const handleComplete = () => {
     // TODO: 선택된 캐릭터 색상 저장
     console.log('선택된 캐릭터 색상:', selectedColor);
-    
+
     // 온보딩 완료 처리
     setOnboarded(true);
-    
+
     // 메인 화면으로 이동 (RootNavigator에서 자동으로 MainTabs로 이동)
   };
 
@@ -114,22 +116,24 @@ export default function OnboardingCharacterScreen({ navigation: _navigation }: O
             한니비의 색상을 선택해주세요. 언제든지 변경할 수 있어요.
           </Text>
         </View>
-        
+
         <View style={styles.characterPreview}>
           <View style={[styles.characterContainer, { backgroundColor: selectedColorData?.color }]}>
             <Text style={styles.characterEmoji}>{selectedColorData?.emoji}</Text>
           </View>
           <Text style={dynamicStyles.characterName}>한니비</Text>
         </View>
-        
+
         <ScrollView style={styles.colorSelector} showsVerticalScrollIndicator={false}>
           <Text style={styles.selectorTitle}>색상 선택</Text>
           <View style={styles.colorGrid}>
-            {characterColors.map((color) => (
+            {characterColors.map(color => (
               <Pressable
                 key={color.id}
                 style={[
-                  selectedColor === color.id ? dynamicStyles.colorOptionSelected : dynamicStyles.colorOption,
+                  selectedColor === color.id
+                    ? dynamicStyles.colorOptionSelected
+                    : dynamicStyles.colorOption,
                   { backgroundColor: color.color },
                 ]}
                 onPress={() => setSelectedColor(color.id)}
@@ -144,7 +148,7 @@ export default function OnboardingCharacterScreen({ navigation: _navigation }: O
             ))}
           </View>
         </ScrollView>
-        
+
         <View style={styles.buttonContainer}>
           <Pressable style={dynamicStyles.completeButton} onPress={handleComplete}>
             <Text style={dynamicStyles.completeButtonText}>완료</Text>

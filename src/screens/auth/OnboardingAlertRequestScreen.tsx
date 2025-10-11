@@ -7,13 +7,15 @@ import { AuthStackScreenProps } from '@/types/navigation';
 
 type OnboardingAlertRequestScreenProps = AuthStackScreenProps<'OnboardingAlertRequest'>;
 
-export default function OnboardingAlertRequestScreen({ navigation }: OnboardingAlertRequestScreenProps) {
+export default function OnboardingAlertRequestScreen({
+  navigation,
+}: OnboardingAlertRequestScreenProps) {
   const { tokens } = useTheme();
 
   const handleAllowNotifications = async () => {
     // TODO: 알림 권한 요청 구현
     console.log('알림 권한 요청');
-    
+
     // 권한 승인 후 경고 화면으로 이동
     navigation.navigate('OnboardingWarningPager', { initialIndex: 0 });
   };
@@ -71,14 +73,14 @@ export default function OnboardingAlertRequestScreen({ navigation }: OnboardingA
         <View style={styles.iconContainer}>
           <Text style={styles.icon}>🔔</Text>
         </View>
-        
+
         <View style={styles.textContainer}>
           <Text style={dynamicStyles.title}>알림 권한이 필요해요</Text>
           <Text style={dynamicStyles.description}>
             음식물 쓰레기 상태 변화를 실시간으로 알려드릴게요
           </Text>
         </View>
-        
+
         <View style={styles.featuresContainer}>
           <View style={styles.featureItem}>
             <Text style={styles.featureIcon}>🌡️</Text>
@@ -98,7 +100,7 @@ export default function OnboardingAlertRequestScreen({ navigation }: OnboardingA
           <Pressable style={dynamicStyles.allowButton} onPress={handleAllowNotifications}>
             <Text style={dynamicStyles.allowButtonText}>알림 허용</Text>
           </Pressable>
-          
+
           <Pressable style={styles.skipButton} onPress={handleSkip}>
             <Text style={dynamicStyles.skipButtonText}>나중에 설정</Text>
           </Pressable>

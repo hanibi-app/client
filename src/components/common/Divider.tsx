@@ -26,7 +26,12 @@ function DividerComponent({
     <View
       style={[
         styles.line,
-        { backgroundColor: color, marginVertical: margin, height: thickness, marginLeft: inset },
+        {
+          backgroundColor: color,
+          marginVertical: margin,
+          height: thickness,
+          marginLeft: inset,
+        },
         style,
       ]}
       testID={testID}

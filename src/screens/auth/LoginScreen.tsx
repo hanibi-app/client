@@ -15,7 +15,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const handleKakaoLogin = async () => {
     // TODO: 카카오 로그인 구현
     console.log('카카오 로그인 시도');
-    
+
     // 더미 로그인 성공 처리
     setUser({
       id: 'user-001',
@@ -24,7 +24,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       profileImage: undefined,
     });
     setSignedIn(true);
-    
+
     // 온보딩으로 이동
     navigation.navigate('OnboardingAlertRequest');
   };
@@ -81,17 +81,17 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           <Text style={dynamicStyles.title}>지금부터 음식물 쓰레기 고민 STOP!</Text>
           <Text style={dynamicStyles.subtitle}>한니비와 함께 스마트하게 관리하세요</Text>
         </View>
-        
+
         <View style={styles.characterContainer}>
           <Text style={styles.character}>🤖</Text>
           <Text style={dynamicStyles.characterName}>한니비</Text>
         </View>
-        
+
         <View style={styles.buttonContainer}>
           <Pressable style={dynamicStyles.kakaoButton} onPress={handleKakaoLogin}>
             <Text style={dynamicStyles.kakaoButtonText}>카카오로 시작하기</Text>
           </Pressable>
-          
+
           <Text style={dynamicStyles.termsText}>
             로그인 시 개인정보 처리방침 및 이용약관에 동의하게 됩니다.
           </Text>

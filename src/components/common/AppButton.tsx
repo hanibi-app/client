@@ -53,7 +53,10 @@ export default function AppButton({
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={a11yLabel}
-      accessibilityState={{ disabled: disabled || loading, busy: loading || undefined }}
+      accessibilityState={{
+        disabled: disabled || loading,
+        busy: loading || undefined,
+      }}
       hitSlop={HIT_SLOP}
       pressRetentionOffset={HIT_SLOP}
       style={[styles.base, sizeStyle, container, style]}

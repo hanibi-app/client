@@ -140,6 +140,7 @@ export type SemanticTokens = {
   };
   // 배경/표면
   surface: {
+    overlay: string;
     background: string;
     card: string;
     elevated: string;

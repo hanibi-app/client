@@ -186,6 +186,12 @@ export type SemanticTokens = {
     scrim: string;
     subtle: string;
   };
+  // 신호 색상
+  signal: {
+    success: string;
+    warning: string;
+    danger: string;
+  };
 };
 
 // 색상 유틸리티 함수들

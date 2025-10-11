@@ -18,6 +18,7 @@ export const darkTheme: SemanticTokens = {
 
   // 배경/표면 색상
   surface: {
+    overlay: colorUtils.withOpacity(neutralColors.gray[950], 0.8),
     background: neutralColors.gray[950],
     card: neutralColors.gray[900],
     elevated: neutralColors.gray[800],
@@ -67,5 +68,11 @@ export const darkTheme: SemanticTokens = {
   overlay: {
     scrim: colorUtils.withOpacity(neutralColors.gray[950], 0.8),
     subtle: colorUtils.withOpacity(neutralColors.gray[0], 0.1),
+  },
+  // 신호 색상
+  signal: {
+    success: brandColors.green[400],
+    warning: signalColors.yellow[400],
+    danger: signalColors.red[500],
   },
 };

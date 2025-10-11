@@ -4,10 +4,7 @@ import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useReportData } from '@/hooks/useReportQuery';
 import { useTheme } from '@/theme';
-import { lightTheme } from '@/theme/light';
 import { ReportStackScreenProps } from '@/types/navigation';
-
-const tokens = lightTheme;
 
 type ReportMetricScreenProps = ReportStackScreenProps<'ReportMetric'>;
 
@@ -118,7 +115,7 @@ export default function ReportMetricScreen({ route }: ReportMetricScreenProps) {
   if (isLoading) {
     return (
       <SafeAreaView style={dynamicStyles.container}>
-        <View style={styles.loadingContainer}>
+        <View style={staticStyles.loadingContainer}>
           <Text style={dynamicStyles.loadingText}>리포트를 불러오는 중...</Text>
         </View>
       </SafeAreaView>
@@ -127,16 +124,16 @@ export default function ReportMetricScreen({ route }: ReportMetricScreenProps) {
 
   return (
     <SafeAreaView style={dynamicStyles.container}>
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
+      <ScrollView style={staticStyles.scrollView}>
+        <View style={staticStyles.header}>
           <Text style={dynamicStyles.title}>{getMetricName(metric)} 리포트</Text>
           <Text style={dynamicStyles.subtitle}>최근 24시간 데이터 기준</Text>
         </View>
 
         {reportData && (
           <>
-            <View style={styles.summarySection}>
-              <View style={styles.summaryGrid}>
+            <View style={staticStyles.summarySection}>
+              <View style={staticStyles.summaryGrid}>
                 <View style={dynamicStyles.summaryCard}>
                   <Text style={dynamicStyles.summaryLabel}>현재 값</Text>
                   <Text style={dynamicStyles.summaryValue}>
@@ -168,14 +165,14 @@ export default function ReportMetricScreen({ route }: ReportMetricScreenProps) {
               </View>
             </View>
 
-            <View style={styles.trendSection}>
-              <Text style={styles.sectionTitle}>트렌드 분석</Text>
-              <View style={styles.trendCard}>
-                <View style={styles.trendHeader}>
-                  <Text style={styles.trendIcon}>{getTrendIcon(reportData.trend)}</Text>
-                  <Text style={styles.trendText}>{getTrendText(reportData.trend)} 추세</Text>
+            <View style={staticStyles.trendSection}>
+              <Text style={staticStyles.sectionTitle}>트렌드 분석</Text>
+              <View style={staticStyles.trendCard}>
+                <View style={staticStyles.trendHeader}>
+                  <Text style={staticStyles.trendIcon}>{getTrendIcon(reportData.trend)}</Text>
+                  <Text style={staticStyles.trendText}>{getTrendText(reportData.trend)} 추세</Text>
                 </View>
-                <Text style={styles.trendDescription}>
+                <Text style={staticStyles.trendDescription}>
                   {reportData.trend === 'up'
                     ? '값이 상승하고 있습니다.'
                     : reportData.trend === 'down'
@@ -185,25 +182,25 @@ export default function ReportMetricScreen({ route }: ReportMetricScreenProps) {
               </View>
             </View>
 
-            <View style={styles.chartSection}>
-              <Text style={styles.sectionTitle}>시간별 변화</Text>
-              <View style={styles.chartPlaceholder}>
-                <Text style={styles.chartText}>📊</Text>
-                <Text style={styles.chartDescription}>
+            <View style={staticStyles.chartSection}>
+              <Text style={staticStyles.sectionTitle}>시간별 변화</Text>
+              <View style={staticStyles.chartPlaceholder}>
+                <Text style={staticStyles.chartText}>📊</Text>
+                <Text style={staticStyles.chartDescription}>
                   차트 데이터: {reportData.chartData.length}개 데이터 포인트
                 </Text>
-                <Text style={styles.chartNote}>TODO: 실제 차트 라이브러리 연동 필요</Text>
+                <Text style={staticStyles.chartNote}>TODO: 실제 차트 라이브러리 연동 필요</Text>
               </View>
             </View>
 
-            <View style={styles.statusSection}>
-              <Text style={styles.sectionTitle}>상태 분석</Text>
-              <View style={styles.statusCard}>
-                <View style={styles.statusHeader}>
-                  <Text style={styles.statusTitle}>현재 상태</Text>
+            <View style={staticStyles.statusSection}>
+              <Text style={staticStyles.sectionTitle}>상태 분석</Text>
+              <View style={staticStyles.statusCard}>
+                <View style={staticStyles.statusHeader}>
+                  <Text style={staticStyles.statusTitle}>현재 상태</Text>
                   <View
                     style={[
-                      styles.statusBadge,
+                      staticStyles.statusBadge,
                       {
                         backgroundColor:
                           reportData.status === 'normal'
@@ -216,7 +213,7 @@ export default function ReportMetricScreen({ route }: ReportMetricScreenProps) {
                       },
                     ]}
                   >
-                    <Text style={styles.statusBadgeText}>
+                    <Text style={staticStyles.statusBadgeText}>
                       {reportData.status === 'normal'
                         ? '정상'
                         : reportData.status === 'warning'
@@ -227,7 +224,7 @@ export default function ReportMetricScreen({ route }: ReportMetricScreenProps) {
                     </Text>
                   </View>
                 </View>
-                <Text style={styles.statusDescription}>
+                <Text style={staticStyles.statusDescription}>
                   {reportData.status === 'normal'
                     ? '모든 수치가 정상 범위 내에 있습니다.'
                     : reportData.status === 'warning'
@@ -245,7 +242,7 @@ export default function ReportMetricScreen({ route }: ReportMetricScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const staticStyles = StyleSheet.create({
   chartDescription: {
     color: tokens.text.muted,
     fontSize: 14,

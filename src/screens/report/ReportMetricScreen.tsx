@@ -112,6 +112,138 @@ export default function ReportMetricScreen({ route }: ReportMetricScreenProps) {
     },
   });
 
+  const staticStyles = StyleSheet.create({
+    chartDescription: {
+      color: tokens.text.muted,
+      fontSize: 14,
+      marginBottom: 8,
+    },
+    chartNote: {
+      color: tokens.text.muted,
+      fontSize: 12,
+      fontStyle: 'italic',
+    },
+    chartPlaceholder: {
+      alignItems: 'center',
+      backgroundColor: tokens.surface.card,
+      borderRadius: 16,
+      elevation: 2,
+      padding: 40,
+      shadowColor: tokens.surface.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    },
+    chartSection: {
+      marginBottom: 24,
+      paddingHorizontal: 20,
+    },
+    chartText: {
+      fontSize: 48,
+      marginBottom: 16,
+    },
+    header: {
+      padding: 20,
+      paddingBottom: 16,
+    },
+    loadingContainer: {
+      alignItems: 'center',
+      flex: 1,
+      justifyContent: 'center',
+    },
+    scrollView: {
+      flex: 1,
+    },
+    sectionTitle: {
+      color: tokens.text.primary,
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginBottom: 16,
+    },
+    statusBadge: {
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+    },
+    statusBadgeText: {
+      color: tokens.text.inverse,
+      fontSize: 12,
+      fontWeight: 'bold',
+    },
+    statusCard: {
+      backgroundColor: tokens.surface.card,
+      borderRadius: 16,
+      elevation: 2,
+      padding: 20,
+      shadowColor: tokens.surface.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    },
+    statusDescription: {
+      color: tokens.text.muted,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    statusHeader: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 12,
+    },
+    statusSection: {
+      paddingBottom: 20,
+      paddingHorizontal: 20,
+    },
+    statusTitle: {
+      color: tokens.text.primary,
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    summaryGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    },
+    summarySection: {
+      marginBottom: 24,
+      paddingHorizontal: 20,
+    },
+    trendCard: {
+      backgroundColor: tokens.surface.card,
+      borderRadius: 16,
+      elevation: 2,
+      padding: 20,
+      shadowColor: tokens.surface.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    },
+    trendDescription: {
+      color: tokens.text.muted,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    trendHeader: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      marginBottom: 8,
+    },
+    trendIcon: {
+      fontSize: 20,
+      marginRight: 8,
+    },
+    trendSection: {
+      marginBottom: 24,
+      paddingHorizontal: 20,
+    },
+    trendText: {
+      color: tokens.text.primary,
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+  });
+
   if (isLoading) {
     return (
       <SafeAreaView style={dynamicStyles.container}>
@@ -241,135 +373,3 @@ export default function ReportMetricScreen({ route }: ReportMetricScreenProps) {
     </SafeAreaView>
   );
 }
-
-const staticStyles = StyleSheet.create({
-  chartDescription: {
-    color: tokens.text.muted,
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  chartNote: {
-    color: tokens.text.muted,
-    fontSize: 12,
-    fontStyle: 'italic',
-  },
-  chartPlaceholder: {
-    alignItems: 'center',
-    backgroundColor: tokens.surface.card,
-    borderRadius: 16,
-    elevation: 2,
-    padding: 40,
-    shadowColor: tokens.surface.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  chartSection: {
-    marginBottom: 24,
-    paddingHorizontal: 20,
-  },
-  chartText: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  header: {
-    padding: 20,
-    paddingBottom: 16,
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  sectionTitle: {
-    color: tokens.text.primary,
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  statusBadge: {
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
-  statusBadgeText: {
-    color: tokens.text.inverse,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  statusCard: {
-    backgroundColor: tokens.surface.card,
-    borderRadius: 16,
-    elevation: 2,
-    padding: 20,
-    shadowColor: tokens.surface.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  statusDescription: {
-    color: tokens.text.muted,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  statusHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  statusSection: {
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-  },
-  statusTitle: {
-    color: tokens.text.primary,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  summaryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  summarySection: {
-    marginBottom: 24,
-    paddingHorizontal: 20,
-  },
-  trendCard: {
-    backgroundColor: tokens.surface.card,
-    borderRadius: 16,
-    elevation: 2,
-    padding: 20,
-    shadowColor: tokens.surface.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  trendDescription: {
-    color: tokens.text.muted,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  trendHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  trendIcon: {
-    fontSize: 20,
-    marginRight: 8,
-  },
-  trendSection: {
-    marginBottom: 24,
-    paddingHorizontal: 20,
-  },
-  trendText: {
-    color: tokens.text.primary,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-});

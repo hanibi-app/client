@@ -71,7 +71,20 @@ export default function HanibiCharacter3D({
       // 실제 GLView 크기 가져오기
       const width = gl.drawingBufferWidth || size;
       const height = gl.drawingBufferHeight || size;
-      console.log('GLView 크기:', width, height);
+      
+      // 크기가 0이면 문제
+      if (width === 0 || height === 0) {
+        console.error('GLView 크기가 0입니다!', { width, height, size });
+        return;
+      }
+      
+      console.log('GLView 컨텍스트 정보:', {
+        drawingBufferWidth: gl.drawingBufferWidth,
+        drawingBufferHeight: gl.drawingBufferHeight,
+        size,
+        width,
+        height,
+      });
 
       // Camera 설정
       const camera = new THREE.PerspectiveCamera(75, width / height || 1, 0.1, 1000);
@@ -80,8 +93,9 @@ export default function HanibiCharacter3D({
 
       // Renderer 설정 - expo-three의 Renderer 사용
       const renderer = new Renderer({ gl });
+      // expo-three Renderer는 자동으로 크기를 설정하므로 명시적 설정 불필요
       rendererRef.current = renderer;
-      console.log('Renderer 생성 완료');
+      console.log('Renderer 생성 완료', { width, height });
 
       // 조명 설정
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -95,7 +109,12 @@ export default function HanibiCharacter3D({
       const character = createHanibiCharacter(color);
       scene.add(character);
       characterRef.current = character;
-      console.log('캐릭터 생성 완료, 색상:', color);
+      console.log('캐릭터 생성 완료', {
+        색상: color,
+        캐릭터위치: character.position,
+        캐릭터크기: character.scale,
+        카메라위치: camera.position,
+      });
 
       // 애니메이션 변수
       let frame = 0;
@@ -103,20 +122,26 @@ export default function HanibiCharacter3D({
 
       // 초기 렌더링 (캐릭터가 즉시 보이도록)
       try {
-        renderer.render(scene, camera);
-        gl.endFrameEXP();
-        console.log('초기 렌더링 완료');
+        // expo-three Renderer의 render 메서드 호출
+        if (renderer && typeof (renderer as any).render === 'function') {
+          (renderer as any).render(scene, camera);
+          gl.endFrameEXP();
+          console.log('초기 렌더링 완료');
+        } else {
+          console.warn('Renderer render 메서드를 찾을 수 없음');
+        }
       } catch (renderError) {
         console.error('초기 렌더링 오류:', renderError);
+        if (renderError instanceof Error) {
+          console.error('렌더링 오류 상세:', renderError.message, renderError.stack);
+        }
       }
 
       // 애니메이션 루프
       const animate = () => {
         if (!isRunning) return;
 
-        animationRef.current = requestAnimationFrame(animate);
-
-        frame += 0.02; // 애니메이션 속도
+        frame += 0.03; // 애니메이션 속도
 
         if (animated && character) {
           // 부드러운 회전
@@ -131,13 +156,23 @@ export default function HanibiCharacter3D({
         }
 
         if (renderer && scene && camera) {
-          renderer.render(scene, camera);
-          gl.endFrameEXP();
+          try {
+            if (typeof (renderer as any).render === 'function') {
+              (renderer as any).render(scene, camera);
+              gl.endFrameEXP();
+            }
+          } catch (error) {
+            console.error('애니메이션 렌더링 오류:', error);
+          }
         }
+
+        // 다음 프레임 예약
+        animationRef.current = requestAnimationFrame(animate);
       };
 
       // 애니메이션 시작
       animationRef.current = requestAnimationFrame(animate);
+      console.log('애니메이션 시작, animated:', animated);
 
       // Cleanup 함수 반환
       return () => {
@@ -156,6 +191,12 @@ export default function HanibiCharacter3D({
       }
     }
   };
+
+  // size가 0이면 렌더링하지 않음
+  if (size <= 0) {
+    console.warn('HanibiCharacter3D: size가 0 이하입니다', size);
+    return <View style={styles.container} testID={testID} />;
+  }
 
   return (
     <View 

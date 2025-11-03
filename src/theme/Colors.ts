@@ -1,5 +1,5 @@
 export const colors = {
-  primary: '#2563eb',
+  primary: '#90EE90', // 연두색 (한니비 메인 컬러)
   primaryForeground: '#ffffff',
   secondary: '#e5e7eb',
   secondaryForeground: '#111827',

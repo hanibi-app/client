@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl';
 import { Renderer } from 'expo-three';
@@ -17,7 +17,7 @@ export type HanibiCharacter3DProps = {
 // 레벨별 색상 정의
 const LEVEL_COLORS: Record<HanibiLevel, string> = {
   low: '#60a5fa', // 파란색 (쾌적)
-  medium: '#f59e0b', // 주황색 (보통)
+  medium: '#90EE90', // 연두색 (온보딩/기본)
   high: '#ef4444', // 빨간색 (주의)
 };
 
@@ -27,83 +27,158 @@ export default function HanibiCharacter3D({
   size = 200,
   testID = 'hanibi-character-3d',
 }: HanibiCharacter3DProps) {
-  const [color] = useState(LEVEL_COLORS[level]);
-
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const color = LEVEL_COLORS[level];
+  const animationRef = useRef<number | null>(null);
+  const rendererRef = useRef<any>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const characterRef = useRef<THREE.Group | null>(null);
 
   useEffect(() => {
-    // Cleanup timeout on unmount
+    // Cleanup animation on unmount
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      if (animationRef.current !== null) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
       }
     };
   }, []);
 
+  // level이 변경되면 색상 업데이트
+  useEffect(() => {
+    if (characterRef.current) {
+      // 캐릭터 색상 업데이트
+      const newColor = LEVEL_COLORS[level];
+      characterRef.current.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          if (child.material instanceof THREE.MeshPhongMaterial) {
+            child.material.color.set(newColor);
+          }
+        }
+      });
+    }
+  }, [level]);
+
   const onContextCreate = async (gl: ExpoWebGLRenderingContext) => {
-    // Scene 설정
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf0f0f0);
+    try {
+      console.log('GLView 컨텍스트 생성 시작, size:', size);
+      
+      // Scene 설정
+      const scene = new THREE.Scene();
+      scene.background = null; // 투명 배경
+      sceneRef.current = scene;
 
-    // Camera 설정
-    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-    camera.position.z = 5;
+      // 실제 GLView 크기 가져오기
+      const width = gl.drawingBufferWidth || size;
+      const height = gl.drawingBufferHeight || size;
+      console.log('GLView 크기:', width, height);
 
-    // Renderer 설정
-    const renderer = new Renderer({ gl });
-    renderer.setSize(size, size);
+      // Camera 설정
+      const camera = new THREE.PerspectiveCamera(75, width / height || 1, 0.1, 1000);
+      camera.position.z = 5;
+      cameraRef.current = camera;
 
-    // 조명 설정
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
+      // Renderer 설정 - expo-three의 Renderer 사용
+      const renderer = new Renderer({ gl });
+      rendererRef.current = renderer;
+      console.log('Renderer 생성 완료');
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(5, 10, 7.5);
-    scene.add(directionalLight);
+      // 조명 설정
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
 
-    // 한니비 캐릭터 만들기 (물방울 모양)
-    const character = createHanibiCharacter(color);
-    scene.add(character);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(5, 10, 7.5);
+      scene.add(directionalLight);
 
-    // 애니메이션 변수
-    let animationId: number | null = null;
-    let frame = 0;
+      // 한니비 캐릭터 만들기 (물방울 모양)
+      const character = createHanibiCharacter(color);
+      scene.add(character);
+      characterRef.current = character;
+      console.log('캐릭터 생성 완료, 색상:', color);
 
-    // 애니메이션 루프
-    const animate = () => {
-      animationId = requestAnimationFrame(animate);
+      // 애니메이션 변수
+      let frame = 0;
+      let isRunning = true;
 
-      if (animated) {
-        frame += 0.01;
-
-        // 부드러운 회전
-        character.rotation.y = Math.sin(frame) * 0.3;
-
-        // 호흡 효과 (크기 변화)
-        const breathScale = 1 + Math.sin(frame * 2) * 0.05;
-        character.scale.set(breathScale, breathScale, breathScale);
-
-        // 위아래 움직임
-        character.position.y = Math.sin(frame * 1.5) * 0.2;
+      // 초기 렌더링 (캐릭터가 즉시 보이도록)
+      try {
+        renderer.render(scene, camera);
+        gl.endFrameEXP();
+        console.log('초기 렌더링 완료');
+      } catch (renderError) {
+        console.error('초기 렌더링 오류:', renderError);
       }
 
-      renderer.render(scene, camera);
-      gl.endFrameEXP();
-    };
+      // 애니메이션 루프
+      const animate = () => {
+        if (!isRunning) return;
 
-    animate();
+        animationRef.current = requestAnimationFrame(animate);
 
-    // Cleanup
-    return () => {
-      if (animationId !== null) {
-        cancelAnimationFrame(animationId);
+        frame += 0.02; // 애니메이션 속도
+
+        if (animated && character) {
+          // 부드러운 회전
+          character.rotation.y = Math.sin(frame) * 0.3;
+
+          // 호흡 효과 (크기 변화)
+          const breathScale = 1 + Math.sin(frame * 2) * 0.05;
+          character.scale.set(breathScale, breathScale, breathScale);
+
+          // 위아래 움직임
+          character.position.y = Math.sin(frame * 1.5) * 0.2;
+        }
+
+        if (renderer && scene && camera) {
+          renderer.render(scene, camera);
+          gl.endFrameEXP();
+        }
+      };
+
+      // 애니메이션 시작
+      animationRef.current = requestAnimationFrame(animate);
+
+      // Cleanup 함수 반환
+      return () => {
+        isRunning = false;
+        if (animationRef.current !== null) {
+          cancelAnimationFrame(animationRef.current);
+          animationRef.current = null;
+        }
+      };
+    } catch (error) {
+      console.error('3D 캐릭터 렌더링 오류:', error);
+      // 에러를 더 자세히 로그
+      if (error instanceof Error) {
+        console.error('에러 메시지:', error.message);
+        console.error('에러 스택:', error.stack);
       }
-    };
+    }
   };
 
   return (
-    <View style={[styles.container, { width: size, height: size }]} testID={testID}>
-      <GLView style={{ width: size, height: size }} onContextCreate={onContextCreate} />
+    <View 
+      style={[
+        styles.container, 
+        { 
+          width: size, 
+          height: size,
+        }
+      ]} 
+      testID={testID}
+    >
+      <GLView
+        style={[
+          styles.glView, 
+          { 
+            width: size, 
+            height: size,
+          }
+        ]}
+        onContextCreate={onContextCreate}
+        msaaSamples={0}
+      />
     </View>
   );
 }
@@ -197,7 +272,12 @@ function createHanibiCharacter(color: string): THREE.Group {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
+    overflow: 'visible',
+  },
+  glView: {
+    backgroundColor: 'transparent',
   },
 });
 

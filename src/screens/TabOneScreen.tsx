@@ -7,12 +7,25 @@ import HanibiCharacter3D from '@/components/common/HanibiCharacter3D';
 import { HanibiLevel } from '@/constants/hanibiThresholds';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
+import { resetOnboarding } from '@/utils/resetOnboarding';
 
 export default function TabOneScreen() {
   const [level, setLevel] = useState<HanibiLevel>('medium');
 
   const handleLevelChange = (newLevel: HanibiLevel) => {
     setLevel(newLevel);
+  };
+
+  const handleResetOnboarding = async () => {
+    try {
+      await resetOnboarding();
+      // RootNavigator의 상태를 다시 체크하도록 트리거
+      if (typeof global !== 'undefined' && (global as any).refreshOnboardingStatus) {
+        (global as any).refreshOnboardingStatus();
+      }
+    } catch (error) {
+      console.error('온보딩 리셋 실패:', error);
+    }
   };
 
   return (
@@ -54,6 +67,16 @@ export default function TabOneScreen() {
           한니비는 물방울 모양의 귀여운 캐릭터입니다. {'\n'}
           환경 상태에 따라 색상이 변화하며, 부드럽게 움직입니다.
         </Text>
+      </View>
+
+      {/* 개발용: 온보딩 다시보기 */}
+      <View style={styles.devSection}>
+        <AppButton
+          label="🔄 온보딩 다시보기"
+          variant="ghost"
+          onPress={handleResetOnboarding}
+          size="sm"
+        />
       </View>
     </ScrollView>
   );
@@ -102,6 +125,12 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: spacing.sm,
     textAlign: 'center',
+  },
+  devSection: {
+    alignItems: 'center',
+    marginTop: spacing.xxl,
+    paddingTop: spacing.xl,
+    width: '100%',
   },
   info: {
     alignItems: 'center',

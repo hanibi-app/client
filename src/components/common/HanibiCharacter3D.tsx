@@ -61,8 +61,6 @@ export default function HanibiCharacter3D({
 
   const onContextCreate = async (gl: ExpoWebGLRenderingContext) => {
     try {
-      console.log('GLView 컨텍스트 생성 시작, size:', size);
-      
       // Scene 설정
       const scene = new THREE.Scene();
       scene.background = null; // 투명 배경
@@ -71,20 +69,6 @@ export default function HanibiCharacter3D({
       // 실제 GLView 크기 가져오기
       const width = gl.drawingBufferWidth || size;
       const height = gl.drawingBufferHeight || size;
-      
-      // 크기가 0이면 문제
-      if (width === 0 || height === 0) {
-        console.error('GLView 크기가 0입니다!', { width, height, size });
-        return;
-      }
-      
-      console.log('GLView 컨텍스트 정보:', {
-        drawingBufferWidth: gl.drawingBufferWidth,
-        drawingBufferHeight: gl.drawingBufferHeight,
-        size,
-        width,
-        height,
-      });
 
       // Camera 설정
       const camera = new THREE.PerspectiveCamera(75, width / height || 1, 0.1, 1000);
@@ -92,10 +76,25 @@ export default function HanibiCharacter3D({
       cameraRef.current = camera;
 
       // Renderer 설정 - expo-three의 Renderer 사용
-      const renderer = new Renderer({ gl });
-      // expo-three Renderer는 자동으로 크기를 설정하므로 명시적 설정 불필요
+      const renderer = new Renderer({ gl, width, height });
       rendererRef.current = renderer;
-      console.log('Renderer 생성 완료', { width, height });
+      
+      // 내부 WebGLRenderer에 접근하여 투명 배경 설정
+      const webGLRenderer = (renderer as any).renderer || renderer;
+      console.log('Renderer 설정:', {
+        renderer: !!renderer,
+        webGLRenderer: !!webGLRenderer,
+        hasRender: typeof webGLRenderer?.render === 'function',
+      });
+      
+      if (webGLRenderer) {
+        if (webGLRenderer.setClearColor) {
+          webGLRenderer.setClearColor(0x000000, 0);
+        }
+        if (webGLRenderer.autoClear !== undefined) {
+          webGLRenderer.autoClear = true;
+        }
+      }
 
       // 조명 설정
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -109,74 +108,95 @@ export default function HanibiCharacter3D({
       const character = createHanibiCharacter(color);
       scene.add(character);
       characterRef.current = character;
-      console.log('캐릭터 생성 완료', {
-        색상: color,
-        캐릭터위치: character.position,
-        캐릭터크기: character.scale,
-        카메라위치: camera.position,
+      
+      console.log('캐릭터 생성 완료:', {
+        character: !!character,
+        position: character.position,
+        scale: character.scale,
+        cameraZ: camera.position.z,
+        sceneChildren: scene.children.length,
       });
 
       // 애니메이션 변수
       let frame = 0;
       let isRunning = true;
+      let animationId: number | null = null;
 
       // 초기 렌더링 (캐릭터가 즉시 보이도록)
-      try {
-        // expo-three Renderer의 render 메서드 호출
-        if (renderer && typeof (renderer as any).render === 'function') {
-          (renderer as any).render(scene, camera);
+      if (webGLRenderer && typeof webGLRenderer.render === 'function') {
+        try {
+          webGLRenderer.render(scene, camera);
           gl.endFrameEXP();
-          console.log('초기 렌더링 완료');
-        } else {
-          console.warn('Renderer render 메서드를 찾을 수 없음');
+          console.log('✅ 초기 렌더링 완료');
+        } catch (err) {
+          console.error('❌ 초기 렌더링 실패:', err);
         }
-      } catch (renderError) {
-        console.error('초기 렌더링 오류:', renderError);
-        if (renderError instanceof Error) {
-          console.error('렌더링 오류 상세:', renderError.message, renderError.stack);
-        }
+      } else {
+        console.error('❌ webGLRenderer가 없거나 render 메서드가 없음');
       }
 
-      // 애니메이션 루프
+      // 애니메이션 루프 (animated prop을 클로저로 캡처)
+      const shouldAnimate = animated;
+      
+      let frameCount = 0;
       const animate = () => {
-        if (!isRunning) return;
-
-        frame += 0.03; // 애니메이션 속도
-
-        if (animated && character) {
-          // 부드러운 회전
-          character.rotation.y = Math.sin(frame) * 0.3;
-
-          // 호흡 효과 (크기 변화)
-          const breathScale = 1 + Math.sin(frame * 2) * 0.05;
-          character.scale.set(breathScale, breathScale, breathScale);
-
-          // 위아래 움직임
-          character.position.y = Math.sin(frame * 1.5) * 0.2;
+        if (!isRunning) {
+          return;
         }
 
-        if (renderer && scene && camera) {
+        // 프레임 기반 애니메이션 (더 빠르게)
+        frame += 0.03;
+
+        // 애니메이션 적용 (명확하게 보이도록 크게)
+        if (character && shouldAnimate) {
+          // 부드러운 회전 (더 크게)
+          character.rotation.y = Math.sin(frame * 0.5) * 0.3;
+
+          // 호흡 효과 (크기 변화) - 더 크게
+          const breathScale = 1 + Math.sin(frame * 1.5) * 0.15;
+          character.scale.set(breathScale, breathScale, breathScale);
+
+          // 위아래 움직임 (둥실둥실 떠있는 효과) - 더 크게
+          character.position.y = Math.sin(frame * 1.2) * 0.5;
+        }
+
+        // 항상 렌더링 (매 프레임마다 반드시 실행)
+        if (webGLRenderer && typeof webGLRenderer.render === 'function' && scene && camera) {
           try {
-            if (typeof (renderer as any).render === 'function') {
-              (renderer as any).render(scene, camera);
-              gl.endFrameEXP();
-            }
-          } catch (error) {
-            console.error('애니메이션 렌더링 오류:', error);
+            webGLRenderer.render(scene, camera);
+            gl.endFrameEXP();
+          } catch (err) {
+            console.error('렌더링 오류:', err);
           }
         }
 
+        // 애니메이션 실행 확인 (10초마다 한 번씩만 로그)
+        frameCount++;
+        if (frameCount % 600 === 0) {
+          console.log('🔄 애니메이션 실행 중:', {
+            frame: Math.floor(frame),
+            rotation: character?.rotation.y,
+            positionY: character?.position.y,
+            scale: character?.scale.x,
+          });
+        }
+
         // 다음 프레임 예약
-        animationRef.current = requestAnimationFrame(animate);
+        animationId = requestAnimationFrame(animate);
+        animationRef.current = animationId;
       };
 
       // 애니메이션 시작
-      animationRef.current = requestAnimationFrame(animate);
-      console.log('애니메이션 시작, animated:', animated);
+      animationId = requestAnimationFrame(animate);
+      animationRef.current = animationId;
 
       // Cleanup 함수 반환
       return () => {
         isRunning = false;
+        if (animationId !== null) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
         if (animationRef.current !== null) {
           cancelAnimationFrame(animationRef.current);
           animationRef.current = null;
@@ -184,11 +204,6 @@ export default function HanibiCharacter3D({
       };
     } catch (error) {
       console.error('3D 캐릭터 렌더링 오류:', error);
-      // 에러를 더 자세히 로그
-      if (error instanceof Error) {
-        console.error('에러 메시지:', error.message);
-        console.error('에러 스택:', error.stack);
-      }
     }
   };
 

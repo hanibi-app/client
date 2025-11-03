@@ -1,15 +1,17 @@
-import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React from 'react';
 
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { ONBOARDING_ROUTES } from '@/constants/routes';
 import LoginScreen from '@/screens/LoginScreen';
 import NotificationRequestScreen from '@/screens/NotificationRequestScreen';
+import PrecautionsScreen from '@/screens/PrecautionsScreen';
 
 export type OnboardingStackParamList = {
   [ONBOARDING_ROUTES.LOGIN]: undefined;
   [ONBOARDING_ROUTES.NOTIFICATION_REQUEST]: undefined;
+  [ONBOARDING_ROUTES.PRECAUTIONS]: undefined;
 };
 
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();
@@ -19,25 +21,21 @@ export type OnboardingNavigatorProps = {
 };
 
 export default function OnboardingNavigator({ onComplete }: OnboardingNavigatorProps) {
-  const navigation = useNavigation<any>();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  const handleKakaoLogin = () => {
-    // 로그인 성공 후 다음 화면으로 이동
-    setIsLoggedIn(true);
-    navigation.navigate(ONBOARDING_ROUTES.NOTIFICATION_REQUEST as never);
+  const handleComplete = () => {
+    // 온보딩 완료 후 홈으로 이동
+    console.log('온보딩 완료 - 홈으로 이동');
+    onComplete?.();
   };
 
   const handleEnableNotifications = () => {
-    // 알림 활성화 후 메인 화면으로 이동
-    console.log('알림 활성화 완료');
-    onComplete?.();
+    // 알림 활성화 후 주의사항 화면으로 이동 (이미 NotificationRequestScreen에서 처리)
+    console.log('알림 활성화');
   };
 
   const handleSkip = () => {
     // 알림 건너뛰기 후 메인 화면으로 이동
     console.log('알림 건너뛰기');
-    onComplete?.();
+    handleComplete();
   };
 
   return (
@@ -48,14 +46,30 @@ export default function OnboardingNavigator({ onComplete }: OnboardingNavigatorP
       initialRouteName={ONBOARDING_ROUTES.LOGIN}
     >
       <Stack.Screen name={ONBOARDING_ROUTES.LOGIN}>
-        {(props) => <LoginScreen {...props} onKakaoLogin={handleKakaoLogin} />}
+        {(props: NativeStackScreenProps<OnboardingStackParamList, typeof ONBOARDING_ROUTES.LOGIN>) => (
+          <LoginScreen
+            {...props}
+            onKakaoLogin={() => {
+              props.navigation.navigate(ONBOARDING_ROUTES.NOTIFICATION_REQUEST);
+            }}
+          />
+        )}
       </Stack.Screen>
       <Stack.Screen name={ONBOARDING_ROUTES.NOTIFICATION_REQUEST}>
         {(props) => (
           <NotificationRequestScreen
             {...props}
+            navigation={props.navigation}
             onEnableNotifications={handleEnableNotifications}
             onSkip={handleSkip}
+          />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name={ONBOARDING_ROUTES.PRECAUTIONS}>
+        {(props) => (
+          <PrecautionsScreen
+            {...props}
+            onComplete={handleComplete}
           />
         )}
       </Stack.Screen>

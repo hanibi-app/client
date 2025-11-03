@@ -16,6 +16,7 @@ export const ROOT_ROUTES = {
 export const ONBOARDING_ROUTES = {
   LOGIN: 'Login',
   NOTIFICATION_REQUEST: 'NotificationRequest',
+  PRECAUTIONS: 'Precautions',
 } as const;
 
 // Tabs Navigator Routes

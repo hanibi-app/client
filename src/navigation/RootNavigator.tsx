@@ -21,10 +21,11 @@ const ONBOARDING_COMPLETE_KEY = '@hanibi:onboarding_complete';
 export default function RootNavigator() {
   const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     checkOnboardingStatus();
-  }, []);
+  }, [refreshKey]);
 
   const checkOnboardingStatus = async () => {
     try {
@@ -46,6 +47,16 @@ export default function RootNavigator() {
       console.error('온보딩 완료 저장 오류:', error);
     }
   };
+
+  // 리셋 후 상태 재확인을 위한 함수 (외부에서 호출 가능하도록)
+  const refreshOnboardingStatus = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  // 글로벌 객체에 함수 노출 (개발용)
+  if (typeof global !== 'undefined') {
+    (global as any).refreshOnboardingStatus = refreshOnboardingStatus;
+  }
 
   if (isLoading) {
     // 로딩 중에는 아무것도 표시하지 않음 (Splash Screen이 처리)

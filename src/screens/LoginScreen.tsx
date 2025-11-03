@@ -41,6 +41,7 @@ export default function LoginScreen({ onKakaoLogin }: LoginScreenProps) {
         <View style={styles.titleContainer}>
           <Text style={styles.title}>지금부터 음식물 쓰레기</Text>
           <Text style={styles.titleHighlight}>고민 STOP!</Text>
+          <Text style={styles.subtitle}>한니비와 함께 음식물 쓰레기 고민 해결해 봐요</Text>
         </View>
         
         <View style={characterContainerStyle}>
@@ -62,13 +63,13 @@ export default function LoginScreen({ onKakaoLogin }: LoginScreenProps) {
 
 const styles = StyleSheet.create({
   buttonContainer: {
-    bottom: 40,
+    bottom: 100,
     paddingHorizontal: spacing.xl,
     position: 'absolute',
     width: '100%',
   },
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background,
     flex: 1,
   },
   content: {
@@ -77,7 +78,7 @@ const styles = StyleSheet.create({
   },
   kakaoButton: {
     alignItems: 'center',
-    backgroundColor: '#FEE500',
+    backgroundColor: colors.kakao,
     borderRadius: 12,
     flexDirection: 'row',
     justifyContent: 'center',
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   kakaoButtonText: {
-    color: '#000000',
+    color: colors.black,
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
     marginLeft: spacing.sm,
@@ -101,6 +102,12 @@ const styles = StyleSheet.create({
   kakaoIconText: {
     fontSize: 20,
   },
+  subtitle: {
+    color: colors.mutedText,
+    fontSize: typography.sizes.sm,
+    marginTop: spacing.lg,
+    textAlign: 'center',
+  },
   title: {
     color: colors.text,
     fontSize: 28,
@@ -110,7 +117,7 @@ const styles = StyleSheet.create({
   titleContainer: {
     alignItems: 'center',
     position: 'absolute',
-    top: 80,
+    top: 150,
     width: '100%',
     zIndex: 1,
   },

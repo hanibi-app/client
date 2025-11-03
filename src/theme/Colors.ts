@@ -12,6 +12,9 @@ export const colors = {
   text: '#111827',
   mutedText: '#6b7280',
   background: '#ffffff',
+  kakao: '#FEE500', // 카카오 로그인 버튼 색상
+  white: '#ffffff',
+  black: '#000000',
   hanibi: {
     temp: {
       low: '#60a5fa',

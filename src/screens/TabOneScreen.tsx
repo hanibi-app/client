@@ -1,31 +1,126 @@
-import { StyleSheet } from 'react-native';
+import { useState } from 'react';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+
+import AppButton from '@/components/common/AppButton';
+import HanibiCharacter3D from '@/components/common/HanibiCharacter3D';
+import { HanibiLevel } from '@/constants/hanibiThresholds';
+import { spacing } from '@/theme/spacing';
+import { typography } from '@/theme/typography';
 
 export default function TabOneScreen() {
+  const [level, setLevel] = useState<HanibiLevel>('medium');
+
+  const handleLevelChange = (newLevel: HanibiLevel) => {
+    setLevel(newLevel);
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="screens/TabOneScreen.tsx" />
-    </View>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>한니비 3D 캐릭터</Text>
+      <Text style={styles.subtitle}>온습도 상태에 따라 캐릭터가 변합니다</Text>
+
+      <View style={styles.characterContainer}>
+        <HanibiCharacter3D level={level} animated={true} size={300} />
+      </View>
+
+      <View style={styles.controls}>
+        <Text style={styles.controlLabel}>레벨 변경:</Text>
+        <View style={styles.buttonRow}>
+          <AppButton
+            label="쾌적 (Low)"
+            variant={level === 'low' ? 'primary' : 'secondary'}
+            onPress={() => handleLevelChange('low')}
+            size="sm"
+          />
+          <AppButton
+            label="보통 (Medium)"
+            variant={level === 'medium' ? 'primary' : 'secondary'}
+            onPress={() => handleLevelChange('medium')}
+            size="sm"
+          />
+          <AppButton
+            label="주의 (High)"
+            variant={level === 'high' ? 'primary' : 'secondary'}
+            onPress={() => handleLevelChange('high')}
+            size="sm"
+          />
+        </View>
+      </View>
+
+      <View style={styles.info}>
+        <Text style={styles.infoText}>🎨 현재 상태: {getLevelText(level)}</Text>
+        <Text style={styles.description}>
+          한니비는 물방울 모양의 귀여운 캐릭터입니다. {'\n'}
+          환경 상태에 따라 색상이 변화하며, 부드럽게 움직입니다.
+        </Text>
+      </View>
+    </ScrollView>
   );
 }
 
+function getLevelText(level: HanibiLevel): string {
+  switch (level) {
+    case 'low':
+      return '쾌적 😊 (파란색)';
+    case 'medium':
+      return '보통 😐 (주황색)';
+    case 'high':
+      return '주의 😰 (빨간색)';
+  }
+}
+
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    flex: 1,
+  buttonRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
     justifyContent: 'center',
   },
-  separator: {
-    height: 1,
-    marginVertical: 30,
-    width: '80%',
+  characterContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: spacing.xl,
+  },
+  container: {
+    alignItems: 'center',
+    flexGrow: 1,
+    padding: spacing.lg,
+  },
+  controlLabel: {
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.medium,
+    marginBottom: spacing.sm,
+  },
+  controls: {
+    alignItems: 'center',
+    marginTop: spacing.lg,
+    width: '100%',
+  },
+  description: {
+    fontSize: typography.sizes.sm,
+    lineHeight: 20,
+    marginTop: spacing.sm,
+    textAlign: 'center',
+  },
+  info: {
+    alignItems: 'center',
+    marginTop: spacing.xl,
+    paddingHorizontal: spacing.lg,
+  },
+  infoText: {
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.bold,
+  },
+  subtitle: {
+    color: '#666',
+    fontSize: typography.sizes.sm,
+    marginTop: spacing.sm,
+    textAlign: 'center',
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: typography.sizes.xxl,
+    fontWeight: typography.weights.bold,
+    marginTop: spacing.lg,
   },
 });

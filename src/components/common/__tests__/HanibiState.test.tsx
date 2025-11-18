@@ -6,8 +6,8 @@ import HanibiState from '@/components/common/HanibiState';
 
 describe('HanibiState', () => {
   it('renders with correct unit for temp', () => {
-    const { getByA11yLabel } = render(<HanibiState metric="temp" value={23} progress={0.5} />);
-    expect(getByA11yLabel(/현재 온도 23°C/)).toBeTruthy();
+    const { getByLabelText } = render(<HanibiState metric="temp" value={23} progress={0.5} />);
+    expect(getByLabelText(/현재 온도 23°C/)).toBeTruthy();
   });
 
   it('clamps progress within 0..1', () => {

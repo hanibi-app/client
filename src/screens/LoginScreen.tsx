@@ -1,26 +1,27 @@
 import React from 'react';
 
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
-import HanibiCharacter3D from '@/components/common/HanibiCharacter3D';
+import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
+import { RootStackParamList } from '@/navigation/types';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 
-export type LoginScreenProps = {
-  onKakaoLogin?: () => void;
-};
+type LoginScreenProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
-export default function LoginScreen({ onKakaoLogin }: LoginScreenProps) {
+export default function LoginScreen({ navigation }: LoginScreenProps) {
   const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
-  
+
   // 화면 중앙에 완전히 크게 표시 - 적절한 크기로 설정
   const CHARACTER_SIZE = Math.floor(Math.min(SCREEN_WIDTH * 0.9, SCREEN_HEIGHT * 0.7));
-  
+
   const handleKakaoLogin = () => {
     // TODO: 카카오 로그인 구현
     console.log('카카오 로그인 클릭');
-    onKakaoLogin?.();
+    navigation.navigate('NotificationRequest');
   };
 
   const characterContainerStyle = {
@@ -43,15 +44,15 @@ export default function LoginScreen({ onKakaoLogin }: LoginScreenProps) {
           <Text style={styles.titleHighlight}>고민 STOP!</Text>
           <Text style={styles.subtitle}>한니비와 함께 음식물 쓰레기 고민 해결해 봐요</Text>
         </View>
-        
+
         <View style={characterContainerStyle}>
-          <HanibiCharacter3D level="medium" animated={true} size={CHARACTER_SIZE} />
+          <HanibiCharacter2D level="medium" animated={true} size={CHARACTER_SIZE} />
         </View>
 
         <View style={styles.buttonContainer}>
           <Pressable onPress={handleKakaoLogin} style={styles.kakaoButton}>
             <View style={styles.kakaoIconPlaceholder}>
-              <Text style={styles.kakaoIconText}>💬</Text>
+              <KakaoLogoIcon />
             </View>
             <Text style={styles.kakaoButtonText}>카카오로 시작하기</Text>
           </Pressable>
@@ -99,9 +100,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 24,
   },
-  kakaoIconText: {
-    fontSize: 20,
-  },
   subtitle: {
     color: colors.mutedText,
     fontSize: typography.sizes.sm,
@@ -130,3 +128,13 @@ const styles = StyleSheet.create({
   },
 });
 
+function KakaoLogoIcon() {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
+      <Path
+        d="M11 20.625C17.0751 20.625 22 16.3157 22 11C22 5.68426 17.0751 1.375 11 1.375C4.92487 1.375 0 5.68426 0 11C0 13.4212 1.02171 15.6336 2.70845 17.3251C2.56821 18.7899 2.09219 20.4024 1.57748 21.5684C1.49604 21.7528 1.64863 21.9604 1.84782 21.9289C5.05613 21.4223 6.9548 20.6185 7.77265 20.2041C8.79323 20.4777 9.87696 20.625 11 20.625Z"
+        fill="#040404"
+      />
+    </Svg>
+  );
+}

@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { ONBOARDING_ROUTES } from '@/constants/routes';
@@ -27,17 +26,6 @@ export default function OnboardingNavigator({ onComplete }: OnboardingNavigatorP
     onComplete?.();
   };
 
-  const handleEnableNotifications = () => {
-    // 알림 활성화 후 주의사항 화면으로 이동 (이미 NotificationRequestScreen에서 처리)
-    console.log('알림 활성화');
-  };
-
-  const handleSkip = () => {
-    // 알림 건너뛰기 후 메인 화면으로 이동
-    console.log('알림 건너뛰기');
-    handleComplete();
-  };
-
   return (
     <Stack.Navigator
       screenOptions={{
@@ -45,35 +33,14 @@ export default function OnboardingNavigator({ onComplete }: OnboardingNavigatorP
       }}
       initialRouteName={ONBOARDING_ROUTES.LOGIN}
     >
-      <Stack.Screen name={ONBOARDING_ROUTES.LOGIN}>
-        {(props: NativeStackScreenProps<OnboardingStackParamList, typeof ONBOARDING_ROUTES.LOGIN>) => (
-          <LoginScreen
-            {...props}
-            onKakaoLogin={() => {
-              props.navigation.navigate(ONBOARDING_ROUTES.NOTIFICATION_REQUEST);
-            }}
-          />
-        )}
-      </Stack.Screen>
-      <Stack.Screen name={ONBOARDING_ROUTES.NOTIFICATION_REQUEST}>
-        {(props) => (
-          <NotificationRequestScreen
-            {...props}
-            navigation={props.navigation}
-            onEnableNotifications={handleEnableNotifications}
-            onSkip={handleSkip}
-          />
-        )}
-      </Stack.Screen>
+      <Stack.Screen name={ONBOARDING_ROUTES.LOGIN} component={LoginScreen} />
+      <Stack.Screen
+        name={ONBOARDING_ROUTES.NOTIFICATION_REQUEST}
+        component={NotificationRequestScreen}
+      />
       <Stack.Screen name={ONBOARDING_ROUTES.PRECAUTIONS}>
-        {(props) => (
-          <PrecautionsScreen
-            {...props}
-            onComplete={handleComplete}
-          />
-        )}
+        {(props) => <PrecautionsScreen {...props} onComplete={handleComplete} />}
       </Stack.Screen>
     </Stack.Navigator>
   );
 }
-

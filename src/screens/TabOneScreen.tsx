@@ -1,16 +1,21 @@
 import { useState } from 'react';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CommonActions, useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import AppButton from '@/components/common/AppButton';
-import HanibiCharacter3D from '@/components/common/HanibiCharacter3D';
+import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
 import { HanibiLevel } from '@/constants/hanibiThresholds';
+import { useAppState } from '@/state/useAppState';
+import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
-import { resetOnboarding } from '@/utils/resetOnboarding';
 
 export default function TabOneScreen() {
   const [level, setLevel] = useState<HanibiLevel>('medium');
+  const navigation = useNavigation();
+  const { setHasOnboarded } = useAppState();
 
   const handleLevelChange = (newLevel: HanibiLevel) => {
     setLevel(newLevel);
@@ -18,11 +23,14 @@ export default function TabOneScreen() {
 
   const handleResetOnboarding = async () => {
     try {
-      await resetOnboarding();
-      // RootNavigator의 상태를 다시 체크하도록 트리거
-      if (typeof global !== 'undefined' && (global as any).refreshOnboardingStatus) {
-        (global as any).refreshOnboardingStatus();
-      }
+      await AsyncStorage.removeItem('@hanibi:onboarding_complete');
+      setHasOnboarded(false);
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Onboarding' as never }],
+        }),
+      );
     } catch (error) {
       console.error('온보딩 리셋 실패:', error);
     }
@@ -30,11 +38,11 @@ export default function TabOneScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>한니비 3D 캐릭터</Text>
+      <Text style={styles.title}>한니비 캐릭터</Text>
       <Text style={styles.subtitle}>온습도 상태에 따라 캐릭터가 변합니다</Text>
 
       <View style={styles.characterContainer}>
-        <HanibiCharacter3D level={level} animated={true} size={300} />
+        <HanibiCharacter2D level={level} animated={true} size={300} />
       </View>
 
       <View style={styles.controls}>
@@ -142,7 +150,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.bold,
   },
   subtitle: {
-    color: '#666',
+    color: colors.mutedText,
     fontSize: typography.sizes.sm,
     marginTop: spacing.sm,
     textAlign: 'center',

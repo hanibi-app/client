@@ -1,27 +1,26 @@
 import React, { useState } from 'react';
 
+import { CommonActions } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import HanibiCharacter3D from '@/components/common/HanibiCharacter3D';
-import { ONBOARDING_ROUTES } from '@/constants/routes';
+import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
+import OutlinedButton from '@/components/common/OutlinedButton';
+import ScreenHeader from '@/components/common/ScreenHeader';
+import { RootStackParamList } from '@/navigation/types';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 
-import { OnboardingStackParamList } from '@/navigation/OnboardingNavigator';
-
-export type PrecautionsScreenProps = NativeStackScreenProps<OnboardingStackParamList, typeof ONBOARDING_ROUTES.PRECAUTIONS> & {
+type PrecautionsScreenProps = NativeStackScreenProps<RootStackParamList, 'CautionSlides'> & {
   onComplete?: () => void;
 };
 
-type PrecautionsPage = {
+const PRECAUTIONS_PAGES: Array<{
   title: string;
   description: string[];
-  characterDescription: string;
-};
-
-const PRECAUTIONS_PAGES: PrecautionsPage[] = [
+}> = [
   {
     title: '이런 음식은 먹을 수 없어요',
     description: [
@@ -32,7 +31,6 @@ const PRECAUTIONS_PAGES: PrecautionsPage[] = [
       '소화되지 않으니 넣지 말아주세요.',
       '(임시 문구, 변경 해야함)',
     ],
-    characterDescription: '배아파하는 디자인',
   },
   {
     title: '냄새가 날 땐 이렇게 해 주세요',
@@ -43,7 +41,6 @@ const PRECAUTIONS_PAGES: PrecautionsPage[] = [
       '냄새가 줄어들어요.',
       '(임시 문구, 변경 해야함)',
     ],
-    characterDescription: '꼬질꼬질 디자인',
   },
   {
     title: '원격 조종은 이렇게 해 주세요',
@@ -56,23 +53,31 @@ const PRECAUTIONS_PAGES: PrecautionsPage[] = [
       '지금 제 소화 상태와 점수를 확인하실 수 있어요.',
       '(임시 문구, 변경 해야함)',
     ],
-    characterDescription: '세 번째 디자인 필요',
   },
 ];
+
+const HORIZONTAL_PADDING = spacing.xl;
 
 export default function PrecautionsScreen({ navigation, onComplete }: PrecautionsScreenProps) {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const [currentPage, setCurrentPage] = useState(0);
+  const insets = useSafeAreaInsets();
 
-  const CARD_WIDTH = SCREEN_WIDTH - spacing.xl * 2;
+  const CARD_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING * 2;
   const CHARACTER_SIZE = Math.floor(CARD_WIDTH * 0.6);
 
   const handleNext = () => {
     if (currentPage < PRECAUTIONS_PAGES.length - 1) {
       setCurrentPage(currentPage + 1);
     } else {
-      // 마지막 페이지에서 완료
+      // 마지막 페이지에서 완료 - MainTabs로 reset
       onComplete?.();
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'MainTabs' as never }],
+        }),
+      );
     }
   };
 
@@ -90,22 +95,39 @@ export default function PrecautionsScreen({ navigation, onComplete }: Precaution
 
   return (
     <View style={styles.container}>
-      {/* 헤더 */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>주의사항</Text>
+      <ScreenHeader
+        title="주의 사항"
+        containerStyle={[styles.header, { paddingTop: insets.top + spacing.sm }]}
+        titleStyle={styles.headerTitle}
+      />
+
+      <View style={styles.card}>
+        <View style={styles.characterWrapper}>
+          <View
+            style={[
+              styles.characterCircle,
+              { width: CHARACTER_SIZE, height: CHARACTER_SIZE, borderRadius: CHARACTER_SIZE / 2 },
+            ]}
+          >
+            <HanibiCharacter2D level="medium" animated size={Math.floor(CHARACTER_SIZE * 0.65)} />
+          </View>
+        </View>
       </View>
 
-      <View style={styles.cardContainer}>
-        <View style={styles.card}>
-        {/* 캐릭터 컨테이너 */}
-        <View style={[styles.characterContainer, { width: CHARACTER_SIZE, height: CHARACTER_SIZE }]}>
-          <HanibiCharacter3D level="medium" animated={true} size={CHARACTER_SIZE} />
-        </View>
+      <View style={styles.pageIndicator}>
+        {PRECAUTIONS_PAGES.map((_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.indicatorDot,
+              index === currentPage ? styles.indicatorDotActive : styles.indicatorDotInactive,
+            ]}
+          />
+        ))}
+      </View>
 
-        {/* 주요 내용 제목 */}
+      <View style={styles.textSection}>
         <Text style={styles.contentTitle}>{currentPageData.title}</Text>
-
-        {/* 상세 설명 */}
         <View style={styles.descriptionContainer}>
           {currentPageData.description.map((line, index) => (
             <Text key={index} style={styles.descriptionText}>
@@ -113,108 +135,65 @@ export default function PrecautionsScreen({ navigation, onComplete }: Precaution
             </Text>
           ))}
         </View>
-
-        {/* 페이지 인디케이터 */}
-        <View style={styles.pageIndicator}>
-          {PRECAUTIONS_PAGES.map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.indicatorDot,
-                index === currentPage ? styles.indicatorDotActive : styles.indicatorDotInactive,
-              ]}
-            />
-          ))}
-        </View>
-        </View>
+      </View>
 
       {/* 하단 버튼 (카드 밖) */}
       <View style={styles.buttonContainer}>
-        <Pressable onPress={handleBack} style={styles.backButton}>
-          <Text style={styles.backButtonText}>
-            {currentPage === 0 ? '뒤로 가기' : '이전'}
-          </Text>
-        </Pressable>
-        <Pressable onPress={handleNext} style={styles.nextButton}>
-          <Text style={styles.nextButtonText}>
-            {isLastPage ? '시작하기' : '다음'}
-          </Text>
-          {!isLastPage && (
+        <View style={styles.buttonRow}>
+          <OutlinedButton label={'뒤로 가기'} onPress={handleBack} style={styles.backButton} />
+          <Pressable
+            onPress={handleNext}
+            style={styles.nextButton}
+            accessibilityRole="button"
+            accessibilityLabel={isLastPage ? '시작하기' : '다음'}
+          >
             <Text style={styles.nextButtonIcon}>→</Text>
-          )}
-        </Pressable>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  backButtonText: {
-    color: colors.text,
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.medium,
-  },
   backButton: {
-    alignItems: 'center',
-    backgroundColor: '#e5e7eb',
-    borderRadius: 12,
-    flex: 1,
-    justifyContent: 'center',
-    marginRight: spacing.md,
-    minHeight: 48,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
+    minWidth: 120,
   },
   buttonContainer: {
-    bottom: spacing.xxl,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
+    alignItems: 'stretch',
+    bottom: spacing.xxxl,
+    paddingHorizontal: HORIZONTAL_PADDING,
     position: 'absolute',
     width: '100%',
   },
+  buttonRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    height: 56,
+    justifyContent: 'space-between',
+  },
   card: {
-    backgroundColor: colors.background,
-    borderRadius: 20,
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    backgroundColor: colors.gray50,
+    borderRadius: 24,
+    marginHorizontal: HORIZONTAL_PADDING,
+    marginTop: spacing.xl,
     paddingBottom: spacing.xl,
     paddingTop: spacing.xl,
-    shadowColor: '#000',
-    shadowOffset: {
-      height: 4,
-      width: 0,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    width: '100%',
   },
-  cardContainer: {
+  characterCircle: {
     alignItems: 'center',
-    flex: 1,
+    backgroundColor: colors.transparent,
     justifyContent: 'center',
-    marginBottom: 120,
-    width: '100%',
   },
-  header: {
+  characterWrapper: {
     alignItems: 'center',
-    marginBottom: spacing.lg,
-    paddingTop: spacing.xl,
-    width: '100%',
-  },
-  headerTitle: {
-    color: colors.mutedText,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.regular,
-  },
-  characterContainer: {
-    alignItems: 'center',
-    alignSelf: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.lg,
   },
   container: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
     flex: 1,
-    paddingHorizontal: spacing.xl,
   },
   contentTitle: {
     color: colors.text,
@@ -226,7 +205,8 @@ const styles = StyleSheet.create({
   },
   descriptionContainer: {
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    paddingHorizontal: HORIZONTAL_PADDING,
   },
   descriptionText: {
     color: colors.mutedText,
@@ -234,6 +214,17 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: spacing.xs,
     textAlign: 'center',
+  },
+  header: {
+    alignItems: 'center',
+    paddingBottom: spacing.md,
+    paddingHorizontal: HORIZONTAL_PADDING,
+    width: '100%',
+  },
+  headerTitle: {
+    color: colors.text,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.bold,
   },
   indicatorDot: {
     borderRadius: 4,
@@ -245,34 +236,31 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   indicatorDotInactive: {
-    backgroundColor: '#d1d5db',
+    backgroundColor: colors.gray100,
   },
   nextButton: {
     alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    flex: 1,
-    flexDirection: 'row',
+    backgroundColor: colors.accent,
+    borderRadius: 999,
+    height: 56,
     justifyContent: 'center',
-    minHeight: 48,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
+    width: 56,
   },
   nextButtonIcon: {
-    color: colors.primaryForeground,
-    fontSize: typography.sizes.lg,
-    marginLeft: spacing.sm,
-  },
-  nextButtonText: {
-    color: colors.primaryForeground,
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.medium,
+    color: colors.white,
+    fontSize: typography.sizes.lg + 15,
+    fontWeight: typography.weights.bold,
   },
   pageIndicator: {
+    alignSelf: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
+    marginTop: spacing.md,
+  },
+  textSection: {
+    alignItems: 'center',
+    marginHorizontal: HORIZONTAL_PADDING,
     marginTop: spacing.xl,
   },
 });
-

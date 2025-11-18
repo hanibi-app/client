@@ -1,5 +1,5 @@
 export const colors = {
-  primary: '#90EE90', // 연두색 (한니비 메인 컬러)
+  primary: '#6BE092', // 메인 그린 (한니비 메인 컬러)
   primaryForeground: '#ffffff',
   secondary: '#e5e7eb',
   secondaryForeground: '#111827',
@@ -15,6 +15,16 @@ export const colors = {
   kakao: '#FEE500', // 카카오 로그인 버튼 색상
   white: '#ffffff',
   black: '#000000',
+  accent: '#40EA87',
+  transparent: 'transparent',
+  blushPink: '#ff9999',
+  gray50: '#f5f5f5',
+  gray75: '#f3f4f6',
+  gray100: '#d1d5db',
+  cream: '#ffe5b4',
+  softCream: '#ffffee',
+  brightYellow: '#ffff00',
+  notifyBackground: '#F4F6F5',
   hanibi: {
     temp: {
       low: '#60a5fa',

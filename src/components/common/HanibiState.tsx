@@ -92,9 +92,9 @@ export default function HanibiState({
             strokeWidth={strokeWidth}
             strokeLinecap="round"
             strokeDasharray={`${circumference} ${circumference}`}
-            strokeDashoffset={strokeDashoffset as unknown as number}
+            strokeDashoffset={strokeDashoffset}
             fill="none"
-            rotation="-90"
+            rotation={-90}
             originX={size / 2}
             originY={size / 2}
           />
@@ -112,9 +112,7 @@ export default function HanibiState({
   );
 }
 
-const AnimatedCircle = Animated.createAnimatedComponent(
-  Circle as unknown as React.ComponentType<{ cx: number; cy: number; r: number; fill: string }>,
-);
+const AnimatedCircle = Animated.createAnimatedComponent<typeof Circle>(Circle);
 
 const styles = StyleSheet.create({
   center: {

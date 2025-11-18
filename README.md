@@ -1,6 +1,6 @@
 # React Native Client
 
-> Expo + React Native + React Navigation 기반 모바일 애플리케이션
+> Expo + React Native + React Navigation 기반 모바일 애플리케이션 (Android/iOS 통합 개발)
 
 ## 🚀 시작하기
 

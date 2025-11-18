@@ -1,6 +1,14 @@
 import React from 'react';
 
-import { ActivityIndicator, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+} from 'react-native';
 
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
@@ -16,11 +24,13 @@ export type AppButtonProps = {
   size?: AppButtonSize;
   disabled?: boolean;
   loading?: boolean;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   accessibilityLabel?: string;
   testID?: string;
+  textColor?: string;
+  containerStyle?: StyleProp<ViewStyle>;
 };
 
 const HIT_SLOP = { top: 12, bottom: 12, left: 12, right: 12 } as const;
@@ -37,6 +47,8 @@ export default function AppButton({
   rightIcon,
   accessibilityLabel,
   testID = 'app-button',
+  textColor,
+  containerStyle,
 }: AppButtonProps) {
   const { container, text } = getVariantStyles(variant, disabled);
   const sizeStyle = getSizeStyle(size);
@@ -56,7 +68,7 @@ export default function AppButton({
       accessibilityState={{ disabled: disabled || loading, busy: loading || undefined }}
       hitSlop={HIT_SLOP}
       pressRetentionOffset={HIT_SLOP}
-      style={[styles.base, sizeStyle, container, style]}
+      style={[styles.base, sizeStyle, container, containerStyle, style]}
       onPress={handlePress}
       disabled={disabled || loading}
     >
@@ -65,7 +77,9 @@ export default function AppButton({
       ) : (
         <View style={styles.contentRow}>
           {leftIcon ? <View style={styles.leftIcon}>{leftIcon}</View> : null}
-          <Text style={[styles.text, text]}>{label}</Text>
+          <Text style={[styles.text, text, textColor ? { color: textColor } : undefined]}>
+            {label}
+          </Text>
           {rightIcon ? <View style={styles.rightIcon}>{rightIcon}</View> : null}
         </View>
       )}

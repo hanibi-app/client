@@ -60,7 +60,7 @@ export default function InputField({
         testID={testID}
         accessibilityLabel={a11yLabel}
         accessibilityHint={a11yHint}
-        accessibilityState={{ disabled: false, selected: false, invalid: invalid || undefined }}
+        accessibilityState={{ disabled: false, selected: false }}
         secureTextEntry={isPassword}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}

@@ -139,14 +139,46 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
   // 차트 애니메이션
   const chartOpacity = useRef(new Animated.Value(0)).current;
 
-  // API 호출 함수 (나중에 실제 API로 교체)
+  // API 호출 함수 (실제 API 연결 대비)
   const fetchReportData = async (type: ReportTabType, range: TimeRange): Promise<ReportData> => {
-    // TODO: 실제 API 호출
-    // const response = await fetch(`/api/reports/${type}?range=${range}`);
-    // return response.json();
+    try {
+      // TODO: 실제 API 엔드포인트로 교체
+      // const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.example.com';
+      // const response = await fetch(`${API_BASE_URL}/api/reports/${type}?range=${range}`, {
+      //   method: 'GET',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     // 'Authorization': `Bearer ${token}`,
+      //   },
+      // });
+      //
+      // if (!response.ok) {
+      //   throw new Error(`API Error: ${response.status}`);
+      // }
+      //
+      // const data = await response.json();
+      // return {
+      //   dataPoints: data.dataPoints.map((dp: any) => ({
+      //     time: dp.time,
+      //     value: dp.value,
+      //     timestamp: dp.timestamp,
+      //   })),
+      //   summary: {
+      //     current: data.summary.current,
+      //     max: data.summary.max,
+      //     min: data.summary.min,
+      //     average: data.summary.average,
+      //     referenceDate: data.summary.referenceDate,
+      //   },
+      // };
 
-    // 임시: 더미 데이터 반환
-    return generateDummyData(type, range);
+      // 임시: 더미 데이터 반환
+      return generateDummyData(type, range);
+    } catch (error) {
+      console.error('리포트 데이터 가져오기 실패:', error);
+      // 에러 발생 시 더미 데이터 반환 (폴백)
+      return generateDummyData(type, range);
+    }
   };
 
   // API 호출
@@ -386,10 +418,12 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                       ? '현재 급식량'
                       : '현재 향기지수'}
               </Text>
-              <Text style={styles.summaryValue}>
-                {reportData.summary.current}
-                {config.unit}
-              </Text>
+              <View style={styles.summaryValueContainer}>
+                <Text style={styles.summaryValue}>
+                  {reportData.summary.current}
+                  {config.unit}
+                </Text>
+              </View>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>
@@ -401,10 +435,13 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                       ? '최고 급식량'
                       : '최고 향기지수'}
               </Text>
-              <Text style={styles.summaryValue}>
-                {reportData.summary.max.value}
-                {config.unit} ({reportData.summary.max.time})
-              </Text>
+              <View style={styles.summaryValueContainer}>
+                <Text style={styles.summaryValue}>
+                  {reportData.summary.max.value}
+                  {config.unit}
+                </Text>
+                <Text style={styles.summaryTime}>{reportData.summary.max.time}</Text>
+              </View>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>
@@ -416,10 +453,13 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                       ? '최저 급식량'
                       : '최저 향기지수'}
               </Text>
-              <Text style={styles.summaryValue}>
-                {reportData.summary.min.value}
-                {config.unit} ({reportData.summary.min.time})
-              </Text>
+              <View style={styles.summaryValueContainer}>
+                <Text style={styles.summaryValue}>
+                  {reportData.summary.min.value}
+                  {config.unit}
+                </Text>
+                <Text style={styles.summaryTime}>{reportData.summary.min.time}</Text>
+              </View>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>
@@ -431,14 +471,18 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                       ? '평균 급식량'
                       : '평균 향기지수'}
               </Text>
-              <Text style={styles.summaryValue}>
-                {reportData.summary.average}
-                {config.unit}
-              </Text>
+              <View style={styles.summaryValueContainer}>
+                <Text style={styles.summaryValue}>
+                  {reportData.summary.average}
+                  {config.unit}
+                </Text>
+              </View>
             </View>
             <View style={[styles.summaryRow, styles.summaryRowLast]}>
               <Text style={styles.summaryLabel}>기준 일자</Text>
-              <Text style={styles.summaryValue}>{reportData.summary.referenceDate}</Text>
+              <View style={styles.summaryValueContainer}>
+                <Text style={styles.summaryValue}>{reportData.summary.referenceDate}</Text>
+              </View>
             </View>
           </View>
         </ScrollView>
@@ -506,26 +550,43 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderRadius: 12,
     marginTop: spacing.xl,
-    padding: spacing.lg,
+    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
   },
   summaryLabel: {
     color: colors.mutedText,
+    flex: 1,
     fontSize: typography.sizes.md,
+    fontWeight: typography.weights.regular,
+    marginRight: spacing.lg,
   },
   summaryRow: {
+    alignItems: 'center',
     borderBottomColor: colors.border,
-    borderBottomWidth: 1,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     paddingVertical: spacing.md,
   },
   summaryRowLast: {
     borderBottomWidth: 0,
+    paddingBottom: 0,
+  },
+  summaryTime: {
+    color: colors.mutedText,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.regular,
+    marginLeft: spacing.xs,
   },
   summaryValue: {
     color: colors.text,
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
+  },
+  summaryValueContainer: {
+    alignItems: 'baseline',
+    flexDirection: 'row',
+    flexShrink: 0,
   },
   timeRangeButton: {
     backgroundColor: colors.background,

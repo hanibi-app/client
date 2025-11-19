@@ -17,11 +17,14 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const ONBOARDING_COMPLETE_KEY = '@hanibi:onboarding_complete';
 
-export default function RootNavigator() {
+type RootNavigatorProps = {
+  navigationRef: React.RefObject<NavigationContainerRef<RootStackParamList> | null>;
+};
+
+export default function RootNavigator({ navigationRef }: RootNavigatorProps) {
   const hasOnboarded = useAppState((s) => s.hasOnboarded);
   const setHasOnboarded = useAppState((s) => s.setHasOnboarded);
   const [isLoading, setIsLoading] = useState(true);
-  const navigationRef = React.useRef<NavigationContainerRef<RootStackParamList>>(null);
   const prevHasOnboardedRef = useRef(hasOnboarded);
 
   const checkOnboardingStatus = useCallback(async () => {
@@ -65,7 +68,7 @@ export default function RootNavigator() {
     }
 
     prevHasOnboardedRef.current = hasOnboarded;
-  }, [hasOnboarded, isLoading]);
+  }, [hasOnboarded, isLoading, navigationRef]);
 
   const completeOnboarding = async () => {
     try {
@@ -82,7 +85,7 @@ export default function RootNavigator() {
   }
 
   return (
-    <Stack.Navigator ref={navigationRef} screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!hasOnboarded ? (
         <>
           <Stack.Screen name="Login" component={LoginScreen} />

@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { ONBOARDING_ROUTES } from '@/constants/routes';
@@ -39,7 +40,17 @@ export default function OnboardingNavigator({ onComplete }: OnboardingNavigatorP
         component={NotificationRequestScreen}
       />
       <Stack.Screen name={ONBOARDING_ROUTES.PRECAUTIONS}>
-        {(props) => <PrecautionsScreen {...props} onComplete={handleComplete} />}
+        {(
+          props: NativeStackScreenProps<
+            OnboardingStackParamList,
+            typeof ONBOARDING_ROUTES.PRECAUTIONS
+          >,
+        ) => (
+          <PrecautionsScreen
+            {...(props as unknown as Parameters<typeof PrecautionsScreen>[0])}
+            onComplete={handleComplete}
+          />
+        )}
       </Stack.Screen>
     </Stack.Navigator>
   );

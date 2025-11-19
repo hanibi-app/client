@@ -2,6 +2,7 @@ export type RootStackParamList = {
   Login: undefined;
   NotificationRequest: undefined;
   CautionSlides: undefined;
+  CharacterCustomize: undefined;
   MainTabs: undefined;
   CameraPermission: undefined;
   CameraCapture: undefined;

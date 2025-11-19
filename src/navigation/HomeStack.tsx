@@ -17,8 +17,7 @@ export default function HomeStack() {
         name="CharacterCustomize"
         component={CharacterCustomizeScreen}
         options={{
-          title: '꾸며주기',
-          headerBackTitle: '뒤로',
+          headerShown: false,
         }}
       />
     </Stack.Navigator>

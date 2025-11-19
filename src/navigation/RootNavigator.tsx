@@ -1,8 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CommonActions, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import CharacterCustomizeScreen from '@/screens/Home/CharacterCustomizeScreen';
 import LoginScreen from '@/screens/LoginScreen';
 import NotificationRequestScreen from '@/screens/NotificationRequestScreen';
 import PrecautionsScreen from '@/screens/PrecautionsScreen';
@@ -19,6 +21,8 @@ export default function RootNavigator() {
   const hasOnboarded = useAppState((s) => s.hasOnboarded);
   const setHasOnboarded = useAppState((s) => s.setHasOnboarded);
   const [isLoading, setIsLoading] = useState(true);
+  const navigationRef = React.useRef<NavigationContainerRef<RootStackParamList>>(null);
+  const prevHasOnboardedRef = useRef(hasOnboarded);
 
   const checkOnboardingStatus = useCallback(async () => {
     try {
@@ -37,6 +41,32 @@ export default function RootNavigator() {
     checkOnboardingStatus();
   }, [checkOnboardingStatus]);
 
+  // hasOnboarded가 false로 변경되면 Login 화면으로 리셋
+  useEffect(() => {
+    // 초기 로딩 중이거나 이전 값과 같으면 무시
+    if (isLoading || prevHasOnboardedRef.current === hasOnboarded) {
+      prevHasOnboardedRef.current = hasOnboarded;
+      return;
+    }
+
+    // hasOnboarded가 true에서 false로 변경된 경우
+    if (prevHasOnboardedRef.current === true && hasOnboarded === false) {
+      // 다음 렌더링 사이클에서 리셋 실행 (Login 화면이 스택에 추가된 후)
+      setTimeout(() => {
+        if (navigationRef.current?.isReady()) {
+          navigationRef.current.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            }),
+          );
+        }
+      }, 0);
+    }
+
+    prevHasOnboardedRef.current = hasOnboarded;
+  }, [hasOnboarded, isLoading]);
+
   const completeOnboarding = async () => {
     try {
       await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
@@ -52,7 +82,7 @@ export default function RootNavigator() {
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator ref={navigationRef} screenOptions={{ headerShown: false }}>
       {!hasOnboarded ? (
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
@@ -60,6 +90,7 @@ export default function RootNavigator() {
           <Stack.Screen name="CautionSlides">
             {(props) => <PrecautionsScreen {...props} onComplete={completeOnboarding} />}
           </Stack.Screen>
+          <Stack.Screen name="CharacterCustomize" component={CharacterCustomizeScreen} />
         </>
       ) : null}
       <Stack.Screen name="MainTabs" component={MainTabs} />

@@ -10,6 +10,7 @@ export type HanibiCharacter2DProps = {
   animated?: boolean;
   size?: number;
   testID?: string;
+  customColor?: string; // 커스텀 색상 (선택한 색상)
 };
 
 // 레벨별 색상 정의
@@ -24,8 +25,9 @@ export default function HanibiCharacter2D({
   animated = true,
   size = 200,
   testID = 'hanibi-character-2d',
+  customColor,
 }: HanibiCharacter2DProps) {
-  const color = LEVEL_COLORS[level];
+  const color = customColor || LEVEL_COLORS[level];
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const translateYAnim = useRef(new Animated.Value(0)).current;
 

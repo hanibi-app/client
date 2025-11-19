@@ -25,6 +25,11 @@ export const colors = {
   softCream: '#ffffee',
   brightYellow: '#ffff00',
   notifyBackground: '#F4F6F5',
+  darkGreen: '#1A5746', // 색상 칩 선택 보더 색상
+  lightGray: '#D1D5DB', // 연한 회색 (인디케이터)
+  lightGrayOverlay: 'rgba(156, 163, 175, 0.15)', // 하이라이트 오버레이
+  lightGreen: '#B8E092', // 연한 초록 (화살표 그라데이션)
+  lightestGreen: '#E5F5E5', // 가장 연한 초록 (화살표 그라데이션)
   hanibi: {
     temp: {
       low: '#60a5fa',

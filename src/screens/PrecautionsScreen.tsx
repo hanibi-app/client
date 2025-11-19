@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 
-import { CommonActions } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -47,18 +46,20 @@ const PRECAUTIONS_PAGES: Array<{
     description: [
       '전원 버튼을 누르면 제가 켜지고,',
       '정지 버튼을 누르면 바로 멈춰요.',
-      '교반 버튼을 누르면 음식물이 잘 섞이도록 제가 회전하고,',
-      '탈취 버튼을 누르면 냄새 제거 기능이 작동합니다.',
+      '교반 버튼을 누르면 음식물이 잘 섞이도록',
+      '제가 회전하고, 탈취 버튼을 누르면 냄새 제거 기능이 작동합니다.',
       '또, 상태 확인 버튼을 누르면',
       '지금 제 소화 상태와 점수를 확인하실 수 있어요.',
-      '(임시 문구, 변경 해야함)',
     ],
   },
 ];
 
 const HORIZONTAL_PADDING = spacing.xl;
 
-export default function PrecautionsScreen({ navigation, onComplete }: PrecautionsScreenProps) {
+export default function PrecautionsScreen({
+  navigation,
+  onComplete: _onComplete,
+}: PrecautionsScreenProps) {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const [currentPage, setCurrentPage] = useState(0);
   const insets = useSafeAreaInsets();
@@ -70,14 +71,8 @@ export default function PrecautionsScreen({ navigation, onComplete }: Precaution
     if (currentPage < PRECAUTIONS_PAGES.length - 1) {
       setCurrentPage(currentPage + 1);
     } else {
-      // 마지막 페이지에서 완료 - MainTabs로 reset
-      onComplete?.();
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'MainTabs' as never }],
-        }),
-      );
+      // 마지막 페이지에서 완료 - CharacterCustomizeScreen으로 이동
+      navigation.navigate('CharacterCustomize' as never);
     }
   };
 
@@ -138,17 +133,26 @@ export default function PrecautionsScreen({ navigation, onComplete }: Precaution
       </View>
 
       {/* 하단 버튼 (카드 밖) */}
-      <View style={styles.buttonContainer}>
+      <View style={[styles.buttonContainer, { bottom: spacing.xl + insets.bottom }]}>
         <View style={styles.buttonRow}>
           <OutlinedButton label={'뒤로 가기'} onPress={handleBack} style={styles.backButton} />
-          <Pressable
-            onPress={handleNext}
-            style={styles.nextButton}
-            accessibilityRole="button"
-            accessibilityLabel={isLastPage ? '시작하기' : '다음'}
-          >
-            <Text style={styles.nextButtonIcon}>→</Text>
-          </Pressable>
+          {isLastPage ? (
+            <OutlinedButton
+              label="시작하기"
+              onPress={handleNext}
+              style={styles.startButton}
+              labelStyle={styles.startButtonText}
+            />
+          ) : (
+            <Pressable
+              onPress={handleNext}
+              style={styles.nextButton}
+              accessibilityRole="button"
+              accessibilityLabel="다음"
+            >
+              <Text style={styles.nextButtonIcon}>→</Text>
+            </Pressable>
+          )}
         </View>
       </View>
     </View>
@@ -161,7 +165,6 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     alignItems: 'stretch',
-    bottom: spacing.xxxl,
     paddingHorizontal: HORIZONTAL_PADDING,
     position: 'absolute',
     width: '100%',
@@ -197,15 +200,15 @@ const styles = StyleSheet.create({
   },
   contentTitle: {
     color: colors.text,
-    fontSize: typography.sizes.lg,
+    fontSize: typography.sizes.xxl,
     fontWeight: typography.weights.bold,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
     marginTop: spacing.lg,
     textAlign: 'center',
   },
   descriptionContainer: {
     alignItems: 'center',
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
     paddingHorizontal: HORIZONTAL_PADDING,
   },
   descriptionText: {
@@ -227,10 +230,10 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.bold,
   },
   indicatorDot: {
-    borderRadius: 4,
-    height: 8,
-    marginHorizontal: 4,
-    width: 8,
+    borderRadius: 8,
+    height: 16,
+    marginHorizontal: 6,
+    width: 16,
   },
   indicatorDotActive: {
     backgroundColor: colors.primary,
@@ -257,6 +260,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spacing.md,
     marginTop: spacing.md,
+  },
+  startButton: {
+    borderColor: colors.accent,
+    minWidth: 120,
+  },
+  startButtonText: {
+    color: colors.accent,
   },
   textSection: {
     alignItems: 'center',

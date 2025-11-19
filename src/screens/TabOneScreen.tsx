@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CommonActions, useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import AppButton from '@/components/common/AppButton';
@@ -14,7 +13,6 @@ import { typography } from '@/theme/typography';
 
 export default function TabOneScreen() {
   const [level, setLevel] = useState<HanibiLevel>('medium');
-  const navigation = useNavigation();
   const { setHasOnboarded } = useAppState();
 
   const handleLevelChange = (newLevel: HanibiLevel) => {
@@ -24,13 +22,8 @@ export default function TabOneScreen() {
   const handleResetOnboarding = async () => {
     try {
       await AsyncStorage.removeItem('@hanibi:onboarding_complete');
+      // RootNavigator의 useEffect에서 자동으로 Login 화면으로 리셋됨
       setHasOnboarded(false);
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Onboarding' as never }],
-        }),
-      );
     } catch (error) {
       console.error('온보딩 리셋 실패:', error);
     }

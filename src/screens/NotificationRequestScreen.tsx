@@ -94,24 +94,26 @@ export default function NotificationRequestScreen({ navigation }: NotificationRe
         </View>
 
         {/* 버튼 컨테이너 */}
-        <View style={[styles.buttonContainer, { bottom: spacing.lg + insets.bottom }]}>
-          <AppButton
-            label="알람을 켤래"
-            variant="primary"
-            onPress={handleEnable}
-            style={[
-              styles.enableButton,
-              { backgroundColor: colors.accent, borderColor: colors.accent },
-            ]}
-            textColor={colors.black}
-            size="lg"
-          />
-          <OutlinedButton
-            label="지금은 괜찮아"
-            onPress={handleSkip}
-            style={styles.skipButton}
-            labelStyle={styles.skipButtonText}
-          />
+        <View style={[styles.buttonContainer, { bottom: spacing.xl + insets.bottom }]}>
+          <View style={styles.buttonsWrapper}>
+            <AppButton
+              label="알람을 켤래"
+              variant="primary"
+              onPress={handleEnable}
+              style={[
+                styles.enableButton,
+                { backgroundColor: colors.accent, borderColor: colors.accent },
+              ]}
+              textColor={colors.black}
+              size="lg"
+            />
+            <OutlinedButton
+              label="지금은 괜찮아"
+              onPress={handleSkip}
+              style={styles.skipButton}
+              labelStyle={styles.skipButtonText}
+            />
+          </View>
         </View>
       </View>
     </View>
@@ -120,9 +122,13 @@ export default function NotificationRequestScreen({ navigation }: NotificationRe
 
 const styles = StyleSheet.create({
   buttonContainer: {
-    bottom: spacing.xl,
+    bottom: spacing.md,
     paddingHorizontal: HORIZONTAL_PADDING,
     position: 'absolute',
+    width: '100%',
+  },
+  buttonsWrapper: {
+    gap: spacing.sm,
     width: '100%',
   },
   characterCircle: {
@@ -151,7 +157,6 @@ const styles = StyleSheet.create({
   },
   enableButton: {
     borderRadius: 12,
-    marginBottom: spacing.md,
     width: '100%',
   },
   header: {
@@ -167,7 +172,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.notifyBackground,
     borderRadius: 12,
     flexDirection: 'row',
-    marginBottom: spacing.md,
     padding: spacing.md,
     width: '100%',
   },
@@ -184,7 +188,7 @@ const styles = StyleSheet.create({
   },
   notificationIcon: {
     alignItems: 'center',
-    backgroundColor: colors.notifyBackground,
+    backgroundColor: colors.white,
     borderRadius: 6,
     height: 32,
     justifyContent: 'center',

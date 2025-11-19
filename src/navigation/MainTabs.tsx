@@ -4,7 +4,6 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import DashboardScreen from '@/screens/Dashboard/DashboardScreen';
-import ReportsScreen from '@/screens/Reports/ReportsScreen';
 import SettingsScreen from '@/screens/Settings/SettingsScreen';
 import { colors } from '@/theme/Colors';
 
@@ -20,6 +19,9 @@ export default function MainTabs() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: '#9CA3AF',
         headerShown: false,
+        tabBarStyle: {
+          backgroundColor: colors.white,
+        },
       }}
     >
       <Tab.Screen
@@ -36,22 +38,9 @@ export default function MainTabs() {
         options={{
           title: '대시보드',
           tabBarIcon: ({ color, size }) => (
-            <FontAwesome name="dashboard" size={size} color={color} />
-          ),
-          headerShown: true,
-          headerTitle: '',
-        }}
-      />
-      <Tab.Screen
-        name="ReportsTab"
-        component={ReportsScreen}
-        options={{
-          title: '리포트',
-          tabBarIcon: ({ color, size }) => (
             <FontAwesome name="bar-chart" size={size} color={color} />
           ),
-          headerShown: true,
-          headerTitle: '',
+          headerShown: false,
         }}
       />
       <Tab.Screen

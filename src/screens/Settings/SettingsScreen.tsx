@@ -1,7 +1,6 @@
 import React from 'react';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CommonActions, useNavigation } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { useAppState } from '@/state/useAppState';
@@ -10,19 +9,13 @@ import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 
 export default function SettingsScreen() {
-  const navigation = useNavigation();
   const { notificationsEnabled, setNotificationsEnabled, setHasOnboarded } = useAppState();
 
   const handleResetOnboarding = async () => {
     try {
       await AsyncStorage.removeItem('@hanibi:onboarding_complete');
+      // RootNavigator의 useEffect에서 자동으로 Login 화면으로 리셋됨
       setHasOnboarded(false);
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Login' as never }],
-        }),
-      );
     } catch (error) {
       console.error('온보딩 리셋 실패:', error);
     }

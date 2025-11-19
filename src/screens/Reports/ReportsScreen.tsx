@@ -228,22 +228,41 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
     yStep = Math.ceil((yMax - yMin) / 8);
   }
 
-  // X축 라벨 (시간) - 1일 기준으로 4개 포인트
+  // X축 라벨 (시간) - 항상 "오전12시" 형식으로 통일
   const getTimeLabel = (point: ReportDataPoint): string => {
     const hour = parseInt(point.time.split(':')[0], 10);
-    if (hour === 0) return '오전 12시';
-    if (hour === 6) return '오전 6시';
-    if (hour === 12) return '오후 12시';
-    if (hour === 18) return '오후 6시';
-    return point.time;
+    if (hour === 0) return '오전12시';
+    if (hour === 6) return '오전6시';
+    if (hour === 12) return '오후12시';
+    if (hour === 18) return '오후6시';
+    // 나머지 시간도 변환
+    if (hour < 12) return `오전${hour}시`;
+    if (hour === 12) return '오후12시';
+    return `오후${hour - 12}시`;
   };
 
   const totalPoints = reportData ? reportData.dataPoints.length : 0;
+  // X축 틱을 0, 6, 12, 18시에 해당하는 포인트로 찾기
+  const findTimeIndex = (targetHour: number): number => {
+    if (!reportData) return 0;
+    for (let i = 0; i < reportData.dataPoints.length; i++) {
+      const hour = parseInt(reportData.dataPoints[i].time.split(':')[0], 10);
+      if (hour === targetHour) return i;
+    }
+    // 찾지 못하면 가장 가까운 인덱스 반환
+    return Math.floor((targetHour / 24) * totalPoints);
+  };
+
   const xTickIndices = reportData
-    ? [0, Math.floor(totalPoints / 4), Math.floor(totalPoints / 2), totalPoints - 1]
+    ? [findTimeIndex(0), findTimeIndex(6), findTimeIndex(12), findTimeIndex(18)]
     : [];
   const xLabels = reportData
-    ? xTickIndices.map((idx) => getTimeLabel(reportData.dataPoints[idx]))
+    ? xTickIndices.map((idx) => {
+        if (idx >= 0 && idx < reportData.dataPoints.length) {
+          return getTimeLabel(reportData.dataPoints[idx]);
+        }
+        return '';
+      })
     : [];
 
   // Y축 틱 값 생성
@@ -282,7 +301,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
               <VictoryChart
                 animate={{ duration: 1000, easing: 'quadInOut' }}
                 height={CHART_HEIGHT}
-                padding={{ top: 10, bottom: 40, left: 30, right: 65 }}
+                padding={{ top: 10, bottom: 50, left: 30, right: 65 }}
                 theme={VictoryTheme.material}
                 width={CHART_WIDTH}
               >
@@ -309,9 +328,13 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                 />
                 <VictoryAxis
                   style={{
-                    axis: { stroke: colors.border },
+                    axis: { stroke: colors.transparent },
                     grid: { stroke: colors.border, strokeWidth: 1 },
-                    tickLabels: { fill: colors.mutedText, fontSize: 11 },
+                    tickLabels: {
+                      fill: colors.text,
+                      fontSize: 12,
+                      fontWeight: typography.weights.medium,
+                    },
                   }}
                   tickFormat={(t) => {
                     const idx = xTickIndices.indexOf(t);
@@ -432,8 +455,9 @@ const styles = StyleSheet.create({
   },
   chartWrapper: {
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     padding: spacing.xs,
+    paddingBottom: 0,
     position: 'relative',
   },
   container: {

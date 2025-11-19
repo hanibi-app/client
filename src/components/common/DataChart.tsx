@@ -3,15 +3,20 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { VictoryAxis, VictoryChart, VictoryLine } from 'victory-native';
 
-export type DataPoint = { x: Date | number; y: number };
+export type DataPoint = { x: Date | number | string; y: number };
 
 export type DataChartProps = {
   data: DataPoint[];
   testID?: string;
 };
 
-function formatTick(value: Date | number): string {
-  const d = value instanceof Date ? value : new Date(value);
+function toDate(value: Date | number | string): Date {
+  if (value instanceof Date) return value;
+  return new Date(value);
+}
+
+function formatTick(value: Date | number | string): string {
+  const d = toDate(value);
   const now = new Date();
   const sameDay = d.toDateString() === now.toDateString();
   if (sameDay) {
@@ -34,10 +39,12 @@ export default function DataChart({ data, testID = 'data-chart' }: DataChartProp
   }
 
   return (
-    <VictoryChart testID={testID}>
-      <VictoryAxis tickFormat={(t) => formatTick(t as Date | number)} />
-      <VictoryAxis dependentAxis />
-      <VictoryLine data={data} interpolation="monotoneX" />
-    </VictoryChart>
+    <View testID={testID} accessible={false}>
+      <VictoryChart>
+        <VictoryAxis tickFormat={(t: Date | number | string) => formatTick(t)} />
+        <VictoryAxis dependentAxis />
+        <VictoryLine data={data} interpolation="monotoneX" />
+      </VictoryChart>
+    </View>
   );
 }

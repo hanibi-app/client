@@ -29,7 +29,7 @@ export default function ModalPopup({
       <View style={styles.backdrop}>
         <View
           style={styles.card}
-          accessibilityRole="dialog"
+          accessibilityRole="alert"
           accessibilityLabel={title}
           testID={testID}
         >

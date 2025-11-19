@@ -6,12 +6,13 @@ import { ColorSchemeName, Pressable, StyleSheet } from 'react-native';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
+import { ROOT_ROUTES, TAB_ROUTES } from '@/constants/routes';
 import TabOneScreen from '@/screens/TabOneScreen';
 import TabTwoScreen from '@/screens/TabTwoScreen';
 
 type TabsParamList = {
-  TabOne: undefined;
-  TabTwo: undefined;
+  [TAB_ROUTES.TAB_ONE]: undefined;
+  [TAB_ROUTES.TAB_TWO]: undefined;
 };
 
 const Tab = createBottomTabNavigator<TabsParamList>();
@@ -30,14 +31,14 @@ export default function TabsNavigator() {
       }}
     >
       <Tab.Screen
-        name="TabOne"
+        name={TAB_ROUTES.TAB_ONE}
         component={TabOneScreen}
         options={({ navigation }) => ({
           title: 'Tab One',
           tabBarIcon: ({ color }) => <FontAwesome name="code" size={24} color={color} />,
           headerRight: () => (
             <Pressable
-              onPress={() => navigation.navigate('Modal' as never)}
+              onPress={() => navigation.navigate(ROOT_ROUTES.MODAL as never)}
               style={styles.headerButton}
             >
               {({ pressed }) => (
@@ -53,7 +54,7 @@ export default function TabsNavigator() {
         })}
       />
       <Tab.Screen
-        name="TabTwo"
+        name={TAB_ROUTES.TAB_TWO}
         component={TabTwoScreen}
         options={{
           title: 'Tab Two',

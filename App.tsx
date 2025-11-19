@@ -1,18 +1,24 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import {
+  DarkTheme,
+  DefaultTheme,
+  NavigationContainer,
+  NavigationContainerRef,
+} from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import RootNavigator from '@/navigation/RootNavigator';
+import { RootStackParamList } from '@/navigation/types';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   const colorScheme = useColorScheme();
+  const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
 
   const [loaded, error] = useFonts({
     // Use a relative path so Metro resolves without alias configuration
@@ -35,8 +41,11 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <RootNavigator />
+    <NavigationContainer
+      ref={navigationRef}
+      theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
+    >
+      <RootNavigator navigationRef={navigationRef} />
     </NavigationContainer>
   );
 }

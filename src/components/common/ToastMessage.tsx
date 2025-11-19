@@ -31,7 +31,7 @@ function ToastMessageComponent({
     <View
       style={[styles.container, backgroundStyle, style]}
       testID={testID}
-      accessibilityRole="status"
+      accessibilityRole="alert"
       accessibilityLiveRegion="polite"
       accessibilityLabel={accessibilityLabel ?? message}
     >

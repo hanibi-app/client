@@ -7,49 +7,38 @@ import AppButton from '@/components/common/AppButton';
 describe('AppButton', () => {
   it('renders label and calls onPress', () => {
     const onPress = jest.fn();
-    const { getByA11yLabel, getByText } = render(<AppButton label="확인" onPress={onPress} />);
+    const { getByLabelText, getByText } = render(<AppButton label="확인" onPress={onPress} />);
     expect(getByText('확인')).toBeTruthy();
-    fireEvent.press(getByA11yLabel('확인'));
+    fireEvent.press(getByLabelText('확인'));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
   it('does not call onPress when disabled', () => {
     const onPress = jest.fn();
-    const { getByA11yLabel } = render(<AppButton label="비활성" onPress={onPress} disabled />);
-    fireEvent.press(getByA11yLabel('비활성'));
+    const { getByLabelText } = render(<AppButton label="비활성" onPress={onPress} disabled />);
+    fireEvent.press(getByLabelText('비활성'));
     expect(onPress).not.toHaveBeenCalled();
   });
 
   it('supports accessibilityLabel override', () => {
     const onPress = jest.fn();
-    const { getByA11yLabel } = render(
+    const { getByLabelText } = render(
       <AppButton label="레이블" accessibilityLabel="액세스" onPress={onPress} />,
     );
-    expect(getByA11yLabel('액세스')).toBeTruthy();
+    expect(getByLabelText('액세스')).toBeTruthy();
   });
 
   it('does not call onPress when loading', () => {
     const onPress = jest.fn();
-    const { getByA11yLabel } = render(
+    const { getByLabelText, rerender } = render(
       <AppButton label="로드" onPress={onPress} accessibilityLabel="로드" />,
     );
-    // rerender with loading true by unmount/mount for simplicity
-    const { getByA11yLabel: getByA11yLabel2, unmount } = render(
-      <AppButton label="로드" onPress={onPress} accessibilityLabel="로드" />,
-    );
-    unmount();
-    const { getByA11yLabel: getByA11yLabel3 } = render(
-      <AppButton label="로드" onPress={onPress} accessibilityLabel="로드" />,
-    );
-    // Simulate press in loading state (using a fresh render with loading)
-    const { getByA11yLabel: getByA11yLabel4 } = render(
-      <AppButton label="로드" onPress={onPress} accessibilityLabel="로드" />,
-    );
-    fireEvent.press(getByA11yLabel('로드'));
-    fireEvent.press(getByA11yLabel2('로드'));
-    fireEvent.press(getByA11yLabel3('로드'));
-    fireEvent.press(getByA11yLabel4('로드'));
-    expect(onPress).toHaveBeenCalled();
+    fireEvent.press(getByLabelText('로드'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+
+    rerender(<AppButton label="로드" onPress={onPress} accessibilityLabel="로드" loading />);
+    fireEvent.press(getByLabelText('로드'));
+    expect(onPress).toHaveBeenCalledTimes(1);
   });
 
   it('renders left and right icons', () => {

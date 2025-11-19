@@ -3,10 +3,10 @@ import React from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-import DashboardScreen from '@/screens/Dashboard/DashboardScreen';
 import SettingsScreen from '@/screens/Settings/SettingsScreen';
 import { colors } from '@/theme/Colors';
 
+import DashboardStack from './DashboardStack';
 import HomeStack from './HomeStack';
 import { TabParamList } from './types';
 
@@ -34,7 +34,7 @@ export default function MainTabs() {
       />
       <Tab.Screen
         name="DashboardTab"
-        component={DashboardScreen}
+        component={DashboardStack}
         options={{
           title: '대시보드',
           tabBarIcon: ({ color, size }) => (

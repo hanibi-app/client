@@ -21,4 +21,9 @@ export type HomeStackParamList = {
   CharacterCustomize: undefined;
 };
 
+export type DashboardStackParamList = {
+  Dashboard: undefined;
+  Reports: undefined;
+};
+
 export type MetricType = 'temp' | 'humidity' | 'moisture' | 'voc';

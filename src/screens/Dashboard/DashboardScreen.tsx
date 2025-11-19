@@ -16,12 +16,12 @@ import Svg, { Defs, Rect, Stop, LinearGradient as SvgLinearGradient } from 'reac
 
 import ThreeArrowIcon from '@/assets/images/three-arrow.svg';
 import AppButton from '@/components/common/AppButton';
-import { TabParamList } from '@/navigation/types';
+import { DashboardStackParamList } from '@/navigation/types';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 
-type DashboardScreenProps = NativeStackScreenProps<TabParamList, 'DashboardTab'>;
+type DashboardScreenProps = NativeStackScreenProps<DashboardStackParamList, 'Dashboard'>;
 
 // API 응답 타입 정의
 type HealthMetrics = {
@@ -152,8 +152,7 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   };
 
   const handleViewReport = () => {
-    // TODO: 리포트 화면으로 이동
-    console.log('리포트 보기');
+    navigation.navigate('Reports');
   };
 
   const getMetricStatus = (metric: keyof HealthMetrics, value: number): 'good' | 'bad' => {

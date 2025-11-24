@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -30,6 +30,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const setCharacterName = useAppState((s) => s.setCharacterName);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(characterName);
+  const [buttonWidth, setButtonWidth] = useState<number | undefined>(undefined);
+  const textInputRef = useRef<TextInput>(null);
 
   // 진행률 계산 (30% 남음 = 70% 진행)
   const progress = 70;
@@ -37,11 +39,18 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const handleEditPress = () => {
     setEditValue(characterName);
     setIsEditing(true);
+    // TextInput이 렌더링된 후 포커스하여 키보드가 올라오도록 함
+    setTimeout(() => {
+      textInputRef.current?.focus();
+    }, 100);
   };
 
   const handleSave = () => {
     if (editValue.trim()) {
       setCharacterName(editValue.trim());
+    } else {
+      // 빈 값이면 원래 이름으로 복원
+      setEditValue(characterName);
     }
     setIsEditing(false);
   };
@@ -117,15 +126,25 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             <View style={styles.buttonRowLeft} />
             <View style={styles.buttonRowCenter}>
               {isEditing ? (
-                <View style={styles.editContainer}>
+                <View
+                  style={[
+                    styles.editContainer,
+                    buttonWidth ? { minWidth: buttonWidth } : undefined,
+                  ]}
+                >
                   <TextInput
+                    ref={textInputRef}
                     style={styles.nameInput}
                     value={editValue}
                     onChangeText={setEditValue}
                     placeholder="이름을 입력하세요"
                     placeholderTextColor={colors.mutedText}
                     maxLength={10}
-                    autoFocus
+                    autoFocus={true}
+                    returnKeyType="done"
+                    onSubmitEditing={handleSave}
+                    editable={true}
+                    selectTextOnFocus={false}
                   />
                   <Pressable onPress={handleSave} style={styles.saveIconButton}>
                     <MaterialIcons name="check" size={20} color={colors.primary} />
@@ -135,7 +154,14 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                   </Pressable>
                 </View>
               ) : (
-                <Pressable onPress={handleEditPress} style={styles.hanibiButton}>
+                <Pressable
+                  onLayout={(event) => {
+                    const { width } = event.nativeEvent.layout;
+                    setButtonWidth(width);
+                  }}
+                  onPress={handleEditPress}
+                  style={styles.hanibiButton}
+                >
                   <Text style={styles.hanibiButtonText}>{characterName}</Text>
                   <MaterialIcons name="edit" size={16} color={colors.text} />
                 </Pressable>
@@ -284,6 +310,8 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.medium,
+    minHeight: 20,
+    padding: 0,
   },
   pinkStar1: {
     position: 'absolute',

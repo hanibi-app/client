@@ -3,6 +3,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import CharacterCustomizeScreen from '@/screens/Home/CharacterCustomizeScreen';
+import CharacterNameEditScreen from '@/screens/Home/CharacterNameEditScreen';
 import HomeScreen from '@/screens/Home/HomeScreen';
 
 import { HomeStackParamList } from './types';
@@ -16,6 +17,13 @@ export default function HomeStack() {
       <Stack.Screen
         name="CharacterCustomize"
         component={CharacterCustomizeScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="CharacterNameEdit"
+        component={CharacterNameEditScreen}
         options={{
           headerShown: false,
         }}

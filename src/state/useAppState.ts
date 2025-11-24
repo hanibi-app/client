@@ -3,12 +3,14 @@ import { create } from 'zustand';
 type AppState = {
   hasOnboarded: boolean;
   notificationsEnabled: boolean;
+  characterName: string;
   // 홈 상태 (보드 하단 8개 카드 표현용)
   hungryLevel: 'low' | 'high';
   humidityLevel: 'low' | 'high';
   smellIndex: number; // 0~100
   setHasOnboarded(b: boolean): void;
   setNotificationsEnabled(b: boolean): void;
+  setCharacterName(name: string): void;
   setHungryLevel(v: 'low' | 'high'): void;
   setHumidityLevel(v: 'low' | 'high'): void;
   setSmellIndex(n: number): void;
@@ -17,11 +19,13 @@ type AppState = {
 export const useAppState = create<AppState>((set) => ({
   hasOnboarded: false,
   notificationsEnabled: false,
+  characterName: '한니비',
   hungryLevel: 'low',
   humidityLevel: 'high',
   smellIndex: 12,
   setHasOnboarded: (b) => set({ hasOnboarded: b }),
   setNotificationsEnabled: (b) => set({ notificationsEnabled: b }),
+  setCharacterName: (name) => set({ characterName: name }),
   setHungryLevel: (v) => set({ hungryLevel: v }),
   setHumidityLevel: (v) => set({ humidityLevel: v }),
   setSmellIndex: (n) => set({ smellIndex: n }),

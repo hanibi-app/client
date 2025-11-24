@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -30,8 +30,14 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const setCharacterName = useAppState((s) => s.setCharacterName);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(characterName);
-  const [buttonWidth, setButtonWidth] = useState<number | undefined>(undefined);
   const textInputRef = useRef<TextInput>(null);
+
+  // characterName이 변경되면 editValue도 업데이트 (편집 중이 아닐 때만)
+  useEffect(() => {
+    if (!isEditing) {
+      setEditValue(characterName);
+    }
+  }, [characterName, isEditing]);
 
   // 진행률 계산 (30% 남음 = 70% 진행)
   const progress = 70;
@@ -42,6 +48,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     // TextInput이 렌더링된 후 포커스하여 키보드가 올라오도록 함
     setTimeout(() => {
       textInputRef.current?.focus();
+      // 편집 시작 시 전체 텍스트 선택
+      textInputRef.current?.setNativeProps({ selection: { start: 0, end: characterName.length } });
     }, 100);
   };
 
@@ -126,56 +134,54 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             <View style={styles.buttonRowLeft} />
             <View style={styles.buttonRowCenter}>
               {isEditing ? (
-                <View
-                  style={[
-                    styles.editContainer,
-                    buttonWidth ? { minWidth: buttonWidth } : undefined,
-                  ]}
-                >
-                  <TextInput
-                    ref={textInputRef}
-                    style={styles.nameInput}
-                    value={editValue}
-                    onChangeText={setEditValue}
-                    placeholder="이름을 입력하세요"
-                    placeholderTextColor={colors.mutedText}
-                    maxLength={10}
-                    autoFocus={true}
-                    returnKeyType="done"
-                    onSubmitEditing={handleSave}
-                    editable={true}
-                    selectTextOnFocus={false}
-                  />
+                <View style={styles.editContainer}>
+                  <View style={styles.inputContainer}>
+                    <TextInput
+                      ref={textInputRef}
+                      style={styles.nameInput}
+                      value={editValue}
+                      onChangeText={setEditValue}
+                      placeholder="이름을 입력하세요"
+                      placeholderTextColor={colors.mutedText}
+                      maxLength={10}
+                      autoFocus={true}
+                      returnKeyType="done"
+                      onSubmitEditing={handleSave}
+                      selectionColor={colors.primary}
+                    />
+                  </View>
                   <Pressable onPress={handleSave} style={styles.saveIconButton}>
-                    <MaterialIcons name="check" size={20} color={colors.primary} />
+                    <MaterialIcons
+                      name="check"
+                      size={20}
+                      color={editValue.trim() ? colors.primary : colors.mutedText}
+                    />
                   </Pressable>
                   <Pressable onPress={handleCancel} style={styles.cancelIconButton}>
                     <MaterialIcons name="close" size={20} color={colors.mutedText} />
                   </Pressable>
                 </View>
               ) : (
-                <Pressable
-                  onLayout={(event) => {
-                    const { width } = event.nativeEvent.layout;
-                    setButtonWidth(width);
-                  }}
-                  onPress={handleEditPress}
-                  style={styles.hanibiButton}
-                >
+                <Pressable onPress={handleEditPress} style={styles.hanibiButton}>
                   <Text style={styles.hanibiButtonText}>{characterName}</Text>
-                  <MaterialIcons name="edit" size={16} color={colors.text} />
+                  <MaterialIcons
+                    name="edit"
+                    size={16}
+                    color={colors.text}
+                    style={styles.editIcon}
+                  />
                 </Pressable>
               )}
             </View>
-            <View style={styles.buttonGap} />
-            <Pressable
-              onPress={() => navigation.navigate('CharacterCustomize')}
-              style={styles.customizeButton}
-            >
-              <EditHanibiIcon width={48} height={48} />
-              <Text style={styles.customizeButtonText}>꾸며주기</Text>
-            </Pressable>
-            <View style={styles.buttonRowRight} />
+            <View style={styles.buttonRowRight}>
+              <Pressable
+                onPress={() => navigation.navigate('CharacterCustomize')}
+                style={styles.customizeButton}
+              >
+                <EditHanibiIcon width={48} height={48} />
+                <Text style={styles.customizeButtonText}>꾸며주기</Text>
+              </Pressable>
+            </View>
           </View>
 
           {/* 진행바 */}
@@ -206,29 +212,32 @@ const styles = StyleSheet.create({
     paddingTop: 0,
     width: '100%',
   },
-  buttonGap: {
-    width: spacing.lg,
-  },
   buttonRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
+    justifyContent: 'space-between',
+    marginBottom: spacing.lg,
     paddingHorizontal: 0,
+    width: '100%',
   },
   buttonRowCenter: {
     alignItems: 'center',
+    flex: 0,
+    justifyContent: 'center',
   },
   buttonRowLeft: {
     flex: 1,
   },
   buttonRowRight: {
+    alignItems: 'flex-end',
     flex: 1,
+    justifyContent: 'flex-end',
   },
   cancelIconButton: {
     alignItems: 'center',
+    height: 24,
     justifyContent: 'center',
-    padding: spacing.xs,
+    width: 24,
   },
   characterContainer: {
     alignItems: 'center',
@@ -258,25 +267,48 @@ const styles = StyleSheet.create({
   editContainer: {
     alignItems: 'center',
     backgroundColor: colors.white,
+    borderColor: colors.primary,
     borderRadius: 12,
+    borderWidth: 2,
+    elevation: 3,
     flexDirection: 'row',
-    gap: spacing.xs,
+    gap: spacing.sm,
+    minWidth: 220,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    shadowColor: colors.primary,
+    shadowOffset: {
+      height: 2,
+      width: 0,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  editIcon: {
+    marginLeft: spacing.xs,
+    position: 'absolute',
+    right: spacing.lg + 8,
   },
   hanibiButton: {
     alignItems: 'center',
     backgroundColor: colors.gray75,
     borderRadius: 12,
-    flexDirection: 'row',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
+    justifyContent: 'center',
+    minWidth: 220,
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
+    position: 'relative',
   },
   hanibiButtonText: {
     color: colors.text,
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.medium,
+    textAlign: 'center',
+    width: '100%',
+  },
+  inputContainer: {
+    flex: 1,
+    minWidth: 160,
   },
   messageBubble: {
     backgroundColor: colors.white,
@@ -310,8 +342,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.medium,
-    minHeight: 20,
-    padding: 0,
+    minHeight: 24,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 0,
+    textAlign: 'center',
+    width: '100%',
   },
   pinkStar1: {
     position: 'absolute',
@@ -337,7 +372,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   progressContainer: {
-    marginTop: spacing.sm,
+    marginTop: spacing.lg,
     width: '100%',
   },
   progressText: {
@@ -352,8 +387,9 @@ const styles = StyleSheet.create({
   },
   saveIconButton: {
     alignItems: 'center',
+    height: 24,
     justifyContent: 'center',
-    padding: spacing.xs,
+    width: 24,
   },
   temperatureText: {
     color: colors.danger,

@@ -4,6 +4,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
+  Animated,
   Pressable,
   SafeAreaView,
   StyleSheet,
@@ -12,6 +13,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import EditHanibiIcon from '@/assets/images/edit-hanibi.svg';
@@ -22,15 +24,20 @@ import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 
+const DEFAULT_EDIT_ACTION_WIDTH = 64;
+
 type HomeScreenProps = NativeStackScreenProps<HomeStackParamList, 'Home'>;
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const characterName = useAppState((s) => s.characterName);
   const setCharacterName = useAppState((s) => s.setCharacterName);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(characterName);
   const textInputRef = useRef<TextInput>(null);
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const waveAnim = useRef(new Animated.Value(0)).current;
 
   // characterName이 변경되면 editValue도 업데이트 (편집 중이 아닐 때만)
   useEffect(() => {
@@ -41,6 +48,48 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
   // 진행률 계산 (30% 남음 = 70% 진행)
   const progress = 70;
+
+  // 진행바 애니메이션
+  useEffect(() => {
+    Animated.timing(progressAnim, {
+      toValue: progress,
+      duration: 1200,
+      useNativeDriver: false, // width는 native driver를 사용할 수 없음
+    }).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress]);
+
+  // 진행 중 애니메이션 (계속 흐르는 효과 - 끊김 없이)
+  useEffect(() => {
+    // 초기값을 0으로 설정
+    waveAnim.setValue(0);
+
+    // 끊김 없이 연속적으로 흐르도록 애니메이션 구성
+    // 그라데이션 패턴이 반복되므로 한 패턴만 이동하고 즉시 다음 패턴으로 이어지도록
+    const createSeamlessLoop = () => {
+      return Animated.sequence([
+        Animated.timing(waveAnim, {
+          toValue: 0.5, // 패턴의 절반만 이동
+          duration: 1200,
+          useNativeDriver: false,
+        }),
+        Animated.timing(waveAnim, {
+          toValue: 0, // 즉시 리셋 (시각적으로는 끊기지 않음)
+          duration: 0,
+          useNativeDriver: false,
+        }),
+      ]);
+    };
+
+    const flowAnimation = Animated.loop(createSeamlessLoop(), { iterations: -1 });
+    flowAnimation.start();
+
+    return () => {
+      flowAnimation.stop();
+      waveAnim.setValue(0);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleEditPress = () => {
     setEditValue(characterName);
@@ -70,6 +119,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
   // 캐릭터 크기
   const CHARACTER_SIZE = Math.floor(SCREEN_WIDTH * 0.5);
+  const NAME_CARD_WIDTH = Math.min(Math.max(SCREEN_WIDTH * 0.6, 220), 320);
+  const editActionWidth = Math.min(Math.max(NAME_CARD_WIDTH * 0.2, 44), DEFAULT_EDIT_ACTION_WIDTH);
+  const messageTopPadding = Math.max(insets.top - spacing.xxxl, spacing.xs);
 
   // 장식 요소 색상
   const YELLOW_RECTANGLE_COLOR = '#FFF9C4';
@@ -110,15 +162,17 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         </View>
 
         {/* 상단 상태 메시지 버블 */}
-        <View style={styles.messageBubble}>
-          <View style={styles.messageIcon}>
-            <MaterialIcons name="local-fire-department" size={24} color="#FF6B35" />
-          </View>
-          <View style={styles.messageContent}>
-            <Text style={styles.messageText1}>너무 더워서 힘들어요 😩</Text>
-            <Text style={styles.messageText2}>
-              <Text style={styles.temperatureText}>온도</Text> 한 번만 확인해 주세요!
-            </Text>
+        <View style={[styles.topSection, { paddingTop: messageTopPadding }]}>
+          <View style={styles.messageBubble}>
+            <View style={styles.messageIcon}>
+              <MaterialIcons name="local-fire-department" size={24} color="#FF6B35" />
+            </View>
+            <View style={styles.messageContent}>
+              <Text style={styles.messageText1}>너무 더워서 힘들어요 😩</Text>
+              <Text style={styles.messageText2}>
+                <Text style={styles.temperatureText}>온도</Text> 한 번만 확인해 주세요!
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -133,12 +187,13 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <View style={styles.buttonRow}>
             <View style={styles.buttonRowLeft} />
             <View style={styles.buttonRowCenter}>
-              {isEditing ? (
-                <View style={styles.editContainer}>
-                  <View style={styles.inputContainer}>
+              <View style={[styles.nameCardWrapper, { width: NAME_CARD_WIDTH }]}>
+                {isEditing ? (
+                  <View style={[styles.hanibiButton, styles.editContainer]}>
+                    <View style={[styles.editSideSpacer, { width: editActionWidth }]} />
                     <TextInput
                       ref={textInputRef}
-                      style={styles.nameInput}
+                      style={[styles.nameInput, styles.nameInputEditing]}
                       value={editValue}
                       onChangeText={setEditValue}
                       placeholder="이름을 입력하세요"
@@ -149,29 +204,31 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                       onSubmitEditing={handleSave}
                       selectionColor={colors.primary}
                     />
+                    <View style={[styles.editActions, { width: editActionWidth }]}>
+                      <Pressable onPress={handleSave} style={styles.saveIconButton}>
+                        <MaterialIcons
+                          name="check"
+                          size={20}
+                          color={editValue.trim() ? colors.primary : colors.mutedText}
+                        />
+                      </Pressable>
+                      <Pressable onPress={handleCancel} style={styles.cancelIconButton}>
+                        <MaterialIcons name="close" size={20} color={colors.mutedText} />
+                      </Pressable>
+                    </View>
                   </View>
-                  <Pressable onPress={handleSave} style={styles.saveIconButton}>
+                ) : (
+                  <Pressable onPress={handleEditPress} style={styles.hanibiButton}>
+                    <Text style={styles.hanibiButtonText}>{characterName}</Text>
                     <MaterialIcons
-                      name="check"
-                      size={20}
-                      color={editValue.trim() ? colors.primary : colors.mutedText}
+                      name="edit"
+                      size={16}
+                      color={colors.text}
+                      style={styles.editIcon}
                     />
                   </Pressable>
-                  <Pressable onPress={handleCancel} style={styles.cancelIconButton}>
-                    <MaterialIcons name="close" size={20} color={colors.mutedText} />
-                  </Pressable>
-                </View>
-              ) : (
-                <Pressable onPress={handleEditPress} style={styles.hanibiButton}>
-                  <Text style={styles.hanibiButtonText}>{characterName}</Text>
-                  <MaterialIcons
-                    name="edit"
-                    size={16}
-                    color={colors.text}
-                    style={styles.editIcon}
-                  />
-                </Pressable>
-              )}
+                )}
+              </View>
             </View>
             <View style={styles.buttonRowRight}>
               <Pressable
@@ -187,12 +244,47 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           {/* 진행바 */}
           <View style={styles.progressContainer}>
             <View style={styles.progressBarBackground}>
-              <LinearGradient
-                colors={['#6BE092', '#FFD700']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[styles.progressBarFill, { width: `${progress}%` }]}
-              />
+              <Animated.View
+                style={[
+                  styles.progressBarFill,
+                  {
+                    width: progressAnim.interpolate({
+                      inputRange: [0, 100],
+                      outputRange: ['0%', '100%'],
+                    }),
+                  },
+                ]}
+              >
+                <Animated.View
+                  style={[
+                    styles.progressBarGradient,
+                    {
+                      left: waveAnim.interpolate({
+                        inputRange: [0, 0.5],
+                        outputRange: ['-50%', '0%'],
+                      }),
+                    },
+                  ]}
+                >
+                  <LinearGradient
+                    colors={[
+                      '#6BE092',
+                      '#FFD700',
+                      '#6BE092',
+                      '#FFD700',
+                      '#6BE092',
+                      '#FFD700',
+                      '#6BE092',
+                      '#FFD700',
+                      '#6BE092',
+                    ]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    locations={[0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1]}
+                    style={StyleSheet.absoluteFill}
+                  />
+                </Animated.View>
+              </Animated.View>
             </View>
             <Text style={[styles.progressText, { color: PROGRESS_TEXT_COLOR }]}>
               다 먹기까지 30% 남음
@@ -264,6 +356,12 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     zIndex: 0,
   },
+  editActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: DEFAULT_EDIT_ACTION_WIDTH,
+  },
   editContainer: {
     alignItems: 'center',
     backgroundColor: colors.white,
@@ -273,8 +371,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     flexDirection: 'row',
     gap: spacing.sm,
-    minWidth: 220,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     shadowColor: colors.primary,
     shadowOffset: {
@@ -283,40 +380,39 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    width: '100%',
   },
   editIcon: {
     marginLeft: spacing.xs,
     position: 'absolute',
     right: spacing.lg + 8,
   },
+  editSideSpacer: {
+    width: DEFAULT_EDIT_ACTION_WIDTH,
+  },
   hanibiButton: {
     alignItems: 'center',
     backgroundColor: colors.gray75,
     borderRadius: 12,
     justifyContent: 'center',
-    minWidth: 220,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     position: 'relative',
+    width: '100%',
   },
   hanibiButtonText: {
     color: colors.text,
-    fontSize: typography.sizes.md,
+    fontSize: typography.sizes.lg,
     fontWeight: typography.weights.medium,
     textAlign: 'center',
     width: '100%',
-  },
-  inputContainer: {
-    flex: 1,
-    minWidth: 160,
   },
   messageBubble: {
     backgroundColor: colors.white,
     borderRadius: 16,
     flexDirection: 'row',
-    marginHorizontal: spacing.xl,
-    marginTop: spacing.xxl,
     padding: spacing.md,
+    width: '100%',
     zIndex: 1,
   },
   messageContent: {
@@ -337,16 +433,23 @@ const styles = StyleSheet.create({
     color: colors.mutedText,
     fontSize: typography.sizes.sm,
   },
+  nameCardWrapper: {
+    alignSelf: 'center',
+    width: '100%',
+  },
   nameInput: {
     color: colors.text,
     flex: 1,
-    fontSize: typography.sizes.md,
+    fontSize: typography.sizes.lg,
     fontWeight: typography.weights.medium,
     minHeight: 24,
     paddingHorizontal: spacing.xs,
     paddingVertical: 0,
     textAlign: 'center',
     width: '100%',
+  },
+  nameInputEditing: {
+    paddingHorizontal: spacing.lg,
   },
   pinkStar1: {
     position: 'absolute',
@@ -370,6 +473,13 @@ const styles = StyleSheet.create({
   progressBarFill: {
     borderRadius: 12,
     height: '100%',
+    overflow: 'hidden',
+  },
+  progressBarGradient: {
+    borderRadius: 12,
+    height: '100%',
+    position: 'absolute',
+    width: '200%',
   },
   progressContainer: {
     marginTop: spacing.lg,
@@ -393,6 +503,10 @@ const styles = StyleSheet.create({
   },
   temperatureText: {
     color: colors.danger,
+  },
+  topSection: {
+    paddingHorizontal: spacing.xl,
+    width: '100%',
   },
   whiteDot1: {
     backgroundColor: colors.white,

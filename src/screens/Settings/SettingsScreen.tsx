@@ -5,13 +5,13 @@ import { NavigationProp, useNavigation } from '@react-navigation/native';
 import {
   Alert,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppHeader from '@/components/common/AppHeader';
 import { RootStackParamList } from '@/navigation/types';
@@ -40,7 +40,7 @@ type SettingToggleRowProps = {
 const SettingLinkRow = ({ label, description, showDivider, onPress }: SettingLinkRowProps) => (
   <Pressable style={[styles.row, showDivider && styles.rowDivider]} onPress={onPress}>
     <View style={styles.rowText}>
-      <Text style={styles.rowLabel}>{label}</Text>
+      <Text style={[styles.rowLabel, styles.linkLabel]}>{label}</Text>
       {description ? <Text style={styles.rowDescription}>{description}</Text> : null}
     </View>
     <Text style={styles.rowArrow}>›</Text>
@@ -75,13 +75,14 @@ const SettingSection: React.FC<{ title: string; children: React.ReactNode }> = (
   children,
 }) => (
   <View style={styles.section}>
-    <Text style={styles.sectionTitle}>{title}</Text>
+    <Text style={[styles.sectionTitle, styles.sectionTitleSpacing]}>{title}</Text>
     <View style={styles.card}>{children}</View>
   </View>
 );
 
 export default function SettingsScreen() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
   const {
     setHasOnboarded,
     displayCharacter,
@@ -161,16 +162,24 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+    <View style={styles.container}>
+      <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
         <AppHeader
           title="설정"
           onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
         />
-
-        <SettingSection title="프로필 및 계정">
-          <SettingLinkRow label="프로필 및 계정" onPress={() => handlePlaceholder('프로필')} />
-        </SettingSection>
+      </View>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.section}>
+          <Pressable
+            style={[styles.card, styles.sectionTitleButton]}
+            onPress={() => handlePlaceholder('프로필')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.sectionTitle}>프로필 및 계정</Text>
+            <Text style={styles.sectionTitleArrow}>›</Text>
+          </Pressable>
+        </View>
 
         <SettingSection title="페어링">
           <SettingLinkRow
@@ -239,7 +248,7 @@ export default function SettingsScreen() {
           />
         </SettingSection>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -254,26 +263,37 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   container: {
-    backgroundColor: colors.gray50,
+    backgroundColor: colors.white,
     flex: 1,
   },
   content: {
     padding: spacing.xl,
     paddingBottom: spacing.xxxl,
   },
+  headerContainer: {
+    backgroundColor: colors.background,
+    borderBottomColor: colors.border,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  linkLabel: {
+    color: colors.text,
+    fontSize: typography.sizes.md,
+  },
   row: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    minHeight: 60,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
   },
   rowArrow: {
+    alignSelf: 'center',
     color: colors.mutedText,
     fontSize: typography.sizes.xl,
   },
   rowDescription: {
-    color: colors.mutedText,
+    color: colors.mutedTextLight,
     fontSize: typography.sizes.xs,
     marginTop: spacing.xs / 2,
   },
@@ -283,7 +303,7 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     color: colors.text,
-    fontSize: typography.sizes.md,
+    fontSize: typography.sizes.sm,
     fontWeight: typography.weights.medium,
   },
   rowText: {
@@ -294,9 +314,23 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxl,
   },
   sectionTitle: {
+    color: colors.text,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+  },
+  sectionTitleArrow: {
     color: colors.mutedText,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
+    fontSize: typography.sizes.xl,
+    marginLeft: spacing.sm,
+  },
+  sectionTitleButton: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+  },
+  sectionTitleSpacing: {
     marginBottom: spacing.sm,
   },
 });

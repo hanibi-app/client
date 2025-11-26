@@ -1,12 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
-  ActivityIndicator,
   Animated,
   Easing,
-  Modal,
   Pressable,
   StyleSheet,
   Text,
@@ -18,6 +16,8 @@ import Svg, { Defs, Rect, Stop, LinearGradient as SvgLinearGradient } from 'reac
 
 import ThreeArrowIcon from '@/assets/images/three-arrow.svg';
 import AppButton from '@/components/common/AppButton';
+import { CameraStatusModal } from '@/components/dashboard/CameraStatusModal';
+import { useCameraStatus } from '@/hooks/useCameraStatus';
 import { DashboardStackParamList } from '@/navigation/types';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
@@ -59,27 +59,13 @@ const STATUS_LABELS = {
   danger: '위험',
 };
 
-const MODAL_OVERLAY_BACKGROUND = 'rgba(0, 0, 0, 0.35)';
-
-type CameraConnectionStatus = {
-  cameraId: string;
-  connected: boolean;
-};
-
-const DEFAULT_CAMERA_ID = 'TEST_0016';
-
 export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCameraModalVisible, setCameraModalVisible] = useState(false);
-  const [cameraStatus, setCameraStatus] = useState<CameraConnectionStatus>({
-    cameraId: DEFAULT_CAMERA_ID,
-    connected: false,
-  });
-  const [isCheckingCamera, setIsCheckingCamera] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
+  const { cameraStatus, isChecking, error: cameraError, refresh } = useCameraStatus();
 
   // 상태 바 너비 계산 (패딩 제외)
   const STATUS_BAR_WIDTH = SCREEN_WIDTH - spacing.xl * 2;
@@ -185,29 +171,11 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
     console.log('CCTV 연결 설정 화면으로 이동');
   };
 
-  const checkCameraConnection = useCallback(async () => {
-    try {
-      setIsCheckingCamera(true);
-      setCameraError(null);
-      // TODO: 실제 API 엔드포인트로 교체
-      // const response = await fetch(`${API_BASE_URL}/cctv/${cameraStatus.cameraId}/status`);
-      // const result = await response.json();
-      // setCameraStatus({ cameraId: result.deviceId, connected: result.connected });
-
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      setCameraStatus((prev) => ({ ...prev }));
-    } catch (error) {
-      setCameraError('연결 상태를 가져오는 중 문제가 발생했어요.');
-    } finally {
-      setIsCheckingCamera(false);
-    }
-  }, []);
-
   useEffect(() => {
     if (isCameraModalVisible) {
-      checkCameraConnection();
+      refresh();
     }
-  }, [checkCameraConnection, isCameraModalVisible]);
+  }, [isCameraModalVisible, refresh]);
 
   const getMetricStatus = (metric: keyof HealthMetrics, value: number): 'good' | 'bad' => {
     // 임시 로직 - 실제로는 각 메트릭의 임계값에 따라 결정
@@ -238,12 +206,6 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const { healthScore, metrics } = dashboardData;
   const statusLabel = STATUS_LABELS[healthScore.status];
   const indicatorPosition = getStatusBarPosition(healthScore.total);
-  const cameraStatusTitle = cameraStatus.connected
-    ? '연결된 CCTV가 있습니다'
-    : '연결된 CCTV가 없습니다';
-  const cameraStatusDescription = cameraStatus.connected
-    ? `${cameraStatus.cameraId} 스트리밍을 확인해 주세요.`
-    : `${cameraStatus.cameraId}에 연결된 CCTV 스트리밍이 없습니다.`;
 
   return (
     <View style={styles.container}>
@@ -447,45 +409,15 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
         </Animated.View>
       </View>
 
-      <Modal
-        transparent
-        animationType="fade"
+      <CameraStatusModal
         visible={isCameraModalVisible}
-        onRequestClose={handleCloseCameraModal}
-      >
-        <View style={styles.modalOverlay}>
-          <Pressable style={styles.modalBackdrop} onPress={handleCloseCameraModal} />
-          <View style={styles.modalCard}>
-            <Pressable style={styles.modalCloseButton} onPress={handleCloseCameraModal}>
-              <Text style={styles.modalCloseIcon}>×</Text>
-            </Pressable>
-            <View style={styles.modalBadgeRow}>
-              <View style={styles.modalBadgeDot} />
-              <Text style={styles.modalBadgeText}>처리 현황을 확인하세요</Text>
-            </View>
-            <View style={styles.modalIconWrapper}>
-              <FontAwesome name="video-camera" size={48} color={colors.mutedText} />
-              <View style={styles.modalIconSlash} />
-            </View>
-            <Text style={styles.modalTitle}>{cameraStatusTitle}</Text>
-            <Text style={styles.modalDescription}>{cameraStatusDescription}</Text>
-            {cameraError ? (
-              <Text style={styles.modalErrorText}>{cameraError}</Text>
-            ) : (
-              isCheckingCamera && (
-                <ActivityIndicator color={colors.primary} style={styles.modalLoader} />
-              )
-            )}
-            <Pressable style={styles.modalPrimaryButton} onPress={handleModalViewReport}>
-              <FontAwesome name="refresh" size={16} color={colors.white} />
-              <Text style={styles.modalPrimaryButtonText}>리포트보기</Text>
-            </Pressable>
-            <Pressable onPress={handleLinkCctvSettings}>
-              <Text style={styles.modalLinkText}>CCTV 연결 설정</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+        status={cameraStatus}
+        isChecking={isChecking}
+        errorMessage={cameraError}
+        onClose={handleCloseCameraModal}
+        onPrimaryAction={handleModalViewReport}
+        onLinkPress={handleLinkCctvSettings}
+      />
     </View>
   );
 }
@@ -623,118 +555,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     justifyContent: 'space-between',
     marginTop: spacing.xl,
-  },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  modalBadgeDot: {
-    backgroundColor: colors.danger,
-    borderRadius: 4,
-    height: 8,
-    marginRight: spacing.xs,
-    width: 8,
-  },
-  modalBadgeRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: spacing.md,
-  },
-  modalBadgeText: {
-    color: colors.text,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
-  },
-  modalCard: {
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    borderRadius: 28,
-    marginHorizontal: spacing.xl,
-    paddingBottom: spacing.xxl,
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xl,
-    width: '90%',
-  },
-  modalCloseButton: {
-    alignItems: 'center',
-    alignSelf: 'flex-end',
-    backgroundColor: colors.gray75,
-    borderRadius: 16,
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
-  modalCloseIcon: {
-    color: colors.text,
-    fontSize: typography.sizes.lg,
-  },
-  modalDescription: {
-    color: colors.mutedText,
-    fontSize: typography.sizes.sm,
-    lineHeight: 20,
-    marginTop: spacing.sm,
-    textAlign: 'center',
-  },
-  modalErrorText: {
-    color: colors.danger,
-    fontSize: typography.sizes.xs,
-    marginTop: spacing.sm,
-    textAlign: 'center',
-  },
-  modalIconSlash: {
-    backgroundColor: colors.white,
-    height: 2,
-    position: 'absolute',
-    transform: [{ rotate: '45deg' }],
-    width: 52,
-  },
-  modalIconWrapper: {
-    alignItems: 'center',
-    alignSelf: 'center',
-    height: 64,
-    justifyContent: 'center',
-    marginTop: spacing.lg,
-    width: 64,
-  },
-  modalLinkText: {
-    color: colors.primary,
-    fontSize: typography.sizes.sm,
-    marginTop: spacing.lg,
-    textAlign: 'center',
-    textDecorationLine: 'underline',
-  },
-  modalLoader: {
-    marginTop: spacing.sm,
-  },
-  modalOverlay: {
-    alignItems: 'center',
-    backgroundColor: MODAL_OVERLAY_BACKGROUND,
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-  modalPrimaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 24,
-    flexDirection: 'row',
-    gap: spacing.sm,
-    justifyContent: 'center',
-    marginTop: spacing.xl,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.sm,
-  },
-  modalPrimaryButtonText: {
-    color: colors.white,
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.bold,
-  },
-  modalTitle: {
-    color: colors.text,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    marginTop: spacing.lg,
-    textAlign: 'center',
   },
   reportButton: {
     backgroundColor: colors.primary,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
@@ -13,6 +13,9 @@ import {
   View,
 } from 'react-native';
 
+import AppHeader from '@/components/common/AppHeader';
+import { RootStackParamList } from '@/navigation/types';
+import { SettingsAPI } from '@/services/api/settings';
 import { useAppState } from '@/state/useAppState';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
@@ -30,6 +33,7 @@ type SettingToggleRowProps = {
   description?: string;
   showDivider?: boolean;
   value: boolean;
+  disabled?: boolean;
   onValueChange: (value: boolean) => void;
 };
 
@@ -48,6 +52,7 @@ const SettingToggleRow = ({
   description,
   showDivider,
   value,
+  disabled,
   onValueChange,
 }: SettingToggleRowProps) => (
   <View style={[styles.row, showDivider && styles.rowDivider]}>
@@ -60,6 +65,7 @@ const SettingToggleRow = ({
       onValueChange={onValueChange}
       trackColor={{ false: '#e5e7eb', true: colors.primary }}
       thumbColor="#fff"
+      disabled={disabled}
     />
   </View>
 );
@@ -75,6 +81,7 @@ const SettingSection: React.FC<{ title: string; children: React.ReactNode }> = (
 );
 
 export default function SettingsScreen() {
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const {
     setHasOnboarded,
     displayCharacter,
@@ -88,8 +95,7 @@ export default function SettingsScreen() {
     setCleaningAlertsEnabled,
     setSensorAlertsEnabled,
   } = useAppState();
-
-  const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
+  const [pendingToggle, setPendingToggle] = useState<string | null>(null);
 
   const handleResetOnboarding = async () => {
     try {
@@ -105,23 +111,62 @@ export default function SettingsScreen() {
     Alert.alert('준비 중', `${feature} 기능은 곧 제공될 예정입니다.`);
   };
 
+  const handleDisplayToggle = async (
+    key: 'displayCharacter' | 'useMonochromeDisplay',
+    value: boolean,
+  ) => {
+    const prevValue = key === 'displayCharacter' ? displayCharacter : useMonochromeDisplay;
+    const setter = key === 'displayCharacter' ? setDisplayCharacter : setUseMonochromeDisplay;
+    setter(value);
+    setPendingToggle(key);
+
+    try {
+      await SettingsAPI.updateDisplaySettings({ [key]: value });
+    } catch (error) {
+      setter(prevValue);
+      Alert.alert('오류', '디스플레이 설정을 저장할 수 없어요.');
+    } finally {
+      setPendingToggle(null);
+    }
+  };
+
+  const handleAlertToggle = async (
+    key: 'dialogueAlertsEnabled' | 'cleaningAlertsEnabled' | 'sensorAlertsEnabled',
+    value: boolean,
+  ) => {
+    const prevValue =
+      key === 'dialogueAlertsEnabled'
+        ? dialogueAlertsEnabled
+        : key === 'cleaningAlertsEnabled'
+          ? cleaningAlertsEnabled
+          : sensorAlertsEnabled;
+    const setter =
+      key === 'dialogueAlertsEnabled'
+        ? setDialogueAlertsEnabled
+        : key === 'cleaningAlertsEnabled'
+          ? setCleaningAlertsEnabled
+          : setSensorAlertsEnabled;
+
+    setter(value);
+    setPendingToggle(key);
+
+    try {
+      await SettingsAPI.updateAlertSettings({ [key]: value });
+    } catch (error) {
+      setter(prevValue);
+      Alert.alert('오류', '알림 설정을 저장할 수 없어요.');
+    } finally {
+      setPendingToggle(null);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <Pressable
-            style={styles.backButton}
-            onPress={() => {
-              if (navigation.canGoBack()) {
-                navigation.goBack();
-              }
-            }}
-          >
-            <Text style={styles.backIcon}>←</Text>
-          </Pressable>
-          <Text style={styles.headerTitle}>설정</Text>
-          <View style={styles.backButton} />
-        </View>
+        <AppHeader
+          title="설정"
+          onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+        />
 
         <SettingSection title="프로필 및 계정">
           <SettingLinkRow label="프로필 및 계정" onPress={() => handlePlaceholder('프로필')} />
@@ -149,13 +194,15 @@ export default function SettingsScreen() {
           <SettingToggleRow
             label="캐릭터 표시"
             value={displayCharacter}
-            onValueChange={setDisplayCharacter}
+            onValueChange={(value) => handleDisplayToggle('displayCharacter', value)}
+            disabled={pendingToggle === 'displayCharacter'}
           />
           <SettingToggleRow
             label="단순 색상 표시"
             showDivider
             value={useMonochromeDisplay}
-            onValueChange={setUseMonochromeDisplay}
+            onValueChange={(value) => handleDisplayToggle('useMonochromeDisplay', value)}
+            disabled={pendingToggle === 'useMonochromeDisplay'}
           />
         </SettingSection>
 
@@ -163,19 +210,22 @@ export default function SettingsScreen() {
           <SettingToggleRow
             label="대화 알림"
             value={dialogueAlertsEnabled}
-            onValueChange={setDialogueAlertsEnabled}
+            onValueChange={(value) => handleAlertToggle('dialogueAlertsEnabled', value)}
+            disabled={pendingToggle === 'dialogueAlertsEnabled'}
           />
           <SettingToggleRow
             label="청소 일정 알림"
             showDivider
             value={cleaningAlertsEnabled}
-            onValueChange={setCleaningAlertsEnabled}
+            onValueChange={(value) => handleAlertToggle('cleaningAlertsEnabled', value)}
+            disabled={pendingToggle === 'cleaningAlertsEnabled'}
           />
           <SettingToggleRow
             label="센서 이상 알림"
             showDivider
             value={sensorAlertsEnabled}
-            onValueChange={setSensorAlertsEnabled}
+            onValueChange={(value) => handleAlertToggle('sensorAlertsEnabled', value)}
+            disabled={pendingToggle === 'sensorAlertsEnabled'}
           />
         </SettingSection>
 
@@ -194,13 +244,6 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  backButton: {
-    width: 32,
-  },
-  backIcon: {
-    color: colors.text,
-    fontSize: typography.sizes.xl,
-  },
   card: {
     backgroundColor: colors.background,
     borderRadius: 16,
@@ -217,17 +260,6 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.xl,
     paddingBottom: spacing.xxxl,
-  },
-  header: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.lg,
-  },
-  headerTitle: {
-    color: colors.text,
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
   },
   row: {
     alignItems: 'center',

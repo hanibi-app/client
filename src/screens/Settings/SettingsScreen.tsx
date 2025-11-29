@@ -1,14 +1,7 @@
-import { NavigationProp, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from 'react-native';
+
+import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppHeader from '@/components/common/AppHeader';
@@ -149,10 +142,7 @@ export default function SettingsScreen() {
   }, []);
 
   const handleDisplayToggle = useCallback(
-    async (
-      key: 'displayCharacter' | 'useMonochromeDisplay',
-      value: boolean,
-    ) => {
+    async (key: 'displayCharacter' | 'useMonochromeDisplay', value: boolean) => {
       const prevValue = key === 'displayCharacter' ? displayCharacter : useMonochromeDisplay;
       const setter = key === 'displayCharacter' ? setDisplayCharacter : setUseMonochromeDisplay;
       setter(value);
@@ -167,12 +157,7 @@ export default function SettingsScreen() {
         setPendingToggle(null);
       }
     },
-    [
-      displayCharacter,
-      setDisplayCharacter,
-      setUseMonochromeDisplay,
-      useMonochromeDisplay,
-    ],
+    [displayCharacter, setDisplayCharacter, setUseMonochromeDisplay, useMonochromeDisplay],
   );
 
   const handleAlertToggle = useCallback(
@@ -228,7 +213,7 @@ export default function SettingsScreen() {
         title: '프로필 및 계정',
         type: 'cta',
         cta: {
-          label: '프로필 및 계정',
+          label: '계정',
           onPress: () => handlePlaceholder('프로필'),
         },
       },
@@ -365,16 +350,9 @@ export default function SettingsScreen() {
         {sections.map((section) => {
           if (section.type === 'cta') {
             return (
-              <View key={section.key} style={styles.section}>
-                <Pressable
-                  style={[styles.card, styles.sectionTitleButton]}
-                  onPress={section.cta.onPress}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.sectionTitle}>{section.cta.label}</Text>
-                  <Text style={styles.sectionTitleArrow}>›</Text>
-                </Pressable>
-              </View>
+              <SettingSection key={section.key} title={section.title}>
+                <SettingLinkRow label={section.cta.label} onPress={section.cta.onPress} />
+              </SettingSection>
             );
           }
 
@@ -480,18 +458,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: typography.sizes.lg,
     fontWeight: typography.weights.bold,
-  },
-  sectionTitleArrow: {
-    color: colors.mutedText,
-    fontSize: typography.sizes.xl,
-    marginLeft: spacing.sm,
-  },
-  sectionTitleButton: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 0,
-    paddingVertical: 0,
   },
   sectionTitleSpacing: {
     marginBottom: spacing.sm,

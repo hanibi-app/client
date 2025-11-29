@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CommonActions, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { ROOT_ROUTES } from '@/constants/routes';
 import CharacterCustomizeScreen from '@/screens/Home/CharacterCustomizeScreen';
 import LoginScreen from '@/screens/LoginScreen';
 import NotificationRequestScreen from '@/screens/NotificationRequestScreen';
@@ -58,7 +59,7 @@ export default function RootNavigator({ navigationRef }: RootNavigatorProps) {
           navigationRef.current.dispatch(
             CommonActions.reset({
               index: 0,
-              routes: [{ name: 'Login' }],
+              routes: [{ name: ROOT_ROUTES.LOGIN }],
             }),
           );
         }
@@ -86,15 +87,21 @@ export default function RootNavigator({ navigationRef }: RootNavigatorProps) {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!hasOnboarded ? (
         <>
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="NotificationRequest" component={NotificationRequestScreen} />
-          <Stack.Screen name="CautionSlides">
+          <Stack.Screen name={ROOT_ROUTES.LOGIN} component={LoginScreen} />
+          <Stack.Screen
+            name={ROOT_ROUTES.NOTIFICATION_REQUEST}
+            component={NotificationRequestScreen}
+          />
+          <Stack.Screen name={ROOT_ROUTES.CAUTION_SLIDES}>
             {(props) => <PrecautionsScreen {...props} onComplete={completeOnboarding} />}
           </Stack.Screen>
-          <Stack.Screen name="CharacterCustomize" component={CharacterCustomizeScreen} />
+          <Stack.Screen
+            name={ROOT_ROUTES.CHARACTER_CUSTOMIZE}
+            component={CharacterCustomizeScreen}
+          />
         </>
       ) : null}
-      <Stack.Screen name="MainTabs" component={MainTabs} />
+      <Stack.Screen name={ROOT_ROUTES.MAIN_TABS} component={MainTabs} />
       {/* 카메라 모달 그룹 (나중에 구현) */}
     </Stack.Navigator>
   );

@@ -1,30 +1,48 @@
+import {
+  DASHBOARD_STACK_ROUTES,
+  HOME_STACK_ROUTES,
+  MAIN_TAB_ROUTES,
+  ROOT_ROUTES,
+} from '@/constants/routes';
+
+/**
+ * 네비게이션 타입 정의
+ *
+ * 모든 ParamList는 routes.ts의 상수를 기반으로 정의되어
+ * 타입 안정성과 일관성을 보장합니다.
+ */
+
+// Root Navigator ParamList (최상위 네비게이터)
 export type RootStackParamList = {
-  Login: undefined;
-  NotificationRequest: undefined;
-  CautionSlides: undefined;
-  CharacterCustomize: undefined;
-  MainTabs: undefined;
-  CameraPermission: undefined;
-  CameraCapture: undefined;
-  CameraPreview: { uri: string };
+  [ROOT_ROUTES.LOGIN]: undefined;
+  [ROOT_ROUTES.NOTIFICATION_REQUEST]: undefined;
+  [ROOT_ROUTES.CAUTION_SLIDES]: undefined;
+  [ROOT_ROUTES.CHARACTER_CUSTOMIZE]: undefined;
+  [ROOT_ROUTES.MAIN_TABS]: undefined;
+  [ROOT_ROUTES.CAMERA_PERMISSION]: undefined;
+  [ROOT_ROUTES.CAMERA_CAPTURE]: undefined;
+  [ROOT_ROUTES.CAMERA_PREVIEW]: { uri: string };
 };
 
+// Main Tabs ParamList (하단 탭 네비게이터)
 export type TabParamList = {
-  HomeTab: undefined;
-  DashboardTab: undefined;
-  ReportsTab: undefined;
-  SettingsTab: undefined;
+  [MAIN_TAB_ROUTES.HOME_TAB]: undefined;
+  [MAIN_TAB_ROUTES.DASHBOARD_TAB]: undefined;
+  [MAIN_TAB_ROUTES.SETTINGS_TAB]: undefined;
 };
 
+// Home Stack ParamList (홈 스택 네비게이터)
 export type HomeStackParamList = {
-  Home: undefined;
-  CharacterCustomize: undefined;
-  CharacterNameEdit: undefined;
+  [HOME_STACK_ROUTES.HOME]: undefined;
+  [HOME_STACK_ROUTES.CHARACTER_CUSTOMIZE]: undefined;
+  [HOME_STACK_ROUTES.CHARACTER_NAME_EDIT]: undefined;
 };
 
+// Dashboard Stack ParamList (대시보드 스택 네비게이터)
 export type DashboardStackParamList = {
-  Dashboard: undefined;
-  Reports: undefined;
+  [DASHBOARD_STACK_ROUTES.DASHBOARD]: undefined;
+  [DASHBOARD_STACK_ROUTES.REPORTS]: undefined;
 };
 
+// 도메인 타입
 export type MetricType = 'temp' | 'humidity' | 'moisture' | 'voc';

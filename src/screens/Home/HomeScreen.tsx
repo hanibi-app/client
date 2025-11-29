@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EditHanibiIcon from '@/assets/images/edit-hanibi.svg';
 import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
 import { DecorativeBackground } from '@/components/home/DecorativeBackground';
-import { MessageBubble } from '@/components/home/MessageBubble';
+import { HomeMessageCard } from '@/components/home/HomeMessageCard';
 import { NameCard } from '@/components/home/NameCard';
 import { ProgressBar } from '@/components/home/ProgressBar';
 import { HomeStackParamList } from '@/navigation/types';
@@ -95,7 +95,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       <SafeAreaView style={styles.safeArea}>
         <DecorativeBackground rectangleColor={YELLOW_RECTANGLE_COLOR} />
 
-        <MessageBubble
+        <HomeMessageCard
           paddingTop={messageTopPadding}
           icon={<MaterialIcons name="local-fire-department" size={24} color="#FF6B35" />}
           title="너무 더워서 힘들어요 😩"

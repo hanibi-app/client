@@ -3,6 +3,7 @@ import React from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
+import { MAIN_TAB_ROUTES } from '@/constants/routes';
 import SettingsScreen from '@/screens/Settings/SettingsScreen';
 import { colors } from '@/theme/Colors';
 
@@ -25,7 +26,7 @@ export default function MainTabs() {
       }}
     >
       <Tab.Screen
-        name="HomeTab"
+        name={MAIN_TAB_ROUTES.HOME_TAB}
         component={HomeStack}
         options={{
           title: '홈',
@@ -33,7 +34,7 @@ export default function MainTabs() {
         }}
       />
       <Tab.Screen
-        name="DashboardTab"
+        name={MAIN_TAB_ROUTES.DASHBOARD_TAB}
         component={DashboardStack}
         options={{
           title: '대시보드',
@@ -44,7 +45,7 @@ export default function MainTabs() {
         }}
       />
       <Tab.Screen
-        name="SettingsTab"
+        name={MAIN_TAB_ROUTES.SETTINGS_TAB}
         component={SettingsScreen}
         options={{
           title: '설정',

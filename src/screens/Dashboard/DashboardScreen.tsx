@@ -80,6 +80,10 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   // API 호출 (나중에 실제 API로 교체)
   useEffect(() => {
     // TODO: 실제 API 호출로 교체
+    // - GET /api/dashboard 엔드포인트 호출
+    // - 응답 형식: { healthScore: {...}, metrics: {...}, alerts: [...] }
+    // - 로딩 상태 및 에러 처리 필요
+    // - 관련 이슈: #대시보드API
     // fetchDashboardData().then(setDashboardData).finally(() => setIsLoading(false));
 
     // 임시 데이터
@@ -168,6 +172,9 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const handleLinkCctvSettings = () => {
     handleCloseCameraModal();
     // TODO: CCTV 설정 화면이 준비되면 해당 화면으로 이동하도록 연결
+    // - navigation.navigate(ROOT_ROUTES.CAMERA_SETTINGS) 사용
+    // - 또는 새로운 CameraSettingsScreen 생성 후 연결
+    // - 관련 이슈: #CCTV설정화면
     console.log('CCTV 연결 설정 화면으로 이동');
   };
 

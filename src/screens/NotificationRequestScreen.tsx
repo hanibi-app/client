@@ -29,6 +29,10 @@ export default function NotificationRequestScreen({ navigation }: NotificationRe
 
   const handleEnable = () => {
     // TODO: 알림 권한 요청 구현
+    // - expo-notifications의 requestPermissionsAsync 사용
+    // - 권한 상태에 따른 분기 처리 (granted, denied, undetermined)
+    // - 권한 거부 시 안내 메시지 표시
+    // - 관련 이슈: #알림권한요청
     console.log('알림 활성화');
     setNotificationsEnabled(true);
     navigation.navigate('CautionSlides');

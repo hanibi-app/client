@@ -1,8 +1,15 @@
 import React from 'react';
 
-import { ActivityIndicator, Text, TextStyle, TouchableOpacity, ViewStyle } from 'react-native';
+import {
+  ActivityIndicator,
+  Text,
+  TextStyle,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
 
-import { Colors, ComponentShadows, Spacing, Typography } from '../../constants/DesignSystem';
+import { colors, componentShadows, spacing, typography } from '@/theme';
 
 export interface ButtonProps {
   title: string;
@@ -37,43 +44,43 @@ export const Button: React.FC<ButtonProps> = ({
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      borderRadius: Spacing.sm,
-      ...ComponentShadows.button.default,
+      borderRadius: spacing.sm,
+      ...componentShadows.button.default,
     };
 
     // 크기별 스타일
     const sizeStyles = {
       small: {
         height: 32,
-        paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.xs,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.xs,
       },
       medium: {
         height: 40,
-        paddingHorizontal: Spacing.lg,
-        paddingVertical: Spacing.sm,
+        paddingHorizontal: spacing.lg,
+        paddingVertical: spacing.sm,
       },
       large: {
         height: 48,
-        paddingHorizontal: Spacing.xl,
-        paddingVertical: Spacing.md,
+        paddingHorizontal: spacing.xl,
+        paddingVertical: spacing.md,
       },
     };
 
     // 변형별 스타일
     const variantStyles = {
       primary: {
-        backgroundColor: Colors.light.primary,
+        backgroundColor: colors.primary,
         borderWidth: 0,
       },
       secondary: {
-        backgroundColor: Colors.light.secondary,
+        backgroundColor: colors.secondary,
         borderWidth: 0,
       },
       outline: {
         backgroundColor: 'transparent',
         borderWidth: 1,
-        borderColor: Colors.light.primary,
+        borderColor: colors.primary,
       },
       ghost: {
         backgroundColor: 'transparent',
@@ -105,16 +112,19 @@ export const Button: React.FC<ButtonProps> = ({
   // 텍스트 스타일 결정
   const getTextStyle = (): TextStyle => {
     const baseTextStyle: TextStyle = {
-      ...Typography.button,
+      fontFamily: typography.fontFamily,
+      fontSize: typography.sizes.md,
+      fontWeight: typography.weights.medium,
+      letterSpacing: 0.4,
       textAlign: 'center',
     };
 
     // 변형별 텍스트 색상
     const variantTextColors = {
-      primary: Colors.light.background,
-      secondary: Colors.light.text,
-      outline: Colors.light.primary,
-      ghost: Colors.light.primary,
+      primary: colors.primaryForeground,
+      secondary: colors.text,
+      outline: colors.primary,
+      ghost: colors.primary,
     };
 
     const textColor = disabled ? '#9E9E9E' : variantTextColors[variant];
@@ -128,8 +138,8 @@ export const Button: React.FC<ButtonProps> = ({
 
   // 아이콘 스타일
   const iconStyle = {
-    marginRight: leftIcon ? Spacing.xs : 0,
-    marginLeft: rightIcon ? Spacing.xs : 0,
+    marginRight: leftIcon ? spacing.xs : 0,
+    marginLeft: rightIcon ? spacing.xs : 0,
   };
 
   return (
@@ -142,13 +152,13 @@ export const Button: React.FC<ButtonProps> = ({
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === 'primary' ? Colors.light.background : Colors.light.primary}
+          color={variant === 'primary' ? colors.primaryForeground : colors.primary}
         />
       ) : (
         <>
-          {leftIcon && <span style={iconStyle}>{leftIcon}</span>}
+          {leftIcon && <View style={iconStyle}>{leftIcon}</View>}
           <Text style={getTextStyle()}>{title}</Text>
-          {rightIcon && <span style={iconStyle}>{rightIcon}</span>}
+          {rightIcon && <View style={iconStyle}>{rightIcon}</View>}
         </>
       )}
     </TouchableOpacity>

@@ -6,14 +6,19 @@ import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 
-type MessageBubbleProps = {
+/**
+ * 홈 화면 메시지 카드 컴포넌트
+ *
+ * 홈 화면 상단에 표시되는 메시지 카드로, 아이콘, 제목, 설명을 포함합니다.
+ */
+type HomeMessageCardProps = {
   paddingTop: number;
   icon: React.ReactNode;
   title: string;
   description: React.ReactNode;
 };
 
-export const MessageBubble = ({ paddingTop, icon, title, description }: MessageBubbleProps) => {
+export const HomeMessageCard = ({ paddingTop, icon, title, description }: HomeMessageCardProps) => {
   return (
     <View style={[styles.topSection, { paddingTop }]}>
       <View style={styles.messageBubble}>

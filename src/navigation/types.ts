@@ -19,6 +19,7 @@ export type TabParamList = {
 export type HomeStackParamList = {
   Home: undefined;
   CharacterCustomize: undefined;
+  CharacterNameEdit: undefined;
 };
 
 export type DashboardStackParamList = {

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import AppButton from '@/components/common/AppButton';
 import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
 import { HanibiLevel } from '@/constants/hanibiThresholds';
+import { resetOnboardingProgress } from '@/services/storage/onboarding';
 import { useAppState } from '@/state/useAppState';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
@@ -21,7 +21,7 @@ export default function TabOneScreen() {
 
   const handleResetOnboarding = async () => {
     try {
-      await AsyncStorage.removeItem('@hanibi:onboarding_complete');
+      await resetOnboardingProgress();
       // RootNavigator의 useEffect에서 자동으로 Login 화면으로 리셋됨
       setHasOnboarded(false);
     } catch (error) {

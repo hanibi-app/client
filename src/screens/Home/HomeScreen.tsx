@@ -1,188 +1,218 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import CharacterCircle from '@/components/common/CharacterCircle';
+import EditHanibiIcon from '@/assets/images/edit-hanibi.svg';
+import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
+import { DecorativeBackground } from '@/components/home/DecorativeBackground';
+import { MessageBubble } from '@/components/home/MessageBubble';
+import { NameCard } from '@/components/home/NameCard';
+import { ProgressBar } from '@/components/home/ProgressBar';
 import { HomeStackParamList } from '@/navigation/types';
 import { useAppState } from '@/state/useAppState';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 
+const DEFAULT_EDIT_ACTION_WIDTH = 64;
+
 type HomeScreenProps = NativeStackScreenProps<HomeStackParamList, 'Home'>;
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
-  const { hungryLevel, humidityLevel, smellIndex, setHungryLevel, setHumidityLevel } =
-    useAppState();
-  const [showDebug, setShowDebug] = useState(false);
+  const insets = useSafeAreaInsets();
+  const characterName = useAppState((s) => s.characterName);
+  const setCharacterName = useAppState((s) => s.setCharacterName);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(characterName);
+  const textInputRef = useRef<TextInput>(null);
 
-  const CIRCLE_SIZE = Math.floor(SCREEN_WIDTH * 0.5);
+  // characterName이 변경되면 editValue도 업데이트 (편집 중이 아닐 때만)
+  useEffect(() => {
+    if (!isEditing) {
+      setEditValue(characterName);
+    }
+  }, [characterName, isEditing]);
 
-  const getBackgroundColor = () => {
-    if (hungryLevel === 'high' && humidityLevel === 'high') return '#FFE5E5';
-    if (hungryLevel === 'low' && humidityLevel === 'low') return '#E5F5FF';
-    return '#F0FFF0';
+  // 진행률 계산 (30% 남음 = 70% 진행)
+  const progress = 70;
+
+  const handleEditPress = () => {
+    setEditValue(characterName);
+    setIsEditing(true);
+    // TextInput이 렌더링된 후 포커스하여 키보드가 올라오도록 함
+    setTimeout(() => {
+      textInputRef.current?.focus();
+      // 편집 시작 시 전체 텍스트 선택
+      textInputRef.current?.setNativeProps({ selection: { start: 0, end: characterName.length } });
+    }, 100);
   };
 
-  const handleLongPress = () => {
-    setShowDebug(!showDebug);
+  const handleSave = () => {
+    if (editValue.trim()) {
+      setCharacterName(editValue.trim());
+    } else {
+      // 빈 값이면 원래 이름으로 복원
+      setEditValue(characterName);
+    }
+    setIsEditing(false);
   };
+
+  const handleCancel = () => {
+    setEditValue(characterName);
+    setIsEditing(false);
+  };
+
+  // 캐릭터 크기
+  const CHARACTER_SIZE = Math.floor(SCREEN_WIDTH * 0.5);
+  const NAME_CARD_WIDTH = Math.min(Math.max(SCREEN_WIDTH * 0.6, 220), 320);
+  const editActionWidth = Math.min(Math.max(NAME_CARD_WIDTH * 0.2, 44), DEFAULT_EDIT_ACTION_WIDTH);
+  const messageTopPadding = Math.max(insets.top - spacing.xxxl, spacing.xs);
+
+  // 장식 요소 색상
+  const YELLOW_RECTANGLE_COLOR = '#FFF9C4';
+  const PROGRESS_TEXT_COLOR = '#4CAF70';
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: getBackgroundColor() }]}>
-      {showDebug && (
-        <View style={styles.debugPanel}>
-          <Text style={styles.debugTitle}>디버그 모드</Text>
-          <Pressable
-            onPress={() => setHungryLevel(hungryLevel === 'low' ? 'high' : 'low')}
-            style={styles.debugButton}
-          >
-            <Text>배고픔: {hungryLevel === 'low' ? '배부름 🟢' : '배고픔 🔴'}</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setHumidityLevel(humidityLevel === 'low' ? 'high' : 'low')}
-            style={styles.debugButton}
-          >
-            <Text>습도: {humidityLevel === 'low' ? '낮음 🟢' : '높음 🔴'}</Text>
-          </Pressable>
-        </View>
-      )}
+    <LinearGradient
+      colors={['#E0F7E8', '#FFE5E5']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <DecorativeBackground rectangleColor={YELLOW_RECTANGLE_COLOR} />
 
-      <View style={styles.content}>
-        <Pressable onLongPress={handleLongPress} style={styles.statusCard}>
-          <View style={styles.statusRow}>
-            <View style={styles.statusBadge}>
-              <Text style={styles.badgeText}>
-                {hungryLevel === 'low' ? '배부르고' : '배고프고'} /{' '}
-                {humidityLevel === 'low' ? '건조' : '습함'}
-              </Text>
+        <MessageBubble
+          paddingTop={messageTopPadding}
+          icon={<MaterialIcons name="local-fire-department" size={24} color="#FF6B35" />}
+          title="너무 더워서 힘들어요 😩"
+          description={
+            <Text>
+              <Text style={styles.temperatureHighlight}>온도</Text> 한 번만 확인해 주세요!
+            </Text>
+          }
+        />
+
+        {/* 중앙 캐릭터 */}
+        <View style={styles.characterContainer}>
+          <HanibiCharacter2D level="medium" animated={true} size={CHARACTER_SIZE} />
+        </View>
+
+        {/* 캐릭터 아래 버튼 및 진행바 */}
+        <View style={styles.bottomSection}>
+          {/* 버튼들 */}
+          <View style={styles.buttonRow}>
+            <View style={styles.buttonRowLeft} />
+            <View style={styles.buttonRowCenter}>
+              <View style={[styles.nameCardWrapper, { width: NAME_CARD_WIDTH }]}>
+                <NameCard
+                  isEditing={isEditing}
+                  autoFocus={isEditing}
+                  characterName={characterName}
+                  editValue={editValue}
+                  onEditPress={handleEditPress}
+                  onChangeText={setEditValue}
+                  onSave={handleSave}
+                  onCancel={handleCancel}
+                  editActionWidth={editActionWidth}
+                  textInputRef={textInputRef}
+                />
+              </View>
             </View>
-            <View style={styles.smellBadge}>
-              <Text style={styles.smellText}>냄새지수 {smellIndex}</Text>
+            <View style={styles.buttonRowRight}>
+              <Pressable
+                onPress={() => navigation.navigate('CharacterCustomize')}
+                style={styles.customizeButton}
+              >
+                <EditHanibiIcon width={48} height={48} />
+                <Text style={styles.customizeButtonText}>꾸며주기</Text>
+              </Pressable>
             </View>
           </View>
-        </Pressable>
 
-        <View style={styles.characterContainer}>
-          <CharacterCircle
-            size={CIRCLE_SIZE}
-            backgroundColor={colors.primary}
-            level="medium"
-            animated={true}
+          <ProgressBar
+            progress={progress}
+            description="다 먹기까지 30% 남음"
+            textColor={PROGRESS_TEXT_COLOR}
           />
         </View>
-
-        <View style={styles.buttonContainer}>
-          <Pressable
-            onPress={() => navigation.navigate('CharacterCustomize')}
-            style={styles.primaryButton}
-          >
-            <Text style={styles.buttonText}>캐릭터 꾸며주기</Text>
-          </Pressable>
-          <Pressable onPress={() => console.log('카메라 열기')} style={styles.secondaryButton}>
-            <Text style={styles.secondaryButtonText}>카메라 열기</Text>
-          </Pressable>
-        </View>
-      </View>
-    </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  badgeText: {
-    color: colors.text,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
-  },
-  buttonContainer: {
-    marginTop: spacing.xl,
+  bottomSection: {
+    marginTop: spacing.lg,
+    paddingBottom: spacing.xxl,
     paddingHorizontal: spacing.xl,
+    paddingTop: 0,
     width: '100%',
   },
-  buttonText: {
-    color: colors.primaryForeground,
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.bold,
+  buttonRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.lg,
+    paddingHorizontal: 0,
+    width: '100%',
+  },
+  buttonRowCenter: {
+    alignItems: 'center',
+    flex: 0,
+    justifyContent: 'center',
+  },
+  buttonRowLeft: {
+    flex: 1,
+  },
+  buttonRowRight: {
+    alignItems: 'flex-end',
+    flex: 1,
+    justifyContent: 'flex-end',
   },
   characterContainer: {
     alignItems: 'center',
-    marginVertical: spacing.xxl,
+    flexGrow: 0,
+    flexShrink: 1,
+    justifyContent: 'center',
+    marginTop: spacing.xl,
+    paddingBottom: spacing.lg,
+    paddingTop: 70,
   },
   container: {
     flex: 1,
   },
-  content: {
+  customizeButton: {
     alignItems: 'center',
-    paddingTop: spacing.xl,
+    justifyContent: 'center',
   },
-  debugButton: {
-    backgroundColor: colors.white,
-    borderRadius: 8,
-    marginTop: spacing.sm,
-    padding: spacing.md,
+  customizeButtonText: {
+    color: colors.text,
+    fontSize: typography.sizes.sm,
+    marginTop: spacing.xs,
   },
-  debugPanel: {
-    backgroundColor: colors.softCream,
-    borderBottomWidth: 2,
-    borderColor: colors.brightYellow,
-    padding: spacing.md,
-  },
-  debugTitle: {
-    fontWeight: typography.weights.bold,
-  },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    marginBottom: spacing.md,
-    paddingVertical: spacing.md,
+  nameCardWrapper: {
+    alignSelf: 'center',
     width: '100%',
   },
-  secondaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.border,
-    borderRadius: 12,
-    paddingVertical: spacing.md,
-    width: '100%',
+  safeArea: {
+    flex: 1,
+    zIndex: 1,
   },
-  secondaryButtonText: {
-    color: colors.text,
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.medium,
-  },
-  smellBadge: {
-    backgroundColor: colors.cream,
-    borderRadius: 12,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  smellText: {
-    color: colors.text,
-    fontSize: typography.sizes.xs,
-  },
-  statusBadge: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  statusCard: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    marginHorizontal: spacing.xl,
-    marginTop: spacing.lg,
-    padding: spacing.md,
-    shadowColor: colors.black,
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    width: '90%',
-  },
-  statusRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  temperatureHighlight: {
+    color: colors.danger,
   },
 });

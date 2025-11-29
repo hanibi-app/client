@@ -49,8 +49,7 @@ export default function MainTabs() {
         options={{
           title: '설정',
           tabBarIcon: ({ color, size }) => <FontAwesome name="cog" size={size} color={color} />,
-          headerShown: true,
-          headerTitle: '',
+          headerShown: false,
         }}
       />
     </Tab.Navigator>

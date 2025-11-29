@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CommonActions, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -8,14 +7,13 @@ import CharacterCustomizeScreen from '@/screens/Home/CharacterCustomizeScreen';
 import LoginScreen from '@/screens/LoginScreen';
 import NotificationRequestScreen from '@/screens/NotificationRequestScreen';
 import PrecautionsScreen from '@/screens/PrecautionsScreen';
+import { markOnboardingComplete, readOnboardingStatus } from '@/services/storage/onboarding';
 import { useAppState } from '@/state/useAppState';
 
 import MainTabs from './MainTabs';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
-
-const ONBOARDING_COMPLETE_KEY = '@hanibi:onboarding_complete';
 
 type RootNavigatorProps = {
   navigationRef: React.RefObject<NavigationContainerRef<RootStackParamList> | null>;
@@ -29,8 +27,8 @@ export default function RootNavigator({ navigationRef }: RootNavigatorProps) {
 
   const checkOnboardingStatus = useCallback(async () => {
     try {
-      const value = await AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY);
-      if (value === 'true') {
+      const isComplete = await readOnboardingStatus();
+      if (isComplete) {
         setHasOnboarded(true);
       }
     } catch (error) {
@@ -72,7 +70,7 @@ export default function RootNavigator({ navigationRef }: RootNavigatorProps) {
 
   const completeOnboarding = async () => {
     try {
-      await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
+      await markOnboardingComplete();
       setHasOnboarded(true);
     } catch (error) {
       console.error('온보딩 완료 저장 오류:', error);

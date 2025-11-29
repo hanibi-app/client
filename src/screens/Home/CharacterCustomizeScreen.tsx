@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CommonActions } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -8,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
 import { HomeStackParamList, RootStackParamList } from '@/navigation/types';
+import { markOnboardingComplete } from '@/services/storage/onboarding';
 import { useAppState } from '@/state/useAppState';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
@@ -36,7 +36,7 @@ export default function CharacterCustomizeScreen({ navigation }: CharacterCustom
   const handleComplete = async () => {
     // 온보딩 완료 처리
     try {
-      await AsyncStorage.setItem('@hanibi:onboarding_complete', 'true');
+      await markOnboardingComplete();
       setHasOnboarded(true);
     } catch (error) {
       console.error('온보딩 완료 저장 오류:', error);

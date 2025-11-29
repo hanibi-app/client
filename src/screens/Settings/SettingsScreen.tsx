@@ -1,124 +1,465 @@
-import React from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import AppHeader from '@/components/common/AppHeader';
+import { RootStackParamList } from '@/navigation/types';
+import { SettingsAPI } from '@/services/api/settings';
+import { resetOnboardingProgress } from '@/services/storage/onboarding';
 import { useAppState } from '@/state/useAppState';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 
-export default function SettingsScreen() {
-  const { notificationsEnabled, setNotificationsEnabled, setHasOnboarded } = useAppState();
+type SettingLinkRowProps = {
+  label: string;
+  description?: string;
+  showDivider?: boolean;
+  onPress?: () => void;
+};
 
-  const handleResetOnboarding = async () => {
-    try {
-      await AsyncStorage.removeItem('@hanibi:onboarding_complete');
-      // RootNavigator의 useEffect에서 자동으로 Login 화면으로 리셋됨
-      setHasOnboarded(false);
-    } catch (error) {
-      console.error('온보딩 리셋 실패:', error);
+type SettingToggleRowProps = {
+  label: string;
+  description?: string;
+  showDivider?: boolean;
+  value: boolean;
+  disabled?: boolean;
+  onValueChange: (value: boolean) => void;
+};
+
+type BaseRowConfig = {
+  key: string;
+  label: string;
+  description?: string;
+};
+
+type LinkRowConfig = BaseRowConfig & {
+  type: 'link';
+  onPress: () => void;
+};
+
+type ToggleRowConfig = BaseRowConfig & {
+  type: 'toggle';
+  value: boolean;
+  disabled?: boolean;
+  onValueChange: (value: boolean) => void;
+};
+
+type SettingRowConfig = LinkRowConfig | ToggleRowConfig;
+
+type SettingsSectionConfig =
+  | {
+      key: string;
+      title: string;
+      type: 'rows';
+      rows: SettingRowConfig[];
     }
-  };
+  | {
+      key: string;
+      title: string;
+      type: 'cta';
+      cta: {
+        label: string;
+        onPress: () => void;
+      };
+    };
 
+const SettingLinkRow = ({ label, description, showDivider, onPress }: SettingLinkRowProps) => (
+  <Pressable style={[styles.row, showDivider && styles.rowDivider]} onPress={onPress}>
+    <View style={styles.rowText}>
+      <Text style={[styles.rowLabel, styles.linkLabel]}>{label}</Text>
+      {description ? <Text style={styles.rowDescription}>{description}</Text> : null}
+    </View>
+    <Text style={styles.rowArrow}>›</Text>
+  </Pressable>
+);
+
+const SettingToggleRow = ({
+  label,
+  description,
+  showDivider,
+  value,
+  disabled,
+  onValueChange,
+}: SettingToggleRowProps) => (
+  <View style={[styles.row, showDivider && styles.rowDivider]}>
+    <View style={styles.rowText}>
+      <Text style={styles.rowLabel}>{label}</Text>
+      {description ? <Text style={styles.rowDescription}>{description}</Text> : null}
+    </View>
+    <Switch
+      value={value}
+      onValueChange={onValueChange}
+      trackColor={{ false: '#e5e7eb', true: colors.primary }}
+      thumbColor="#fff"
+      disabled={disabled}
+    />
+  </View>
+);
+
+const SettingSection: React.FC<{ title: string; children: React.ReactNode }> = ({
+  title,
+  children,
+}) => (
+  <View style={styles.section}>
+    <Text style={[styles.sectionTitle, styles.sectionTitleSpacing]}>{title}</Text>
+    <View style={styles.card}>{children}</View>
+  </View>
+);
+
+export default function SettingsScreen() {
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
+  const {
+    setHasOnboarded,
+    displayCharacter,
+    useMonochromeDisplay,
+    dialogueAlertsEnabled,
+    cleaningAlertsEnabled,
+    sensorAlertsEnabled,
+    setDisplayCharacter,
+    setUseMonochromeDisplay,
+    setDialogueAlertsEnabled,
+    setCleaningAlertsEnabled,
+    setSensorAlertsEnabled,
+  } = useAppState();
+  const [pendingToggle, setPendingToggle] = useState<string | null>(null);
+
+  const handleResetOnboarding = useCallback(async () => {
+    try {
+      await resetOnboardingProgress();
+      setHasOnboarded(false);
+      Alert.alert('온보딩 안내', '다시 실행하면 온보딩을 처음부터 볼 수 있어요.');
+    } catch (error) {
+      Alert.alert('오류', '온보딩 정보를 초기화할 수 없어요.');
+    }
+  }, [setHasOnboarded]);
+
+  const handlePlaceholder = useCallback((feature: string) => {
+    Alert.alert('준비 중', `${feature} 기능은 곧 제공될 예정입니다.`);
+  }, []);
+
+  const handleDisplayToggle = useCallback(
+    async (key: 'displayCharacter' | 'useMonochromeDisplay', value: boolean) => {
+      const prevValue = key === 'displayCharacter' ? displayCharacter : useMonochromeDisplay;
+      const setter = key === 'displayCharacter' ? setDisplayCharacter : setUseMonochromeDisplay;
+      setter(value);
+      setPendingToggle(key);
+
+      try {
+        await SettingsAPI.updateDisplaySettings({ [key]: value });
+      } catch (error) {
+        setter(prevValue);
+        Alert.alert('오류', '디스플레이 설정을 저장할 수 없어요.');
+      } finally {
+        setPendingToggle(null);
+      }
+    },
+    [displayCharacter, setDisplayCharacter, setUseMonochromeDisplay, useMonochromeDisplay],
+  );
+
+  const handleAlertToggle = useCallback(
+    async (
+      key: 'dialogueAlertsEnabled' | 'cleaningAlertsEnabled' | 'sensorAlertsEnabled',
+      value: boolean,
+    ) => {
+      const prevValue =
+        key === 'dialogueAlertsEnabled'
+          ? dialogueAlertsEnabled
+          : key === 'cleaningAlertsEnabled'
+            ? cleaningAlertsEnabled
+            : sensorAlertsEnabled;
+      const setter =
+        key === 'dialogueAlertsEnabled'
+          ? setDialogueAlertsEnabled
+          : key === 'cleaningAlertsEnabled'
+            ? setCleaningAlertsEnabled
+            : setSensorAlertsEnabled;
+
+      setter(value);
+      setPendingToggle(key);
+
+      try {
+        await SettingsAPI.updateAlertSettings({ [key]: value });
+      } catch (error) {
+        setter(prevValue);
+        Alert.alert('오류', '알림 설정을 저장할 수 없어요.');
+      } finally {
+        setPendingToggle(null);
+      }
+    },
+    [
+      cleaningAlertsEnabled,
+      dialogueAlertsEnabled,
+      sensorAlertsEnabled,
+      setCleaningAlertsEnabled,
+      setDialogueAlertsEnabled,
+      setSensorAlertsEnabled,
+    ],
+  );
+
+  const sections = useMemo<SettingsSectionConfig[]>(() => {
+    const disableDisplayCharacter = pendingToggle === 'displayCharacter';
+    const disableMonochrome = pendingToggle === 'useMonochromeDisplay';
+    const disableDialogue = pendingToggle === 'dialogueAlertsEnabled';
+    const disableCleaning = pendingToggle === 'cleaningAlertsEnabled';
+    const disableSensor = pendingToggle === 'sensorAlertsEnabled';
+
+    return [
+      {
+        key: 'profile',
+        title: '프로필 및 계정',
+        type: 'cta',
+        cta: {
+          label: '계정',
+          onPress: () => handlePlaceholder('프로필'),
+        },
+      },
+      {
+        key: 'pairing',
+        title: '페어링',
+        type: 'rows',
+        rows: [
+          {
+            key: 'speech',
+            type: 'link',
+            label: '캐릭터 말투',
+            description: '말투 및 언어 변경',
+            onPress: () => handlePlaceholder('캐릭터 말투'),
+          },
+          {
+            key: 'resetCharacter',
+            type: 'link',
+            label: '캐릭터 초기화',
+            description: '캐릭터 설정을 초기값으로 되돌립니다',
+            onPress: handleResetOnboarding,
+          },
+        ],
+      },
+      {
+        key: 'remote',
+        title: '원격 제어',
+        type: 'rows',
+        rows: [
+          {
+            key: 'device-control',
+            type: 'link',
+            label: '기기 제어',
+            onPress: () => handlePlaceholder('기기 제어'),
+          },
+        ],
+      },
+      {
+        key: 'display',
+        title: '디스플레이',
+        type: 'rows',
+        rows: [
+          {
+            key: 'displayCharacter',
+            type: 'toggle',
+            label: '캐릭터 표시',
+            value: displayCharacter,
+            disabled: disableDisplayCharacter,
+            onValueChange: (value) => handleDisplayToggle('displayCharacter', value),
+          },
+          {
+            key: 'useMonochromeDisplay',
+            type: 'toggle',
+            label: '단순 색상 표시',
+            value: useMonochromeDisplay,
+            disabled: disableMonochrome,
+            onValueChange: (value) => handleDisplayToggle('useMonochromeDisplay', value),
+          },
+        ],
+      },
+      {
+        key: 'alerts',
+        title: '알림 설정',
+        type: 'rows',
+        rows: [
+          {
+            key: 'dialogueAlertsEnabled',
+            type: 'toggle',
+            label: '대화 알림',
+            value: dialogueAlertsEnabled,
+            disabled: disableDialogue,
+            onValueChange: (value) => handleAlertToggle('dialogueAlertsEnabled', value),
+          },
+          {
+            key: 'cleaningAlertsEnabled',
+            type: 'toggle',
+            label: '청소 일정 알림',
+            value: cleaningAlertsEnabled,
+            disabled: disableCleaning,
+            onValueChange: (value) => handleAlertToggle('cleaningAlertsEnabled', value),
+          },
+          {
+            key: 'sensorAlertsEnabled',
+            type: 'toggle',
+            label: '센서 이상 알림',
+            value: sensorAlertsEnabled,
+            disabled: disableSensor,
+            onValueChange: (value) => handleAlertToggle('sensorAlertsEnabled', value),
+          },
+        ],
+      },
+      {
+        key: 'etc',
+        title: '기타',
+        type: 'rows',
+        rows: [
+          {
+            key: 'terms',
+            type: 'link',
+            label: '이용약관',
+            onPress: () => handlePlaceholder('이용약관'),
+          },
+          {
+            key: 'version',
+            type: 'link',
+            label: '앱 버전 정보',
+            description: '1.0.0 (데모)',
+            onPress: () => handlePlaceholder('앱 버전 정보'),
+          },
+        ],
+      },
+    ];
+  }, [
+    cleaningAlertsEnabled,
+    dialogueAlertsEnabled,
+    displayCharacter,
+    handleAlertToggle,
+    handleDisplayToggle,
+    handlePlaceholder,
+    handleResetOnboarding,
+    pendingToggle,
+    sensorAlertsEnabled,
+    useMonochromeDisplay,
+  ]);
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>설정</Text>
-
-        {/* 알림 토글 */}
-        <View style={styles.settingRow}>
-          <View style={styles.settingLabelContainer}>
-            <Text style={styles.settingLabel}>알림</Text>
-            <Text style={styles.settingDescription}>음식물 처리 상태 알림</Text>
-          </View>
-          <Switch
-            value={notificationsEnabled}
-            onValueChange={setNotificationsEnabled}
-            trackColor={{ false: '#e5e7eb', true: colors.primary }}
-            thumbColor="#fff"
-          />
-        </View>
-
-        {/* 온보딩 다시 보기 */}
-        <Pressable onPress={handleResetOnboarding} style={styles.resetButton}>
-          <Text style={styles.resetButtonText}>온보딩 다시 보기</Text>
-        </Pressable>
-
-        {/* 앱 정보 */}
-        <View style={styles.infoSection}>
-          <Text style={styles.infoLabel}>버전</Text>
-          <Text style={styles.infoValue}>1.0.0 (데모)</Text>
-        </View>
+    <View style={styles.container}>
+      <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
+        <AppHeader
+          title="설정"
+          onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+        />
       </View>
-    </ScrollView>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {sections.map((section) => {
+          if (section.type === 'cta') {
+            return (
+              <SettingSection key={section.key} title={section.title}>
+                <SettingLinkRow label={section.cta.label} onPress={section.cta.onPress} />
+              </SettingSection>
+            );
+          }
+
+          return (
+            <SettingSection key={section.key} title={section.title}>
+              {section.rows.map((row, index) => {
+                const showDivider = index > 0;
+
+                if (row.type === 'link') {
+                  return (
+                    <SettingLinkRow
+                      key={row.key}
+                      label={row.label}
+                      description={row.description}
+                      showDivider={showDivider}
+                      onPress={row.onPress}
+                    />
+                  );
+                }
+
+                return (
+                  <SettingToggleRow
+                    key={row.key}
+                    label={row.label}
+                    description={row.description}
+                    showDivider={showDivider}
+                    value={row.value}
+                    disabled={row.disabled}
+                    onValueChange={row.onValueChange}
+                  />
+                );
+              })}
+            </SettingSection>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  card: {
+    backgroundColor: colors.background,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: colors.black,
+    shadowOffset: { height: 2, width: 0 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+  },
   container: {
-    backgroundColor: colors.gray50,
+    backgroundColor: colors.white,
     flex: 1,
   },
   content: {
     padding: spacing.xl,
+    paddingBottom: spacing.xxxl,
   },
-  infoLabel: {
-    color: colors.mutedText,
-    fontSize: typography.sizes.sm,
-  },
-  infoSection: {
-    alignItems: 'center',
-    marginTop: spacing.xxl,
-    paddingTop: spacing.xxl,
-  },
-  infoValue: {
-    color: colors.text,
-    fontSize: typography.sizes.md,
-    marginTop: spacing.xs,
-  },
-  resetButton: {
-    alignItems: 'center',
-    backgroundColor: colors.danger,
-    borderRadius: 12,
-    marginTop: spacing.xxl,
-    paddingVertical: spacing.md,
-    width: '100%',
-  },
-  resetButtonText: {
-    color: colors.white,
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.bold,
-  },
-  settingDescription: {
-    color: colors.mutedText,
-    fontSize: typography.sizes.xs,
-    marginTop: 2,
-  },
-  settingLabel: {
-    color: colors.text,
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.medium,
-  },
-  settingLabelContainer: {
-    flex: 1,
-  },
-  settingRow: {
-    alignItems: 'center',
+  headerContainer: {
     backgroundColor: colors.background,
-    borderRadius: 12,
+    borderBottomColor: colors.border,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  linkLabel: {
+    color: colors.text,
+    fontSize: typography.sizes.md,
+  },
+  row: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: spacing.xl,
-    padding: spacing.lg,
-    shadowColor: colors.black,
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    minHeight: 60,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
   },
-  title: {
+  rowArrow: {
+    alignSelf: 'center',
+    color: colors.mutedText,
+    fontSize: typography.sizes.xl,
+  },
+  rowDescription: {
+    color: colors.mutedTextLight,
+    fontSize: typography.sizes.xs,
+    marginTop: spacing.xs / 2,
+  },
+  rowDivider: {
+    borderTopColor: colors.gray100,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  rowLabel: {
     color: colors.text,
-    fontSize: typography.sizes.xxl,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+  },
+  rowText: {
+    flex: 1,
+    marginRight: spacing.md,
+  },
+  section: {
+    marginBottom: spacing.xxl,
+  },
+  sectionTitle: {
+    color: colors.text,
+    fontSize: typography.sizes.lg,
     fontWeight: typography.weights.bold,
+  },
+  sectionTitleSpacing: {
+    marginBottom: spacing.sm,
   },
 });

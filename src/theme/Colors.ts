@@ -11,6 +11,7 @@ export const colors = {
   warning: '#f59e0b',
   text: '#111827',
   mutedText: '#6b7280',
+  mutedTextLight: '#9ca3af',
   background: '#ffffff',
   kakao: '#FEE500', // 카카오 로그인 버튼 색상
   white: '#ffffff',

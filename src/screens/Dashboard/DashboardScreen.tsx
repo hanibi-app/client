@@ -16,6 +16,8 @@ import Svg, { Defs, Rect, Stop, LinearGradient as SvgLinearGradient } from 'reac
 
 import ThreeArrowIcon from '@/assets/images/three-arrow.svg';
 import AppButton from '@/components/common/AppButton';
+import { CameraStatusModal } from '@/components/dashboard/CameraStatusModal';
+import { useCameraStatus } from '@/hooks/useCameraStatus';
 import { DashboardStackParamList } from '@/navigation/types';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
@@ -62,6 +64,8 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const insets = useSafeAreaInsets();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCameraModalVisible, setCameraModalVisible] = useState(false);
+  const { cameraStatus, isChecking, error: cameraError, refresh } = useCameraStatus();
 
   // 상태 바 너비 계산 (패딩 제외)
   const STATUS_BAR_WIDTH = SCREEN_WIDTH - spacing.xl * 2;
@@ -147,13 +151,31 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   };
 
   const handleCamera = () => {
-    // TODO: 카메라 화면으로 이동
-    console.log('카메라 열기');
+    setCameraModalVisible(true);
   };
 
   const handleViewReport = () => {
     navigation.navigate('Reports');
   };
+
+  const handleCloseCameraModal = () => setCameraModalVisible(false);
+
+  const handleModalViewReport = () => {
+    handleCloseCameraModal();
+    handleViewReport();
+  };
+
+  const handleLinkCctvSettings = () => {
+    handleCloseCameraModal();
+    // TODO: CCTV 설정 화면이 준비되면 해당 화면으로 이동하도록 연결
+    console.log('CCTV 연결 설정 화면으로 이동');
+  };
+
+  useEffect(() => {
+    if (isCameraModalVisible) {
+      refresh();
+    }
+  }, [isCameraModalVisible, refresh]);
 
   const getMetricStatus = (metric: keyof HealthMetrics, value: number): 'good' | 'bad' => {
     // 임시 로직 - 실제로는 각 메트릭의 임계값에 따라 결정
@@ -386,6 +408,16 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
           />
         </Animated.View>
       </View>
+
+      <CameraStatusModal
+        visible={isCameraModalVisible}
+        status={cameraStatus}
+        isChecking={isChecking}
+        errorMessage={cameraError}
+        onClose={handleCloseCameraModal}
+        onPrimaryAction={handleModalViewReport}
+        onLinkPress={handleLinkCctvSettings}
+      />
     </View>
   );
 }

@@ -1,7 +1,17 @@
-import { colors } from '@/theme/Colors';
-import { spacing } from '@/theme/spacing';
-import { typography } from '@/theme/typography';
+/**
+ * @deprecated 이 파일은 더 이상 사용되지 않습니다.
+ * 대신 @/theme에서 직접 import하세요.
+ *
+ * 예시:
+ * - 이전: import { Colors, Spacing } from '@/constants/DesignSystem'
+ * - 이후: import { colors, spacing } from '@/theme'
+ *
+ * 이 파일은 하위 호환성을 위해 유지되지만, 새로운 코드에서는 사용하지 마세요.
+ */
 
+import { colors, componentShadows, spacing, typography } from '@/theme';
+
+// 하위 호환성을 위한 재export (deprecated)
 export const Colors = {
   light: {
     primary: colors.primary,
@@ -28,14 +38,4 @@ export const Typography = {
   },
 } as const;
 
-export const ComponentShadows = {
-  button: {
-    default: {
-      shadowColor: 'rgba(0,0,0,0.15)',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.15,
-      shadowRadius: 4,
-      elevation: 2,
-    },
-  },
-} as const;
+export const ComponentShadows = componentShadows;

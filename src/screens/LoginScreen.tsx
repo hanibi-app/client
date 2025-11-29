@@ -20,6 +20,10 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
   const handleKakaoLogin = () => {
     // TODO: 카카오 로그인 구현
+    // - @react-native-seoul/kakao-login 또는 유사한 라이브러리 사용
+    // - 로그인 성공 시 사용자 정보를 상태 관리에 저장
+    // - 에러 처리 및 로딩 상태 관리 필요
+    // - 관련 이슈: #카카오로그인
     console.log('카카오 로그인 클릭');
     navigation.navigate('NotificationRequest');
   };

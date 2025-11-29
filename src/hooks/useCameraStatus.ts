@@ -20,6 +20,10 @@ export const useCameraStatus = (initialCameraId = DEFAULT_CAMERA_ID) => {
       setIsChecking(true);
       setError(null);
       // TODO: 실제 API 호출로 교체
+      // - GET /api/cameras/{cameraId}/status 엔드포인트 호출
+      // - 응답 형식: { cameraId: string, connected: boolean }
+      // - 네트워크 에러 및 타임아웃 처리 필요
+      // - 관련 이슈: #카메라상태API
       await new Promise((resolve) => setTimeout(resolve, 400));
       setCameraStatus((prev) => ({ ...prev }));
     } catch (err) {

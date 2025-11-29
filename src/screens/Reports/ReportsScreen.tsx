@@ -143,6 +143,12 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
   const fetchReportData = async (type: ReportTabType, range: TimeRange): Promise<ReportData> => {
     try {
       // TODO: 실제 API 엔드포인트로 교체
+      // - GET /api/reports/{type}?range={range} 엔드포인트 호출
+      // - type: 'temp' | 'humidity' | 'moisture' | 'voc'
+      // - range: '1일' | '1주' | '1개월' | '3개월'
+      // - 응답 형식: { dataPoints: [...], summary: {...} }
+      // - 인증 토큰 헤더 추가 필요
+      // - 관련 이슈: #리포트API
       // const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.example.com';
       // const response = await fetch(`${API_BASE_URL}/api/reports/${type}?range=${range}`, {
       //   method: 'GET',

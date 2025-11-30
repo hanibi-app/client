@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
-import { Modal, StyleSheet, Text, View } from 'react-native';
+import { Modal, Platform, StyleSheet, Text, View } from 'react-native';
 
 import AppButton from '@/components/common/AppButton';
 import { colors } from '@/theme/Colors';
@@ -24,6 +24,19 @@ export default function ModalPopup({
   onCancel,
   testID = 'modal-popup',
 }: ModalPopupProps) {
+  const cardRef = useRef<View>(null);
+
+  // 웹 환경에서 aria-hidden 경고 방지
+  useEffect(() => {
+    if (Platform.OS === 'web' && !visible && cardRef.current) {
+      // 모달이 닫힐 때 포커스 제거
+      const element = cardRef.current as unknown as HTMLElement;
+      if (element && document.activeElement && element.contains(document.activeElement)) {
+        (document.activeElement as HTMLElement)?.blur();
+      }
+    }
+  }, [visible]);
+
   return (
     <Modal
       visible={visible}
@@ -36,12 +49,15 @@ export default function ModalPopup({
         style={styles.backdrop}
         accessibilityViewIsModal={true}
         importantForAccessibility="no-hide-descendants"
+        {...(Platform.OS === 'web' && { 'aria-hidden': false })}
       >
         <View
+          ref={cardRef}
           style={styles.card}
           accessibilityRole="alertdialog"
           accessibilityLabel={title}
           testID={testID}
+          {...(Platform.OS === 'web' && { 'aria-hidden': false })}
         >
           <Text style={styles.title}>{title}</Text>
           {description ? <Text style={styles.description}>{description}</Text> : null}

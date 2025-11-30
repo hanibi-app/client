@@ -35,11 +35,35 @@ export const CameraStatusModal = ({
     : `${status.cameraId}에 연결된 CCTV 스트리밍이 없습니다.`;
 
   return (
-    <Modal transparent animationType="fade" visible={visible} onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <Pressable style={styles.modalBackdrop} onPress={onClose} />
-        <View style={styles.modalCard}>
-          <Pressable style={styles.modalCloseButton} onPress={onClose}>
+    <Modal
+      transparent
+      animationType="fade"
+      visible={visible}
+      onRequestClose={onClose}
+      accessibilityViewIsModal={true}
+      statusBarTranslucent={true}
+    >
+      <View
+        style={styles.modalOverlay}
+        accessibilityViewIsModal={true}
+        importantForAccessibility="no-hide-descendants"
+      >
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="모달 닫기"
+          accessibilityHint="배경을 탭하여 모달을 닫습니다"
+          importantForAccessibility="yes"
+        />
+        <View style={styles.modalCard} accessibilityRole="dialog" accessibilityLabel={title}>
+          <Pressable
+            style={styles.modalCloseButton}
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="닫기"
+            accessibilityHint="모달을 닫습니다"
+          >
             <Text style={styles.modalCloseIcon}>×</Text>
           </Pressable>
           <View style={styles.modalBadgeRow}>
@@ -57,11 +81,22 @@ export const CameraStatusModal = ({
           ) : (
             isChecking && <ActivityIndicator color={colors.primary} style={styles.modalLoader} />
           )}
-          <Pressable style={styles.modalPrimaryButton} onPress={onPrimaryAction}>
+          <Pressable
+            style={styles.modalPrimaryButton}
+            onPress={onPrimaryAction}
+            accessibilityRole="button"
+            accessibilityLabel="리포트보기"
+            accessibilityHint="리포트 화면으로 이동합니다"
+          >
             <FontAwesome name="refresh" size={16} color={colors.white} />
             <Text style={styles.modalPrimaryButtonText}>리포트보기</Text>
           </Pressable>
-          <Pressable onPress={onLinkPress}>
+          <Pressable
+            onPress={onLinkPress}
+            accessibilityRole="button"
+            accessibilityLabel="CCTV 연결 설정"
+            accessibilityHint="CCTV 연결 설정 화면으로 이동합니다"
+          >
             <Text style={styles.modalLinkText}>CCTV 연결 설정</Text>
           </Pressable>
         </View>

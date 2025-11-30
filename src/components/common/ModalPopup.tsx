@@ -25,11 +25,21 @@ export default function ModalPopup({
   testID = 'modal-popup',
 }: ModalPopupProps) {
   return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.backdrop}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      accessibilityViewIsModal={true}
+      statusBarTranslucent={true}
+    >
+      <View
+        style={styles.backdrop}
+        accessibilityViewIsModal={true}
+        importantForAccessibility="no-hide-descendants"
+      >
         <View
           style={styles.card}
-          accessibilityRole="alert"
+          accessibilityRole="alertdialog"
           accessibilityLabel={title}
           testID={testID}
         >

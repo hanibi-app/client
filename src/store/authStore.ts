@@ -22,6 +22,11 @@ export const useAuthStore = create<AuthState>((set) => ({
    * 액세스 토큰과 리프레시 토큰을 설정합니다.
    */
   setTokens: (accessToken: string, refreshToken: string) => {
+    console.log('[AuthStore] 토큰 설정:', {
+      hasAccessToken: !!accessToken,
+      hasRefreshToken: !!refreshToken,
+      accessTokenLength: accessToken?.length,
+    });
     set({ accessToken, refreshToken });
   },
 
@@ -29,6 +34,7 @@ export const useAuthStore = create<AuthState>((set) => ({
    * 모든 토큰을 초기화합니다.
    */
   clear: () => {
+    console.log('[AuthStore] 토큰 초기화');
     set({ accessToken: null, refreshToken: null });
   },
 

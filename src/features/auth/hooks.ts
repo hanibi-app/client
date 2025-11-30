@@ -28,12 +28,24 @@ export const useLogin = () => {
   const setTokens = useAuthStore((state) => state.setTokens);
 
   return useMutation({
-    mutationFn: (payload: authApi.LoginPayload) => authApi.login(payload),
+    mutationFn: (payload: authApi.LoginPayload) => {
+      console.log('[useLogin] 로그인 요청 시작:', { email: payload.email });
+      return authApi.login(payload);
+    },
     onSuccess: (data: authApi.AuthResponse) => {
+      console.log('[useLogin] 로그인 성공:', {
+        hasAccessToken: !!data.accessToken,
+        hasRefreshToken: !!data.refreshToken,
+        accessTokenLength: data.accessToken?.length,
+      });
       // 로그인 성공 시 토큰 저장
       setTokens(data.accessToken, data.refreshToken);
       // 사용자 정보 캐시 무효화 (추후 사용자 정보를 가져올 때 사용)
       queryClient.invalidateQueries({ queryKey: ['me'] });
+      console.log('[useLogin] 토큰 저장 완료');
+    },
+    onError: (error: unknown) => {
+      console.error('[useLogin] 로그인 실패:', error);
     },
   });
 };

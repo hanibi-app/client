@@ -1,14 +1,16 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { CommonActions, NavigationProp, useNavigation } from '@react-navigation/native';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppHeader from '@/components/common/AppHeader';
+import { ROOT_ROUTES } from '@/constants/routes';
 import { RootStackParamList } from '@/navigation/types';
 import { SettingsAPI } from '@/services/api/settings';
 import { resetOnboardingProgress } from '@/services/storage/onboarding';
 import { useAppState } from '@/state/useAppState';
+import { useAuthStore } from '@/store/authStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -125,6 +127,7 @@ export default function SettingsScreen() {
     setCleaningAlertsEnabled,
     setSensorAlertsEnabled,
   } = useAppState();
+  const clearAuth = useAuthStore((state) => state.clear);
   const [pendingToggle, setPendingToggle] = useState<string | null>(null);
 
   const handleResetOnboarding = useCallback(async () => {
@@ -140,6 +143,45 @@ export default function SettingsScreen() {
   const handlePlaceholder = useCallback((feature: string) => {
     Alert.alert('준비 중', `${feature} 기능은 곧 제공될 예정입니다.`);
   }, []);
+
+  const handleLogout = useCallback(() => {
+    Alert.alert('로그아웃', '정말 로그아웃하시겠어요?', [
+      {
+        text: '취소',
+        style: 'cancel',
+      },
+      {
+        text: '로그아웃',
+        style: 'destructive',
+        onPress: () => {
+          clearAuth();
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: ROOT_ROUTES.LOGIN }],
+            }),
+          );
+        },
+      },
+    ]);
+  }, [clearAuth, navigation]);
+
+  const handleDeleteAccount = useCallback(() => {
+    Alert.alert('계정 탈퇴', '정말 계정을 탈퇴하시겠어요?\n탈퇴한 계정은 복구할 수 없어요.', [
+      {
+        text: '취소',
+        style: 'cancel',
+      },
+      {
+        text: '탈퇴하기',
+        style: 'destructive',
+        onPress: () => {
+          // TODO: 계정 탈퇴 API 호출
+          handlePlaceholder('계정 탈퇴');
+        },
+      },
+    ]);
+  }, [handlePlaceholder]);
 
   const handleDisplayToggle = useCallback(
     async (key: 'displayCharacter' | 'useMonochromeDisplay', value: boolean) => {
@@ -211,11 +253,21 @@ export default function SettingsScreen() {
       {
         key: 'profile',
         title: '프로필 및 계정',
-        type: 'cta',
-        cta: {
-          label: '계정',
-          onPress: () => handlePlaceholder('프로필'),
-        },
+        type: 'rows',
+        rows: [
+          {
+            key: 'logout',
+            type: 'link',
+            label: '로그아웃',
+            onPress: handleLogout,
+          },
+          {
+            key: 'deleteAccount',
+            type: 'link',
+            label: '계정 탈퇴',
+            onPress: handleDeleteAccount,
+          },
+        ],
       },
       {
         key: 'pairing',
@@ -331,7 +383,9 @@ export default function SettingsScreen() {
     dialogueAlertsEnabled,
     displayCharacter,
     handleAlertToggle,
+    handleDeleteAccount,
     handleDisplayToggle,
+    handleLogout,
     handlePlaceholder,
     handleResetOnboarding,
     pendingToggle,

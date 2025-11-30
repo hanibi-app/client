@@ -16,7 +16,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
 
   // 화면 중앙에 적절한 크기로 표시
-  const CHARACTER_SIZE = Math.floor(Math.min(SCREEN_WIDTH * 0.75, SCREEN_HEIGHT * 0.7));
+  const CHARACTER_SIZE = Math.floor(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.8));
 
   const handleKakaoLogin = () => {
     // TODO: 카카오 로그인 구현

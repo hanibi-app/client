@@ -134,36 +134,37 @@ export default function HanibiCharacter2D({
       ])
     );
 
-    // 왼쪽 팔 흔들림 애니메이션
+    // 팔 흔들림 애니메이션 (같은 일정한 각도로 동기화)
+    const armAnimationDuration = 3000;
     const leftArmAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(leftArmRotateAnim, {
           toValue: 1,
-          duration: 3000,
+          duration: armAnimationDuration,
           useNativeDriver: false, // SVG transform은 native driver 미지원
           easing: Easing.inOut(Easing.ease),
         }),
         Animated.timing(leftArmRotateAnim, {
           toValue: 0,
-          duration: 3000,
+          duration: armAnimationDuration,
           useNativeDriver: false,
           easing: Easing.inOut(Easing.ease),
         }),
       ])
     );
 
-    // 오른쪽 팔 흔들림 애니메이션 (왼쪽과 반대로)
+    // 오른쪽 팔 흔들림 애니메이션 (왼쪽과 같은 각도, 같은 타이밍)
     const rightArmAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(rightArmRotateAnim, {
           toValue: 1,
-          duration: 3200,
+          duration: armAnimationDuration,
           useNativeDriver: false,
           easing: Easing.inOut(Easing.ease),
         }),
         Animated.timing(rightArmRotateAnim, {
           toValue: 0,
-          duration: 3200,
+          duration: armAnimationDuration,
           useNativeDriver: false,
           easing: Easing.inOut(Easing.ease),
         }),
@@ -224,12 +225,12 @@ export default function HanibiCharacter2D({
     if (!animated) return;
 
     const leftListener = leftArmRotateAnim.addListener(({ value }) => {
-      const angle = -8 + (value * 16); // -8deg to 8deg
+      const angle = -5 + (value * 10); // -5deg to 5deg
       setLeftArmAngle(angle);
     });
 
     const rightListener = rightArmRotateAnim.addListener(({ value }) => {
-      const angle = 8 - (value * 16); // 8deg to -8deg
+      const angle = 5 - (value * 10); // 5deg to -5deg (왼쪽과 대칭)
       setRightArmAngle(angle);
     });
 

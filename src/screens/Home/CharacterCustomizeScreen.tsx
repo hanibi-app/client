@@ -14,11 +14,11 @@ import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 
 const COLOR_CHIPS = [
-  { id: 'green', color: '#40EA87', name: '초록' },
-  { id: 'orange', color: '#FF7017', name: '주황' },
-  { id: 'red', color: '#ED5B5B', name: '레드' },
-  { id: 'sky', color: '#2BD4DB', name: '스카이' },
-  { id: 'pink', color: '#F676E5', name: '핑크' },
+  { id: 'default', color: '#467D60', name: '기본' },
+  { id: 'citrus', color: '#FF7A1F', name: '주황' },
+  { id: 'coral', color: '#FF5A65', name: '코랄' },
+  { id: 'aqua', color: '#16D7DD', name: '아쿠아' },
+  { id: 'violet', color: '#ED5CFF', name: '바이올렛' },
 ];
 
 type CharacterCustomizeScreenProps = NativeStackScreenProps<

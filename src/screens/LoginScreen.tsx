@@ -15,8 +15,8 @@ type LoginScreenProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
 export default function LoginScreen({ navigation }: LoginScreenProps) {
   const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
 
-  // 화면 중앙에 완전히 크게 표시 - 적절한 크기로 설정
-  const CHARACTER_SIZE = Math.floor(Math.min(SCREEN_WIDTH * 0.9, SCREEN_HEIGHT * 0.7));
+  // 화면 중앙에 적절한 크기로 표시
+  const CHARACTER_SIZE = Math.floor(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.8));
 
   const handleKakaoLogin = () => {
     // TODO: 카카오 로그인 구현
@@ -30,7 +30,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
   const characterContainerStyle = {
     position: 'absolute' as const,
-    top: (SCREEN_HEIGHT - CHARACTER_SIZE) / 2,
+    top: (SCREEN_HEIGHT - CHARACTER_SIZE) / 2 + 50,
     left: (SCREEN_WIDTH - CHARACTER_SIZE) / 2,
     width: CHARACTER_SIZE,
     height: CHARACTER_SIZE,
@@ -68,7 +68,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
 const styles = StyleSheet.create({
   buttonContainer: {
-    bottom: 100,
+    bottom: 60,
     paddingHorizontal: spacing.xl,
     position: 'absolute',
     width: '100%',

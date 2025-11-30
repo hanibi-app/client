@@ -28,7 +28,6 @@ const PRECAUTIONS_PAGES: Array<{
       '기름기가 많은 음식,',
       '그리고 비닐·플라스틱·금속 같은 이물질은',
       '소화되지 않으니 넣지 말아주세요.',
-      '(임시 문구, 변경 해야함)',
     ],
   },
   {
@@ -38,7 +37,6 @@ const PRECAUTIONS_PAGES: Array<{
       '내부가 가득 찼다면 음식물을 비워 주세요.',
       '필터를 교체하거나 청소해 주시면',
       '냄새가 줄어들어요.',
-      '(임시 문구, 변경 해야함)',
     ],
   },
   {
@@ -65,7 +63,7 @@ export default function PrecautionsScreen({
   const insets = useSafeAreaInsets();
 
   const CARD_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING * 2;
-  const CHARACTER_SIZE = Math.floor(CARD_WIDTH * 0.6);
+  const CHARACTER_SIZE = Math.floor(CARD_WIDTH * 0.75);
 
   const handleNext = () => {
     if (currentPage < PRECAUTIONS_PAGES.length - 1) {
@@ -104,7 +102,7 @@ export default function PrecautionsScreen({
               { width: CHARACTER_SIZE, height: CHARACTER_SIZE, borderRadius: CHARACTER_SIZE / 2 },
             ]}
           >
-            <HanibiCharacter2D level="medium" animated size={Math.floor(CHARACTER_SIZE * 0.65)} />
+            <HanibiCharacter2D level="medium" animated size={Math.floor(CHARACTER_SIZE * 0.8)} />
           </View>
         </View>
       </View>
@@ -271,6 +269,6 @@ const styles = StyleSheet.create({
   textSection: {
     alignItems: 'center',
     marginHorizontal: HORIZONTAL_PADDING,
-    marginTop: spacing.xl,
+    marginTop: spacing.sm,
   },
 });

@@ -76,7 +76,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   };
 
   // 캐릭터 크기
-  const CHARACTER_SIZE = Math.floor(SCREEN_WIDTH * 0.5);
+  const CHARACTER_SIZE = Math.floor(SCREEN_WIDTH * 0.65);
   const NAME_CARD_WIDTH = Math.min(Math.max(SCREEN_WIDTH * 0.6, 220), 320);
   const editActionWidth = Math.min(Math.max(NAME_CARD_WIDTH * 0.2, 44), DEFAULT_EDIT_ACTION_WIDTH);
   const messageTopPadding = Math.max(insets.top - spacing.xxxl, spacing.xs);

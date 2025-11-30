@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import Svg, {
@@ -84,13 +84,15 @@ export default function HanibiCharacter2D({
     ]
   );
 
-  // SVG 비율 (200 x 220)
-  const width = size;
-  const height = size * (220 / 200);
+  // SVG 비율 (200 x 220) - 팔 애니메이션을 위한 여유 공간 확보를 위해 크기 조정
+  const width = size * 0.85;
+  const height = size * 0.85 * (220 / 200);
 
   // --- 애니메이션 로직 (기존 코드 유지 및 보완) ---
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const translateYAnim = useRef(new Animated.Value(0)).current;
+  const leftArmRotateAnim = useRef(new Animated.Value(0)).current;
+  const rightArmRotateAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (!animated) return;
@@ -131,19 +133,153 @@ export default function HanibiCharacter2D({
       ])
     );
 
+    // 왼쪽 팔 흔들림 애니메이션
+    const leftArmAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(leftArmRotateAnim, {
+          toValue: 1,
+          duration: 3000,
+          useNativeDriver: false, // SVG transform은 native driver 미지원
+          easing: Easing.inOut(Easing.ease),
+        }),
+        Animated.timing(leftArmRotateAnim, {
+          toValue: 0,
+          duration: 3000,
+          useNativeDriver: false,
+          easing: Easing.inOut(Easing.ease),
+        }),
+      ])
+    );
+
+    // 오른쪽 팔 흔들림 애니메이션 (왼쪽과 반대로)
+    const rightArmAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(rightArmRotateAnim, {
+          toValue: 1,
+          duration: 3200,
+          useNativeDriver: false,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        Animated.timing(rightArmRotateAnim, {
+          toValue: 0,
+          duration: 3200,
+          useNativeDriver: false,
+          easing: Easing.inOut(Easing.ease),
+        }),
+      ])
+    );
+
     scaleAnimation.start();
     translateYAnimation.start();
+    leftArmAnimation.start();
+    rightArmAnimation.start();
 
     return () => {
       scaleAnimation.stop();
       translateYAnimation.stop();
+      leftArmAnimation.stop();
+      rightArmAnimation.stop();
     };
-  }, [animated, scaleAnim, translateYAnim]);
+  }, [animated, scaleAnim, translateYAnim, leftArmRotateAnim, rightArmRotateAnim]);
 
   const translateY = translateYAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [-6, 6],
   });
+
+  const [leftArmAngle, setLeftArmAngle] = useState(0);
+  const [rightArmAngle, setRightArmAngle] = useState(0);
+
+  useEffect(() => {
+    if (!animated) return;
+
+    const leftListener = leftArmRotateAnim.addListener(({ value }) => {
+      const angle = -8 + (value * 16); // -8deg to 8deg
+      setLeftArmAngle(angle);
+    });
+
+    const rightListener = rightArmRotateAnim.addListener(({ value }) => {
+      const angle = 8 - (value * 16); // 8deg to -8deg
+      setRightArmAngle(angle);
+    });
+
+    return () => {
+      leftArmRotateAnim.removeListener(leftListener);
+      rightArmRotateAnim.removeListener(rightListener);
+    };
+  }, [animated, leftArmRotateAnim, rightArmRotateAnim]);
+
+  // 팔 좌표 계산 함수
+  const getLeftArmPath = (angle: number) => {
+    const rad = (angle * Math.PI) / 180;
+    const baseX = 31;
+    const baseY = 155;
+    
+    // 기본 좌표
+    const points = [
+      { x: 15, y: 170 },
+      { x: 8, y: 185 },
+      { x: 10, y: 200 },
+      { x: 20, y: 200 },
+      { x: 25, y: 195 },
+      { x: 28, y: 185 },
+      { x: 31, y: 175 },
+    ];
+
+    // 회전 변환 적용
+    const rotatedPoints = points.map(p => {
+      const dx = p.x - baseX;
+      const dy = p.y - baseY;
+      return {
+        x: baseX + dx * Math.cos(rad) - dy * Math.sin(rad),
+        y: baseY + dx * Math.sin(rad) + dy * Math.cos(rad),
+      };
+    });
+
+    return {
+      outline: `M ${baseX} ${baseY} L ${rotatedPoints[0].x} ${rotatedPoints[0].y} L ${rotatedPoints[1].x} ${rotatedPoints[1].y} L ${rotatedPoints[2].x} ${rotatedPoints[2].y} L ${rotatedPoints[3].x} ${rotatedPoints[3].y} L ${rotatedPoints[4].x} ${rotatedPoints[4].y} L ${rotatedPoints[5].x} ${rotatedPoints[5].y} L ${rotatedPoints[6].x} ${rotatedPoints[6].y} Z`,
+      fill: `M ${baseX} ${baseY} L ${rotatedPoints[0].x + 3} ${rotatedPoints[0].y - 2} L ${rotatedPoints[1].x + 2} ${rotatedPoints[1].y - 3} L ${rotatedPoints[2].x + 2} ${rotatedPoints[2].y - 2} L ${rotatedPoints[3].x - 2} ${rotatedPoints[3].y - 2} L ${rotatedPoints[4].x - 2} ${rotatedPoints[4].y - 1} L ${rotatedPoints[5].x - 1} ${rotatedPoints[5].y + 2} L ${rotatedPoints[6].x} ${rotatedPoints[6].y + 2} Z`,
+      fistX: rotatedPoints[2].x,
+      fistY: rotatedPoints[2].y,
+    };
+  };
+
+  const getRightArmPath = (angle: number) => {
+    const rad = (angle * Math.PI) / 180;
+    const baseX = 176;
+    const baseY = 155;
+    
+    // 기본 좌표
+    const points = [
+      { x: 192, y: 170 },
+      { x: 199, y: 185 },
+      { x: 197, y: 200 },
+      { x: 187, y: 200 },
+      { x: 182, y: 195 },
+      { x: 179, y: 185 },
+      { x: 176, y: 175 },
+    ];
+
+    // 회전 변환 적용
+    const rotatedPoints = points.map(p => {
+      const dx = p.x - baseX;
+      const dy = p.y - baseY;
+      return {
+        x: baseX + dx * Math.cos(rad) - dy * Math.sin(rad),
+        y: baseY + dx * Math.sin(rad) + dy * Math.cos(rad),
+      };
+    });
+
+    return {
+      outline: `M ${baseX} ${baseY} L ${rotatedPoints[0].x} ${rotatedPoints[0].y} L ${rotatedPoints[1].x} ${rotatedPoints[1].y} L ${rotatedPoints[2].x} ${rotatedPoints[2].y} L ${rotatedPoints[3].x} ${rotatedPoints[3].y} L ${rotatedPoints[4].x} ${rotatedPoints[4].y} L ${rotatedPoints[5].x} ${rotatedPoints[5].y} L ${rotatedPoints[6].x} ${rotatedPoints[6].y} Z`,
+      fill: `M ${baseX} ${baseY} L ${rotatedPoints[0].x - 3} ${rotatedPoints[0].y - 2} L ${rotatedPoints[1].x - 2} ${rotatedPoints[1].y - 3} L ${rotatedPoints[2].x - 2} ${rotatedPoints[2].y - 2} L ${rotatedPoints[3].x + 2} ${rotatedPoints[3].y - 2} L ${rotatedPoints[4].x + 2} ${rotatedPoints[4].y - 1} L ${rotatedPoints[5].x + 1} ${rotatedPoints[5].y + 2} L ${rotatedPoints[6].x} ${rotatedPoints[6].y + 2} Z`,
+      fistX: rotatedPoints[2].x,
+      fistY: rotatedPoints[2].y,
+    };
+  };
+
+  const leftArm = getLeftArmPath(leftArmAngle);
+  const rightArm = getRightArmPath(rightArmAngle);
 
   // --- 눈 렌더링 (레벨에 따른 표정 변화) ---
   const renderEyes = () => {
@@ -192,7 +328,7 @@ export default function HanibiCharacter2D({
           transform: [{ scale: scaleAnim }, { translateY }],
         }}
       >
-        <Svg width={width} height={height} viewBox="0 0 200 220" fill="none">
+        <Svg width={width} height={height} viewBox="-20 -10 240 240" fill="none">
           <Defs>
             {/* 몸체 금속 질감 그라데이션 */}
             <LinearGradient id="bodyGrad" x1="0" y1="0" x2="1" y2="1">
@@ -203,6 +339,12 @@ export default function HanibiCharacter2D({
                   stopColor={color}
                 />
               ))}
+            </LinearGradient>
+            {/* 팔용 부드러운 그라데이션 */}
+            <LinearGradient id="armGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor={palette.gradientHighlight} stopOpacity="0.9" />
+              <Stop offset="50%" stopColor={palette.bodyBase} stopOpacity="1" />
+              <Stop offset="100%" stopColor={palette.darkOutline} stopOpacity="0.8" />
             </LinearGradient>
           </Defs>
 
@@ -223,6 +365,40 @@ export default function HanibiCharacter2D({
             fill={palette.gloss}
             fillOpacity="0.25"
           />
+
+          {/* 왼쪽 팔 (< 모양) - 애니메이션 적용 */}
+          <G>
+            <Path
+              d={leftArm.outline}
+              fill={palette.darkOutline}
+              opacity="0.85"
+            />
+            <Path
+              d={leftArm.fill}
+              fill="url(#bodyGrad)"
+            />
+            {/* 왼쪽 주먹 */}
+            <Circle cx={leftArm.fistX} cy={leftArm.fistY} r="8" fill={palette.darkOutline} opacity="0.8" />
+            <Circle cx={leftArm.fistX} cy={leftArm.fistY} r="6" fill={palette.bodyBase} />
+            <Circle cx={leftArm.fistX} cy={leftArm.fistY} r="4" fill={palette.gradientHighlight} opacity="0.5" />
+          </G>
+
+          {/* 오른쪽 팔 (> 모양) - 애니메이션 적용 */}
+          <G>
+            <Path
+              d={rightArm.outline}
+              fill={palette.darkOutline}
+              opacity="0.85"
+            />
+            <Path
+              d={rightArm.fill}
+              fill="url(#bodyGrad)"
+            />
+            {/* 오른쪽 주먹 */}
+            <Circle cx={rightArm.fistX} cy={rightArm.fistY} r="8" fill={palette.darkOutline} opacity="0.8" />
+            <Circle cx={rightArm.fistX} cy={rightArm.fistY} r="6" fill={palette.bodyBase} />
+            <Circle cx={rightArm.fistX} cy={rightArm.fistY} r="4" fill={palette.gradientHighlight} opacity="0.5" />
+          </G>
 
           {/* 3. 목 (Neck) */}
           <Rect x="60" y="115" width="80" height="15" fill={palette.darkOutline} />

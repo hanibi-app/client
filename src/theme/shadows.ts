@@ -17,3 +17,4 @@ export const componentShadows = {
 } as const;
 
 export type ComponentShadows = typeof componentShadows;
+

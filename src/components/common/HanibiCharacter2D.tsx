@@ -93,6 +93,7 @@ export default function HanibiCharacter2D({
   const translateYAnim = useRef(new Animated.Value(0)).current;
   const leftArmRotateAnim = useRef(new Animated.Value(0)).current;
   const rightArmRotateAnim = useRef(new Animated.Value(0)).current;
+  const blinkAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (!animated) return;
@@ -169,6 +170,33 @@ export default function HanibiCharacter2D({
       ])
     );
 
+    // 눈 깜빡임 애니메이션 (3-5초마다 자연스럽게)
+    const runBlinkAnimation = () => {
+      const delay = 3000 + Math.random() * 2000; // 3-5초 랜덤 딜레이
+      const blinkSequence = Animated.sequence([
+        Animated.delay(delay),
+        Animated.timing(blinkAnim, {
+          toValue: 0,
+          duration: 100,
+          useNativeDriver: false, // SVG 애니메이션은 native driver 미지원
+          easing: Easing.out(Easing.quad),
+        }),
+        Animated.timing(blinkAnim, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: false,
+          easing: Easing.in(Easing.quad),
+        }),
+      ]);
+      
+      blinkSequence.start(() => {
+        // 애니메이션 완료 후 다시 시작 (재귀)
+        runBlinkAnimation();
+      });
+    };
+
+    runBlinkAnimation();
+
     scaleAnimation.start();
     translateYAnimation.start();
     leftArmAnimation.start();
@@ -179,8 +207,9 @@ export default function HanibiCharacter2D({
       translateYAnimation.stop();
       leftArmAnimation.stop();
       rightArmAnimation.stop();
+      blinkAnim.stopAnimation();
     };
-  }, [animated, scaleAnim, translateYAnim, leftArmRotateAnim, rightArmRotateAnim]);
+  }, [animated, scaleAnim, translateYAnim, leftArmRotateAnim, rightArmRotateAnim, blinkAnim]);
 
   const translateY = translateYAnim.interpolate({
     inputRange: [0, 1],
@@ -189,6 +218,7 @@ export default function HanibiCharacter2D({
 
   const [leftArmAngle, setLeftArmAngle] = useState(0);
   const [rightArmAngle, setRightArmAngle] = useState(0);
+  const [blinkHeight, setBlinkHeight] = useState(1);
 
   useEffect(() => {
     if (!animated) return;
@@ -203,27 +233,32 @@ export default function HanibiCharacter2D({
       setRightArmAngle(angle);
     });
 
+    const blinkListener = blinkAnim.addListener(({ value }) => {
+      setBlinkHeight(value); // 1 = 열림, 0 = 닫힘
+    });
+
     return () => {
       leftArmRotateAnim.removeListener(leftListener);
       rightArmRotateAnim.removeListener(rightListener);
+      blinkAnim.removeListener(blinkListener);
     };
-  }, [animated, leftArmRotateAnim, rightArmRotateAnim]);
+  }, [animated, leftArmRotateAnim, rightArmRotateAnim, blinkAnim]);
 
   // 팔 좌표 계산 함수
   const getLeftArmPath = (angle: number) => {
     const rad = (angle * Math.PI) / 180;
     const baseX = 31;
-    const baseY = 155;
+    const baseY = 135; // 위로 10px 올림
     
     // 기본 좌표
     const points = [
-      { x: 15, y: 170 },
-      { x: 8, y: 185 },
-      { x: 10, y: 200 },
-      { x: 20, y: 200 },
-      { x: 25, y: 195 },
-      { x: 28, y: 185 },
-      { x: 31, y: 175 },
+      { x: 15, y: 160 },
+      { x: 8, y: 175 },
+      { x: 10, y: 190 },
+      { x: 20, y: 190 },
+      { x: 25, y: 185 },
+      { x: 28, y: 175 },
+      { x: 31, y: 165 },
     ];
 
     // 회전 변환 적용
@@ -247,17 +282,17 @@ export default function HanibiCharacter2D({
   const getRightArmPath = (angle: number) => {
     const rad = (angle * Math.PI) / 180;
     const baseX = 176;
-    const baseY = 155;
+    const baseY = 135; // 위로 10px 올림
     
     // 기본 좌표
     const points = [
-      { x: 192, y: 170 },
-      { x: 199, y: 185 },
-      { x: 197, y: 200 },
-      { x: 187, y: 200 },
-      { x: 182, y: 195 },
-      { x: 179, y: 185 },
-      { x: 176, y: 175 },
+      { x: 192, y: 160 },
+      { x: 199, y: 175 },
+      { x: 197, y: 190 },
+      { x: 187, y: 190 },
+      { x: 182, y: 185 },
+      { x: 179, y: 175 },
+      { x: 176, y: 165 },
     ];
 
     // 회전 변환 적용
@@ -281,7 +316,7 @@ export default function HanibiCharacter2D({
   const leftArm = getLeftArmPath(leftArmAngle);
   const rightArm = getRightArmPath(rightArmAngle);
 
-  // --- 눈 렌더링 (레벨에 따른 표정 변화) ---
+  // --- 눈 렌더링 (레벨에 따른 표정 변화 + 깜빡임 애니메이션) ---
   const renderEyes = () => {
     const eyeY = 70;
 
@@ -304,13 +339,44 @@ export default function HanibiCharacter2D({
       fill: 'none',
     };
 
+    // 깜빡임 애니메이션: blinkHeight가 1이면 열림, 0이면 닫힘
+    const isBlinking = blinkHeight < 0.5;
+
     return (
       <G>
-        <Path d={`M 50 ${eyeY + 10} A 22 22 0 0 1 90 ${eyeY - 6}`} {...arcProps} />
-        <Circle cx="80" cy={eyeY + 2} r="7" fill={palette.eyeColor} stroke="none" />
+        {/* 왼쪽 눈 */}
+        {!isBlinking && (
+          <>
+            <Path d={`M 50 ${eyeY + 10} A 22 22 0 0 1 90 ${eyeY - 6}`} {...arcProps} />
+            <Circle cx="80" cy={eyeY + 2} r="7" fill={palette.eyeColor} stroke="none" />
+          </>
+        )}
+        {/* 왼쪽 눈 깜빡임 (닫힘) */}
+        {isBlinking && (
+          <Path
+            d={`M 50 ${eyeY + 2} L 90 ${eyeY + 2}`}
+            stroke={palette.eyeColor}
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+        )}
 
-        <Path d={`M 150 ${eyeY + 10} A 22 22 0 0 0 110 ${eyeY - 6}`} {...arcProps} />
-        <Circle cx="120" cy={eyeY + 2} r="7" fill={palette.eyeColor} stroke="none" />
+        {/* 오른쪽 눈 */}
+        {!isBlinking && (
+          <>
+            <Path d={`M 150 ${eyeY + 10} A 22 22 0 0 0 110 ${eyeY - 6}`} {...arcProps} />
+            <Circle cx="120" cy={eyeY + 2} r="7" fill={palette.eyeColor} stroke="none" />
+          </>
+        )}
+        {/* 오른쪽 눈 깜빡임 (닫힘) */}
+        {isBlinking && (
+          <Path
+            d={`M 110 ${eyeY + 2} L 150 ${eyeY + 2}`}
+            stroke={palette.eyeColor}
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+        )}
       </G>
     );
   };

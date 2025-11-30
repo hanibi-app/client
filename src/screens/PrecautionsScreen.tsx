@@ -269,6 +269,6 @@ const styles = StyleSheet.create({
   textSection: {
     alignItems: 'center',
     marginHorizontal: HORIZONTAL_PADDING,
-    marginTop: spacing.xl,
+    marginTop: spacing.sm,
   },
 });

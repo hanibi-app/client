@@ -14,6 +14,7 @@ import { useAuthStore } from '@/store/authStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
+import { logAuthState } from '@/utils/authDebug';
 
 type SettingLinkRowProps = {
   label: string;
@@ -128,6 +129,8 @@ export default function SettingsScreen() {
     setSensorAlertsEnabled,
   } = useAppState();
   const clearAuth = useAuthStore((state) => state.clear);
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const refreshToken = useAuthStore((state) => state.refreshToken);
   const [pendingToggle, setPendingToggle] = useState<string | null>(null);
 
   const handleResetOnboarding = useCallback(async () => {
@@ -249,7 +252,7 @@ export default function SettingsScreen() {
     const disableCleaning = pendingToggle === 'cleaningAlertsEnabled';
     const disableSensor = pendingToggle === 'sensorAlertsEnabled';
 
-    return [
+    const sections: SettingsSectionConfig[] = [
       {
         key: 'profile',
         title: '프로필 및 계정',
@@ -378,6 +381,34 @@ export default function SettingsScreen() {
         ],
       },
     ];
+
+    // 개발 모드에서만 인증 상태 확인 섹션 추가
+    if (__DEV__) {
+      sections.push({
+        key: 'debug',
+        title: '🔧 개발자 도구',
+        type: 'rows',
+        rows: [
+          {
+            key: 'authStatus',
+            type: 'link',
+            label: '인증 상태 확인',
+            description: accessToken
+              ? `✅ 로그인됨 (토큰: ${accessToken.substring(0, 20)}...)`
+              : '❌ 로그인 안됨',
+            onPress: () => {
+              logAuthState();
+              Alert.alert(
+                '인증 상태',
+                `Access Token: ${accessToken ? '✅ 있음' : '❌ 없음'}\nRefresh Token: ${refreshToken ? '✅ 있음' : '❌ 없음'}\n\n콘솔에서 자세한 정보를 확인하세요.`,
+              );
+            },
+          },
+        ],
+      });
+    }
+
+    return sections;
   }, [
     cleaningAlertsEnabled,
     dialogueAlertsEnabled,
@@ -391,6 +422,8 @@ export default function SettingsScreen() {
     pendingToggle,
     sensorAlertsEnabled,
     useMonochromeDisplay,
+    accessToken,
+    refreshToken,
   ]);
   return (
     <View style={styles.container}>

@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
+import { useKakaoLogin } from '@/features/auth/hooks';
 import { RootStackParamList } from '@/navigation/types';
+import { getKakaoAccessToken, loginWithKakao } from '@/services/auth/kakaoLogin';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -14,18 +16,57 @@ type LoginScreenProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 export default function LoginScreen({ navigation }: LoginScreenProps) {
   const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
+  const [isLoading, setIsLoading] = useState(false);
+  const kakaoLoginMutation = useKakaoLogin();
 
   // 화면 중앙에 적절한 크기로 표시
   const CHARACTER_SIZE = Math.floor(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.8));
 
-  const handleKakaoLogin = () => {
-    // TODO: 카카오 로그인 구현
-    // - @react-native-seoul/kakao-login 또는 유사한 라이브러리 사용
-    // - 로그인 성공 시 사용자 정보를 상태 관리에 저장
-    // - 에러 처리 및 로딩 상태 관리 필요
-    // - 관련 이슈: #카카오로그인
-    console.log('카카오 로그인 클릭');
-    navigation.navigate('NotificationRequest');
+  const handleKakaoLogin = async () => {
+    if (isLoading || kakaoLoginMutation.isPending) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // 리다이렉트 URI 설정 (앱의 스킴 또는 웹 URL)
+      const redirectUri = process.env.EXPO_PUBLIC_KAKAO_REDIRECT_URI || 'hanibi://kakao-login';
+
+      // 카카오 로그인 실행
+      const code = await loginWithKakao(redirectUri);
+
+      if (!code) {
+        Alert.alert('로그인 취소', '카카오 로그인이 취소되었습니다.');
+        setIsLoading(false);
+        return;
+      }
+
+      // 카카오 액세스 토큰 가져오기
+      const kakaoAccessToken = await getKakaoAccessToken(code);
+
+      // 백엔드 API를 통해 카카오 로그인 처리
+      kakaoLoginMutation.mutate(
+        { accessToken: kakaoAccessToken },
+        {
+          onSuccess: () => {
+            console.log('[LoginScreen] 카카오 로그인 성공');
+            navigation.navigate('NotificationRequest');
+          },
+          onError: (error) => {
+            console.error('[LoginScreen] 카카오 로그인 실패:', error);
+            Alert.alert('로그인 실패', '카카오 로그인에 실패했습니다. 다시 시도해주세요.');
+          },
+          onSettled: () => {
+            setIsLoading(false);
+          },
+        },
+      );
+    } catch (error) {
+      console.error('[LoginScreen] 카카오 로그인 오류:', error);
+      Alert.alert('오류', '카카오 로그인 중 오류가 발생했습니다.');
+      setIsLoading(false);
+    }
   };
 
   const characterContainerStyle = {
@@ -54,11 +95,20 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         </View>
 
         <View style={styles.buttonContainer}>
-          <Pressable onPress={handleKakaoLogin} style={styles.kakaoButton}>
+          <Pressable
+            onPress={handleKakaoLogin}
+            style={[
+              styles.kakaoButton,
+              (isLoading || kakaoLoginMutation.isPending) && styles.kakaoButtonDisabled,
+            ]}
+            disabled={isLoading || kakaoLoginMutation.isPending}
+          >
             <View style={styles.kakaoIconPlaceholder}>
               <KakaoLogoIcon />
             </View>
-            <Text style={styles.kakaoButtonText}>카카오로 시작하기</Text>
+            <Text style={styles.kakaoButtonText}>
+              {isLoading || kakaoLoginMutation.isPending ? '로그인 중...' : '카카오로 시작하기'}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -91,6 +141,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     width: '100%',
+  },
+  kakaoButtonDisabled: {
+    opacity: 0.6,
   },
   kakaoButtonText: {
     color: colors.black,

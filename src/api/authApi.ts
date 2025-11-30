@@ -64,3 +64,19 @@ export const refresh = async (refreshToken: string): Promise<AuthResponse> => {
 export const logout = async (): Promise<void | unknown> => {
   return apiClient.post('/api/v1/auth/logout').then((res) => res.data);
 };
+
+/**
+ * 카카오 로그인 요청 페이로드 타입
+ */
+export interface KakaoLoginPayload {
+  accessToken: string;
+}
+
+/**
+ * 카카오 로그인 API 호출
+ * @param payload 카카오 액세스 토큰
+ * @returns Promise<AuthResponse> 액세스 토큰과 리프레시 토큰을 포함한 응답
+ */
+export const kakaoLogin = async (payload: KakaoLoginPayload): Promise<AuthResponse> => {
+  return apiClient.post('/api/v1/auth/kakao', payload).then((res) => res.data);
+};

@@ -66,3 +66,35 @@ export const useLogout = () => {
     },
   });
 };
+
+/**
+ * 카카오 로그인 훅
+ * 카카오 로그인 성공 시 토큰을 authStore에 저장하고, 사용자 정보 캐시를 무효화합니다.
+ * @returns useMutation 객체 - 카카오 로그인 요청을 처리합니다.
+ */
+export const useKakaoLogin = () => {
+  const queryClient = useQueryClient();
+  const setTokens = useAuthStore((state) => state.setTokens);
+
+  return useMutation({
+    mutationFn: (payload: authApi.KakaoLoginPayload) => {
+      console.log('[useKakaoLogin] 카카오 로그인 요청 시작');
+      return authApi.kakaoLogin(payload);
+    },
+    onSuccess: (data: authApi.AuthResponse) => {
+      console.log('[useKakaoLogin] 카카오 로그인 성공:', {
+        hasAccessToken: !!data.accessToken,
+        hasRefreshToken: !!data.refreshToken,
+        accessTokenLength: data.accessToken?.length,
+      });
+      // 로그인 성공 시 토큰 저장
+      setTokens(data.accessToken, data.refreshToken);
+      // 사용자 정보 캐시 무효화
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+      console.log('[useKakaoLogin] 토큰 저장 완료');
+    },
+    onError: (error: unknown) => {
+      console.error('[useKakaoLogin] 카카오 로그인 실패:', error);
+    },
+  });
+};

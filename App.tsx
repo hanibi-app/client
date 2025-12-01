@@ -7,6 +7,7 @@ import {
   NavigationContainer,
   NavigationContainerRef,
 } from '@react-navigation/native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 
@@ -15,6 +16,16 @@ import RootNavigator from '@/navigation/RootNavigator';
 import { RootStackParamList } from '@/navigation/types';
 
 SplashScreen.preventAutoHideAsync();
+
+// QueryClient는 컴포넌트 밖에 생성하여 리렌더링 시 캐시가 초기화되지 않도록 함
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 export default function App() {
   const colorScheme = useColorScheme();
@@ -41,11 +52,13 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer
-      ref={navigationRef}
-      theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
-    >
-      <RootNavigator navigationRef={navigationRef} />
-    </NavigationContainer>
+    <QueryClientProvider client={queryClient}>
+      <NavigationContainer
+        ref={navigationRef}
+        theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
+      >
+        <RootNavigator navigationRef={navigationRef} />
+      </NavigationContainer>
+    </QueryClientProvider>
   );
 }

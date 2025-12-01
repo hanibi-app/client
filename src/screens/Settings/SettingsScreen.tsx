@@ -11,6 +11,7 @@ import { SettingsAPI } from '@/services/api/settings';
 import { resetOnboardingProgress } from '@/services/storage/onboarding';
 import { useAppState } from '@/state/useAppState';
 import { useAuthStore } from '@/store/authStore';
+import { useLoadingStore } from '@/store/loadingStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -130,6 +131,7 @@ export default function SettingsScreen() {
   } = useAppState();
   const accessToken = useAuthStore((state) => state.accessToken);
   const refreshToken = useAuthStore((state) => state.refreshToken);
+  const { startLoading, stopLoading, withLoading } = useLoadingStore();
   const { handleLogout, isLoggingOut } = useLogoutNavigation();
   const [pendingToggle, setPendingToggle] = useState<string | null>(null);
 
@@ -412,6 +414,29 @@ export default function SettingsScreen() {
                 '인증 상태',
                 `Access Token: ${accessToken ? '✅ 있음' : '❌ 없음'}\nRefresh Token: ${refreshToken ? '✅ 있음' : '❌ 없음'}\n\n콘솔에서 자세한 정보를 확인하세요.`,
               );
+            },
+          },
+          {
+            key: 'testLoading',
+            type: 'link',
+            label: '전역 로딩 테스트 (3초)',
+            description: '전역 로딩 UI 테스트',
+            onPress: () => {
+              withLoading(async () => {
+                await new Promise((resolve) => setTimeout(resolve, 3000));
+              }, '테스트 로딩 중...');
+            },
+          },
+          {
+            key: 'testLoadingManual',
+            type: 'link',
+            label: '전역 로딩 테스트 (수동)',
+            description: '수동으로 시작/중지',
+            onPress: () => {
+              startLoading('수동 로딩 테스트 중...');
+              setTimeout(() => {
+                stopLoading();
+              }, 2000);
             },
           },
         ],

@@ -11,10 +11,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useColorScheme } from '@/components/useColorScheme';
 import { setRootNavigationRef } from '@/navigation/navigationRef';
 import RootNavigator from '@/navigation/RootNavigator';
 import { RootStackParamList } from '@/navigation/types';
+import { useLoadingStore } from '@/store/loadingStore';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,6 +33,7 @@ const queryClient = new QueryClient({
 export default function App() {
   const colorScheme = useColorScheme();
   const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
+  const { isLoading, message } = useLoadingStore();
 
   const [loaded, error] = useFonts({
     // Use a relative path so Metro resolves without alias configuration
@@ -70,6 +73,8 @@ export default function App() {
       >
         <RootNavigator navigationRef={navigationRef} />
       </NavigationContainer>
+      {/* 전역 로딩 오버레이 */}
+      {isLoading && <LoadingSpinner fullScreen message={message} />}
     </QueryClientProvider>
   );
 }

@@ -1,15 +1,21 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { pairDevice, unpairDevice } from '@/api/devices';
 import AppHeader from '@/components/common/AppHeader';
 import ModalPopup from '@/components/common/ModalPopup';
-import { useDevices, useUnpairDevice } from '@/features/devices/hooks';
+import DevicePairingModal from '@/components/DevicePairingModal';
+import { useDevices } from '@/features/devices/hooks';
+import { useForceUnpairDevice } from '@/hooks/useForceUnpair';
 import { RootStackParamList } from '@/navigation/types';
 import { useLogoutNavigation } from '@/navigation/useLogoutNavigation';
 import { SettingsAPI } from '@/services/api/settings';
+import { clearPairedDevice, getPairedDevice } from '@/services/storage/deviceStorage';
 import { resetOnboardingProgress } from '@/services/storage/onboarding';
 import { useAppState } from '@/state/useAppState';
 import { useAuthStore } from '@/store/authStore';
@@ -135,10 +141,215 @@ export default function SettingsScreen() {
   const refreshToken = useAuthStore((state) => state.refreshToken);
   const { startLoading, stopLoading, withLoading } = useLoadingStore();
   const { handleLogout } = useLogoutNavigation();
+  const DEFAULT_DEVICE_ID = 'HANIBI-ESP32-001';
+  const { forceUnpair } = useForceUnpairDevice(DEFAULT_DEVICE_ID);
+  const queryClient = useQueryClient();
   const [pendingToggle, setPendingToggle] = useState<string | null>(null);
   const { data: devices } = useDevices();
-  const unpairDevice = useUnpairDevice();
   const [isUnpairModalVisible, setIsUnpairModalVisible] = useState(false);
+
+  const unpairMutation = useMutation({
+    mutationFn: unpairDevice,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['devices'] });
+    },
+    onError: (error) => {
+      if (
+        error instanceof Error &&
+        'status' in error &&
+        (error as { status: number }).status === 429
+      ) {
+        console.warn('[SettingsScreen] 페어링 해제 429 에러 - Rate limit');
+        Alert.alert('알림', '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+      }
+    },
+  });
+
+  const syncToServerMutation = useMutation({
+    mutationFn: pairDevice,
+    onSuccess: async (device) => {
+      await setPairedDevice({
+        deviceId: device.deviceId,
+        deviceName: device.deviceName,
+        apiSynced: true,
+        syncedAt: new Date().toISOString(),
+      });
+      queryClient.invalidateQueries({ queryKey: ['devices'] });
+      await loadLocalDevice();
+      Alert.alert('완료', '서버와 동기화되었습니다.');
+    },
+    onError: async (error) => {
+      if (error instanceof AxiosError) {
+        const status = error.response?.status;
+        if (status === 409) {
+          if (!localPairedDevice) {
+            Alert.alert('오류', '동기화할 기기 정보가 없어요.');
+            return;
+          }
+          Alert.alert(
+            '이미 페어링된 기기',
+            '이 기기는 이미 다른 계정과 페어링되어 있습니다.\n기존 페어링을 해제하고 다시 동기화하시겠어요?',
+            [
+              {
+                text: '취소',
+                style: 'cancel',
+              },
+              {
+                text: '해제 후 동기화',
+                onPress: async () => {
+                  try {
+                    await unpairDevice({ deviceId: localPairedDevice.deviceId });
+                    await pairDevice({
+                      deviceId: localPairedDevice.deviceId,
+                      deviceName: localPairedDevice.deviceName,
+                    });
+                    await setPairedDevice({
+                      deviceId: localPairedDevice.deviceId,
+                      deviceName: localPairedDevice.deviceName,
+                      apiSynced: true,
+                      syncedAt: new Date().toISOString(),
+                    });
+                    queryClient.invalidateQueries({ queryKey: ['devices'] });
+                    await loadLocalDevice();
+                    Alert.alert('완료', '서버와 동기화되었습니다.');
+                  } catch (retryError) {
+                    if (retryError instanceof AxiosError && retryError.response?.status === 429) {
+                      console.warn('[SettingsScreen] 서버 동기화 재시도 429 에러 - Rate limit');
+                      Alert.alert('알림', '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+                    } else {
+                      Alert.alert('오류', '페어링 해제 및 재동기화에 실패했습니다.');
+                    }
+                  }
+                },
+              },
+            ],
+          );
+          return;
+        }
+        if (status === 429) {
+          console.warn('[SettingsScreen] 서버 동기화 429 에러 - Rate limit');
+          Alert.alert('알림', '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+          return;
+        }
+      }
+      const errorMessage =
+        error && typeof error === 'object' && 'message' in error
+          ? String(error.message)
+          : '서버 동기화에 실패했습니다.';
+      Alert.alert('오류', errorMessage);
+    },
+  });
+
+  const [pairingModalVisible, setPairingModalVisible] = useState(false);
+  const [localPairedDevice, setLocalPairedDevice] = useState<{
+    deviceId: string;
+    deviceName: string;
+    apiSynced?: boolean;
+  } | null>(null);
+
+  const loadLocalDevice = useCallback(async () => {
+    try {
+      const device = await getPairedDevice();
+      setLocalPairedDevice(device);
+    } catch (error) {
+      console.error('[SettingsScreen] 로컬 기기 정보 불러오기 실패:', error);
+    }
+  }, []);
+
+  const hasAttemptedUnpairRef = useRef(false);
+
+  useEffect(() => {
+    if (hasAttemptedUnpairRef.current) {
+      return;
+    }
+
+    hasAttemptedUnpairRef.current = true;
+
+    const performForceUnpair = async () => {
+      try {
+        await forceUnpair();
+      } catch {
+        // 에러는 무시하고 로컬 기기만 로드
+      } finally {
+        loadLocalDevice();
+      }
+    };
+
+    performForceUnpair();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadLocalDevice();
+    }, [loadLocalDevice]),
+  );
+
+  const handleOpenPairingModal = useCallback(() => {
+    setPairingModalVisible(true);
+  }, []);
+
+  const handleClosePairingModal = useCallback(() => {
+    setPairingModalVisible(false);
+    loadLocalDevice();
+  }, [loadLocalDevice]);
+
+  const handleSyncToServer = useCallback(async () => {
+    if (!localPairedDevice) {
+      Alert.alert('오류', '동기화할 기기 정보가 없어요.');
+      return;
+    }
+
+    if (localPairedDevice.apiSynced) {
+      Alert.alert('알림', '이미 서버와 동기화되어 있어요.');
+      return;
+    }
+
+    Alert.alert('서버 동기화', '서버에 기기 정보를 동기화하시겠어요?', [
+      {
+        text: '취소',
+        style: 'cancel',
+      },
+      {
+        text: '동기화',
+        onPress: async () => {
+          try {
+            await syncToServerMutation.mutateAsync({
+              deviceId: localPairedDevice.deviceId,
+              deviceName: localPairedDevice.deviceName,
+            });
+          } catch (error) {
+            console.error('[SettingsScreen] 서버 동기화 실패:', error);
+          }
+        },
+      },
+    ]);
+  }, [localPairedDevice, syncToServerMutation]);
+
+  const handleForceUnpair = useCallback(async () => {
+    Alert.alert('페어링 초기화', '로컬에 저장된 기기 정보를 초기화하시겠어요?', [
+      {
+        text: '취소',
+        style: 'cancel',
+      },
+      {
+        text: '초기화',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await clearPairedDevice();
+            queryClient.invalidateQueries({ queryKey: ['devices'] });
+            queryClient.removeQueries({ queryKey: ['devices'] });
+            setLocalPairedDevice(null);
+            Alert.alert('완료', '페어링 정보가 초기화되었어요.');
+          } catch (error) {
+            console.error('[SettingsScreen] 강제 초기화 실패:', error);
+            Alert.alert('오류', '초기화 중 오류가 발생했어요.');
+          }
+        },
+      },
+    ]);
+  }, [queryClient]);
 
   const handleResetOnboarding = useCallback(async () => {
     try {
@@ -207,7 +418,7 @@ export default function SettingsScreen() {
     setIsUnpairModalVisible(false);
   }, []);
 
-  // 페어링 해제 확인
+  // 페어링 해제 확인 (DELETE /api/v1/devices/pair)
   const handleConfirmUnpair = useCallback(async () => {
     if (!devices || devices.length === 0) {
       Alert.alert('오류', '페어링된 기기가 없어요.');
@@ -218,34 +429,25 @@ export default function SettingsScreen() {
     const deviceToUnpair = devices[0];
 
     try {
-      // 첫 번째 기기를 해제 (나중에 여러 기기 지원 시 선택 로직 추가 가능)
-      await unpairDevice.mutateAsync(deviceToUnpair.deviceId);
+      await unpairMutation.mutateAsync({ deviceId: deviceToUnpair.deviceId });
+      await clearPairedDevice();
+      setLocalPairedDevice(null);
       setIsUnpairModalVisible(false);
       Alert.alert('완료', '페어링이 해제되었어요.');
-      // 성공 시 기기 목록이 자동으로 갱신됨
     } catch (error: unknown) {
-      const axiosError = error as {
-        response?: { data?: { message?: string } };
-        message?: string;
-      };
-
-      console.error('[SettingsScreen] 페어링 해제 실패:', {
-        error,
-        deviceId: deviceToUnpair.deviceId,
-        deviceName: deviceToUnpair.deviceName,
-        response: axiosError?.response?.data,
-        message: axiosError?.message,
-      });
-
-      // 더 구체적인 에러 메시지 제공
       const errorMessage =
-        axiosError?.response?.data?.message ||
-        axiosError?.message ||
-        '페어링 해제 중 오류가 발생했어요.';
+        error && typeof error === 'object' && 'message' in error
+          ? String(error.message)
+          : '페어링 해제 중 오류가 발생했어요.';
 
+      if (error instanceof AxiosError && error.response?.status === 429) {
+        console.warn('[SettingsScreen] 페어링 해제 429 에러 - Rate limit');
+      } else {
+        console.error('[SettingsScreen] 페어링 해제 실패:', error);
+      }
       Alert.alert('오류', errorMessage);
     }
-  }, [devices, unpairDevice]);
+  }, [devices, unpairMutation]);
 
   const handleDisplayToggle = useCallback(
     async (key: 'displayCharacter' | 'useMonochromeDisplay', value: boolean) => {
@@ -358,13 +560,51 @@ export default function SettingsScreen() {
             description: '캐릭터 설정을 초기값으로 되돌립니다',
             onPress: handleResetOnboarding,
           },
+          {
+            key: 'deviceStatus',
+            type: 'link',
+            label: localPairedDevice
+              ? `연결된 기기: ${localPairedDevice.deviceName} (${localPairedDevice.deviceId})`
+              : '연결된 기기가 없습니다.',
+            description: localPairedDevice
+              ? localPairedDevice.apiSynced
+                ? '✅ 서버와 동기화됨'
+                : '⚠️ 로컬 저장만 됨 (서버 동기화 필요)'
+              : undefined,
+            onPress: () => {},
+          } as LinkRowConfig,
+          ...(localPairedDevice && !localPairedDevice.apiSynced
+            ? [
+                {
+                  key: 'syncToServer',
+                  type: 'link',
+                  label: '서버 동기화',
+                  description: '서버에 기기 정보를 동기화합니다',
+                  onPress: handleSyncToServer,
+                } as LinkRowConfig,
+              ]
+            : []),
+          {
+            key: 'pairDevice',
+            type: 'link',
+            label: '기기 페어링',
+            description: '새로운 기기를 페어링합니다',
+            onPress: handleOpenPairingModal,
+          } as LinkRowConfig,
+          {
+            key: 'forceUnpair',
+            type: 'link',
+            label: '페어링 초기화',
+            description: '로컬에 저장된 기기 정보를 초기화합니다',
+            onPress: handleForceUnpair,
+          } as LinkRowConfig,
           ...(devices && devices.length > 0
             ? [
                 {
                   key: 'unpair',
                   type: 'link',
                   label: '페어링 해제',
-                  description: '연결된 기기의 페어링을 해제합니다',
+                  description: '서버에 등록된 기기의 페어링을 해제합니다',
                   onPress: handleOpenUnpairModal,
                 } as LinkRowConfig,
               ]
@@ -510,6 +750,7 @@ export default function SettingsScreen() {
     }
 
     return sections;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     cleaningAlertsEnabled,
     devices,
@@ -517,7 +758,11 @@ export default function SettingsScreen() {
     displayCharacter,
     handleAlertToggle,
     handleDeleteAccount,
+    handleOpenPairingModal,
+    handleSyncToServer,
+    handleForceUnpair,
     handleOpenUnpairModal,
+    localPairedDevice,
     navigation,
     startLoading,
     stopLoading,
@@ -532,6 +777,7 @@ export default function SettingsScreen() {
     accessToken,
     refreshToken,
   ]);
+
   return (
     <View style={styles.container}>
       <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
@@ -592,6 +838,9 @@ export default function SettingsScreen() {
         onConfirm={handleConfirmUnpair}
         onCancel={handleCloseUnpairModal}
       />
+
+      {/* 기기 페어링 모달 */}
+      <DevicePairingModal visible={pairingModalVisible} onClose={handleClosePairingModal} />
     </View>
   );
 }

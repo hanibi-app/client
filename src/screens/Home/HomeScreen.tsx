@@ -23,6 +23,7 @@ import { ProgressBar } from '@/components/home/ProgressBar';
 import { useMe, useUpdateProfile } from '@/features/user/hooks';
 import { HomeStackParamList } from '@/navigation/types';
 import { useAppState } from '@/state/useAppState';
+import { useLoadingStore } from '@/store/loadingStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -36,8 +37,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
   const characterName = useAppState((s) => s.characterName);
   const setCharacterName = useAppState((s) => s.setCharacterName);
-  const { data: me } = useMe();
+  const { data: me, isLoading } = useMe();
   const updateProfile = useUpdateProfile();
+  const { startLoading, stopLoading } = useLoadingStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(characterName);
   const textInputRef = useRef<TextInput>(null);
@@ -54,7 +56,17 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     if (me?.nickname && me.nickname !== characterName) {
       setCharacterName(me.nickname);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me?.nickname]); // characterName 의존성 제외 (무한 루프 방지)
+
+  // React Query의 isLoading을 전역 로딩과 연동
+  useEffect(() => {
+    if (isLoading) {
+      startLoading('홈 데이터를 불러오는 중...');
+    } else {
+      stopLoading();
+    }
+  }, [isLoading, startLoading, stopLoading]);
 
   // 진행률 계산 (30% 남음 = 70% 진행)
   const progress = 70;

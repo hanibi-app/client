@@ -17,6 +17,7 @@ import { VictoryAxis, VictoryChart, VictoryLine, VictoryTheme } from 'victory-na
 import AppHeader from '@/components/common/AppHeader';
 import ReportTabs, { ReportTabType } from '@/components/common/ReportTabs';
 import { DashboardStackParamList } from '@/navigation/types';
+import { useLoadingStore } from '@/store/loadingStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -134,7 +135,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
   const [activeTab, setActiveTab] = useState<ReportTabType>('temp');
   const [timeRange, setTimeRange] = useState<TimeRange>('1일');
   const [reportData, setReportData] = useState<ReportData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { withLoading } = useLoadingStore();
 
   // 차트 애니메이션
   const chartOpacity = useRef(new Animated.Value(0)).current;
@@ -189,16 +190,17 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
 
   // API 호출
   useEffect(() => {
-    setIsLoading(true);
-    fetchReportData(activeTab, timeRange)
-      .then(setReportData)
-      .catch((error: unknown) => {
+    withLoading(async () => {
+      try {
+        const data = await fetchReportData(activeTab, timeRange);
+        setReportData(data);
+      } catch (error: unknown) {
         console.error('리포트 데이터 로딩 실패:', error);
         // 에러 발생 시 더미 데이터 사용
         setReportData(generateDummyData(activeTab, timeRange));
-      })
-      .finally(() => setIsLoading(false));
-  }, [activeTab, timeRange]);
+      }
+    }, '리포트 데이터를 불러오는 중...');
+  }, [activeTab, timeRange, withLoading]);
 
   // 차트 애니메이션 효과
   useEffect(() => {
@@ -218,14 +220,15 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
   };
 
   const handleRefresh = () => {
-    setIsLoading(true);
-    fetchReportData(activeTab, timeRange)
-      .then(setReportData)
-      .catch((error: unknown) => {
+    withLoading(async () => {
+      try {
+        const data = await fetchReportData(activeTab, timeRange);
+        setReportData(data);
+      } catch (error: unknown) {
         console.error('리포트 데이터 새로고침 실패:', error);
         setReportData(generateDummyData(activeTab, timeRange));
-      })
-      .finally(() => setIsLoading(false));
+      }
+    }, '리포트 데이터를 새로고침하는 중...');
   };
 
   const config = TAB_CONFIG[activeTab];
@@ -316,11 +319,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
       {/* 탭 바 */}
       <ReportTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {isLoading || !reportData ? (
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>로딩 중...</Text>
-        </View>
-      ) : (
+      {!reportData ? null : (
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
           {/* 제목 섹션 */}
           <View style={styles.titleSection}>
@@ -518,15 +517,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     position: 'relative',
     zIndex: 10,
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-  },
-  loadingText: {
-    color: colors.mutedText,
-    fontSize: typography.sizes.md,
   },
   refreshButton: {
     alignItems: 'center',

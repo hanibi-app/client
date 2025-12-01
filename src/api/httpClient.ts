@@ -49,15 +49,46 @@ apiClient.interceptors.request.use(
 
 /**
  * 응답 인터셉터
- * 401 Unauthorized 응답이 오면 authStore의 handleUnauthorized를 호출합니다.
+ * 401 Unauthorized 응답이 오면 토큰 갱신을 시도하고 원래 요청을 재시도합니다.
  */
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
     return response;
   },
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      useAuthStore.getState().handleUnauthorized();
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
+
+    // 401 에러이고, 아직 재시도하지 않은 요청인 경우
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      const authStore = useAuthStore.getState();
+
+      // 리프레시 토큰이 있고, 갱신 중이 아닌 경우에만 갱신 시도
+      if (authStore.refreshToken && !authStore.isRefreshing) {
+        try {
+          // 토큰 갱신
+          const newAccessToken = await authStore.refreshAccessToken();
+
+          // 원래 요청의 Authorization 헤더 업데이트
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          }
+
+          // 원래 요청 재시도
+          return apiClient(originalRequest);
+        } catch (refreshError) {
+          // 토큰 갱신 실패 시 로그아웃 처리
+          console.error('[HttpClient] 토큰 갱신 실패:', refreshError);
+          authStore.clear();
+          return Promise.reject(refreshError);
+        }
+      } else if (!authStore.refreshToken) {
+        // 리프레시 토큰이 없으면 바로 초기화
+        authStore.clear();
+      }
     }
 
     return Promise.reject(error);

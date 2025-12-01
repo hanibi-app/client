@@ -1,12 +1,12 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { CommonActions, NavigationProp, useNavigation } from '@react-navigation/native';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppHeader from '@/components/common/AppHeader';
-import { ROOT_ROUTES } from '@/constants/routes';
 import { RootStackParamList } from '@/navigation/types';
+import { useLogoutNavigation } from '@/navigation/useLogoutNavigation';
 import { SettingsAPI } from '@/services/api/settings';
 import { resetOnboardingProgress } from '@/services/storage/onboarding';
 import { useAppState } from '@/state/useAppState';
@@ -128,9 +128,9 @@ export default function SettingsScreen() {
     setCleaningAlertsEnabled,
     setSensorAlertsEnabled,
   } = useAppState();
-  const clearAuth = useAuthStore((state) => state.clear);
   const accessToken = useAuthStore((state) => state.accessToken);
   const refreshToken = useAuthStore((state) => state.refreshToken);
+  const { handleLogout, isLoggingOut } = useLogoutNavigation();
   const [pendingToggle, setPendingToggle] = useState<string | null>(null);
 
   const handleResetOnboarding = useCallback(async () => {
@@ -147,7 +147,7 @@ export default function SettingsScreen() {
     Alert.alert('준비 중', `${feature} 기능은 곧 제공될 예정입니다.`);
   }, []);
 
-  const handleLogout = useCallback(() => {
+  const onLogoutPress = useCallback(() => {
     Alert.alert('로그아웃', '정말 로그아웃하시겠어요?', [
       {
         text: '취소',
@@ -156,18 +156,22 @@ export default function SettingsScreen() {
       {
         text: '로그아웃',
         style: 'destructive',
-        onPress: () => {
-          clearAuth();
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [{ name: ROOT_ROUTES.LOGIN }],
-            }),
-          );
+        onPress: async () => {
+          try {
+            // useLogoutNavigation 훅이 모든 로그아웃 로직을 처리합니다:
+            // 1. 로그아웃 API 호출
+            // 2. 토큰 및 전역 상태 초기화
+            // 3. 루트 네비게이터를 Login 화면으로 안전하게 RESET
+            await handleLogout();
+            console.log('[SettingsScreen] 로그아웃 완료');
+          } catch (error) {
+            console.error('[SettingsScreen] 로그아웃 실패:', error);
+            // 에러는 useLogoutNavigation 내부에서 처리됨
+          }
         },
       },
     ]);
-  }, [clearAuth, navigation]);
+  }, [handleLogout]);
 
   const handleDeleteAccount = useCallback(() => {
     Alert.alert('계정 탈퇴', '정말 계정을 탈퇴하시겠어요?\n탈퇴한 계정은 복구할 수 없어요.', [
@@ -262,7 +266,7 @@ export default function SettingsScreen() {
             key: 'logout',
             type: 'link',
             label: '로그아웃',
-            onPress: handleLogout,
+            onPress: onLogoutPress,
           },
           {
             key: 'deleteAccount',
@@ -416,7 +420,7 @@ export default function SettingsScreen() {
     handleAlertToggle,
     handleDeleteAccount,
     handleDisplayToggle,
-    handleLogout,
+    onLogoutPress,
     handlePlaceholder,
     handleResetOnboarding,
     pendingToggle,

@@ -263,6 +263,12 @@ export default function SettingsScreen() {
         type: 'rows',
         rows: [
           {
+            key: 'profile',
+            type: 'link',
+            label: '프로필 및 계정',
+            onPress: () => navigation.navigate('Profile'),
+          },
+          {
             key: 'logout',
             type: 'link',
             label: '로그아웃',

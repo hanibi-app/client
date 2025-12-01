@@ -70,7 +70,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me?.nickname]); // characterName 의존성 제외 (무한 루프 방지)
 
-  // 페어링 상태 확인
+  // 페어링 상태 확인: 서버 기기 목록을 우선 확인
+  // 서버에 기기가 있으면 페어링됨, 서버에 기기가 없으면 페어링 안됨 (로컬 저장소는 무시)
   const isPaired = devices && devices.length > 0;
 
   // React Query의 isLoading을 전역 로딩과 연동
@@ -121,6 +122,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         ]),
       );
 
+      // 캐릭터와 동일하게 즉시 시작
       scaleAnimation.start();
       translateYAnimation.start();
 
@@ -254,13 +256,14 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           ) : (
             <HanibiCharacter2D level="medium" animated={true} size={CHARACTER_SIZE} />
           )}
-          {/* 페어링 안됨 표시 말풍선 */}
+          {/* 페어링 안됨 표시 말풍선 - 캐릭터 위에 배치 */}
           {!isPaired && (
             <Pressable onPress={handleOpenPairingModal}>
               <Animated.View
                 style={[
                   styles.speechBubbleContainer,
                   {
+                    top: -CHARACTER_SIZE / 2 - 140,
                     transform: [
                       { scale: speechBubbleScaleAnim },
                       {
@@ -424,7 +427,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     position: 'absolute',
-    top: 50,
     zIndex: 10,
   },
   temperatureHighlight: {

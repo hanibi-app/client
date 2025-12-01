@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 
 import { NavigationProp, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppHeader from '@/components/common/AppHeader';
 import InputField from '@/components/common/InputField';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import ToastMessage from '@/components/common/ToastMessage';
 import { useMe, useUpdateProfile } from '@/features/user/hooks';
@@ -116,8 +117,7 @@ export default function ProfileScreen() {
           />
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>프로필 정보를 불러오는 중...</Text>
+          <LoadingSpinner message="프로필 정보를 불러오는 중..." />
         </View>
       </View>
     );
@@ -225,11 +225,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-  },
-  loadingText: {
-    color: colors.mutedText,
-    fontSize: typography.sizes.md,
-    marginTop: spacing.md,
   },
   readOnlyField: {
     backgroundColor: colors.background,

@@ -4,10 +4,12 @@ import { CommonActions, NavigationContainerRef } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { ROOT_ROUTES } from '@/constants/routes';
+import EmailLoginScreen from '@/screens/EmailLoginScreen';
 import CharacterCustomizeScreen from '@/screens/Home/CharacterCustomizeScreen';
 import LoginScreen from '@/screens/LoginScreen';
 import NotificationRequestScreen from '@/screens/NotificationRequestScreen';
 import PrecautionsScreen from '@/screens/PrecautionsScreen';
+import RegisterScreen from '@/screens/RegisterScreen';
 import { markOnboardingComplete, readOnboardingStatus } from '@/services/storage/onboarding';
 import { useAppState } from '@/state/useAppState';
 
@@ -88,6 +90,8 @@ export default function RootNavigator({ navigationRef }: RootNavigatorProps) {
       {!hasOnboarded ? (
         <>
           <Stack.Screen name={ROOT_ROUTES.LOGIN} component={LoginScreen} />
+          <Stack.Screen name={ROOT_ROUTES.EMAIL_LOGIN} component={EmailLoginScreen} />
+          <Stack.Screen name={ROOT_ROUTES.REGISTER} component={RegisterScreen} />
           <Stack.Screen
             name={ROOT_ROUTES.NOTIFICATION_REQUEST}
             component={NotificationRequestScreen}

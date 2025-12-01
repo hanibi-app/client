@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { CameraConnectionStatus } from '@/hooks/useCameraStatus';
 import { colors } from '@/theme/Colors';
@@ -34,12 +42,57 @@ export const CameraStatusModal = ({
     ? `${status.cameraId} 스트리밍을 확인해 주세요.`
     : `${status.cameraId}에 연결된 CCTV 스트리밍이 없습니다.`;
 
+  const cardRef = useRef<View>(null);
+
+  // 웹 환경에서 aria-hidden 경고 방지
+  useEffect(() => {
+    if (Platform.OS === 'web' && !visible && cardRef.current) {
+      // 모달이 닫힐 때 포커스 제거
+      const element = cardRef.current as unknown as HTMLElement;
+      if (element && document.activeElement && element.contains(document.activeElement)) {
+        (document.activeElement as HTMLElement)?.blur();
+      }
+    }
+  }, [visible]);
+
   return (
-    <Modal transparent animationType="fade" visible={visible} onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <Pressable style={styles.modalBackdrop} onPress={onClose} />
-        <View style={styles.modalCard}>
-          <Pressable style={styles.modalCloseButton} onPress={onClose}>
+    <Modal
+      transparent
+      animationType="fade"
+      visible={visible}
+      onRequestClose={onClose}
+      accessibilityViewIsModal={true}
+      statusBarTranslucent={true}
+    >
+      <View
+        style={styles.modalOverlay}
+        accessibilityViewIsModal={true}
+        importantForAccessibility="no-hide-descendants"
+        {...(Platform.OS === 'web' && { 'aria-hidden': false })}
+      >
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="모달 닫기"
+          accessibilityHint="배경을 탭하여 모달을 닫습니다"
+          importantForAccessibility="yes"
+          {...(Platform.OS === 'web' && { 'aria-hidden': false })}
+        />
+        <View
+          ref={cardRef}
+          style={styles.modalCard}
+          accessibilityRole="dialog"
+          accessibilityLabel={title}
+          {...(Platform.OS === 'web' && { 'aria-hidden': false })}
+        >
+          <Pressable
+            style={styles.modalCloseButton}
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="닫기"
+            accessibilityHint="모달을 닫습니다"
+          >
             <Text style={styles.modalCloseIcon}>×</Text>
           </Pressable>
           <View style={styles.modalBadgeRow}>
@@ -57,11 +110,22 @@ export const CameraStatusModal = ({
           ) : (
             isChecking && <ActivityIndicator color={colors.primary} style={styles.modalLoader} />
           )}
-          <Pressable style={styles.modalPrimaryButton} onPress={onPrimaryAction}>
+          <Pressable
+            style={styles.modalPrimaryButton}
+            onPress={onPrimaryAction}
+            accessibilityRole="button"
+            accessibilityLabel="리포트보기"
+            accessibilityHint="리포트 화면으로 이동합니다"
+          >
             <FontAwesome name="refresh" size={16} color={colors.white} />
             <Text style={styles.modalPrimaryButtonText}>리포트보기</Text>
           </Pressable>
-          <Pressable onPress={onLinkPress}>
+          <Pressable
+            onPress={onLinkPress}
+            accessibilityRole="button"
+            accessibilityLabel="CCTV 연결 설정"
+            accessibilityHint="CCTV 연결 설정 화면으로 이동합니다"
+          >
             <Text style={styles.modalLinkText}>CCTV 연결 설정</Text>
           </Pressable>
         </View>

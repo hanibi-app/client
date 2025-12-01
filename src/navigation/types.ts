@@ -15,6 +15,8 @@ import {
 // Root Navigator ParamList (최상위 네비게이터)
 export type RootStackParamList = {
   [ROOT_ROUTES.LOGIN]: undefined;
+  [ROOT_ROUTES.EMAIL_LOGIN]: undefined;
+  [ROOT_ROUTES.REGISTER]: undefined;
   [ROOT_ROUTES.NOTIFICATION_REQUEST]: undefined;
   [ROOT_ROUTES.CAUTION_SLIDES]: undefined;
   [ROOT_ROUTES.CHARACTER_CUSTOMIZE]: undefined;

@@ -15,6 +15,8 @@
 // Root Navigator Routes (최상위 네비게이터)
 export const ROOT_ROUTES = {
   LOGIN: 'Login',
+  EMAIL_LOGIN: 'EmailLogin',
+  REGISTER: 'Register',
   NOTIFICATION_REQUEST: 'NotificationRequest',
   CAUTION_SLIDES: 'CautionSlides',
   CHARACTER_CUSTOMIZE: 'CharacterCustomize',

@@ -6,12 +6,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppHeader from '@/components/common/AppHeader';
 import { RootStackParamList } from '@/navigation/types';
+import { useLogoutNavigation } from '@/navigation/useLogoutNavigation';
 import { SettingsAPI } from '@/services/api/settings';
 import { resetOnboardingProgress } from '@/services/storage/onboarding';
 import { useAppState } from '@/state/useAppState';
+import { useAuthStore } from '@/store/authStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
+import { logAuthState } from '@/utils/authDebug';
 
 type SettingLinkRowProps = {
   label: string;
@@ -125,6 +128,9 @@ export default function SettingsScreen() {
     setCleaningAlertsEnabled,
     setSensorAlertsEnabled,
   } = useAppState();
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const refreshToken = useAuthStore((state) => state.refreshToken);
+  const { handleLogout, isLoggingOut } = useLogoutNavigation();
   const [pendingToggle, setPendingToggle] = useState<string | null>(null);
 
   const handleResetOnboarding = useCallback(async () => {
@@ -140,6 +146,49 @@ export default function SettingsScreen() {
   const handlePlaceholder = useCallback((feature: string) => {
     Alert.alert('준비 중', `${feature} 기능은 곧 제공될 예정입니다.`);
   }, []);
+
+  const onLogoutPress = useCallback(() => {
+    Alert.alert('로그아웃', '정말 로그아웃하시겠어요?', [
+      {
+        text: '취소',
+        style: 'cancel',
+      },
+      {
+        text: '로그아웃',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            // useLogoutNavigation 훅이 모든 로그아웃 로직을 처리합니다:
+            // 1. 로그아웃 API 호출
+            // 2. 토큰 및 전역 상태 초기화
+            // 3. 루트 네비게이터를 Login 화면으로 안전하게 RESET
+            await handleLogout();
+            console.log('[SettingsScreen] 로그아웃 완료');
+          } catch (error) {
+            console.error('[SettingsScreen] 로그아웃 실패:', error);
+            // 에러는 useLogoutNavigation 내부에서 처리됨
+          }
+        },
+      },
+    ]);
+  }, [handleLogout]);
+
+  const handleDeleteAccount = useCallback(() => {
+    Alert.alert('계정 탈퇴', '정말 계정을 탈퇴하시겠어요?\n탈퇴한 계정은 복구할 수 없어요.', [
+      {
+        text: '취소',
+        style: 'cancel',
+      },
+      {
+        text: '탈퇴하기',
+        style: 'destructive',
+        onPress: () => {
+          // TODO: 계정 탈퇴 API 호출
+          handlePlaceholder('계정 탈퇴');
+        },
+      },
+    ]);
+  }, [handlePlaceholder]);
 
   const handleDisplayToggle = useCallback(
     async (key: 'displayCharacter' | 'useMonochromeDisplay', value: boolean) => {
@@ -207,15 +256,25 @@ export default function SettingsScreen() {
     const disableCleaning = pendingToggle === 'cleaningAlertsEnabled';
     const disableSensor = pendingToggle === 'sensorAlertsEnabled';
 
-    return [
+    const sections: SettingsSectionConfig[] = [
       {
         key: 'profile',
         title: '프로필 및 계정',
-        type: 'cta',
-        cta: {
-          label: '계정',
-          onPress: () => handlePlaceholder('프로필'),
-        },
+        type: 'rows',
+        rows: [
+          {
+            key: 'logout',
+            type: 'link',
+            label: '로그아웃',
+            onPress: onLogoutPress,
+          },
+          {
+            key: 'deleteAccount',
+            type: 'link',
+            label: '계정 탈퇴',
+            onPress: handleDeleteAccount,
+          },
+        ],
       },
       {
         key: 'pairing',
@@ -326,17 +385,49 @@ export default function SettingsScreen() {
         ],
       },
     ];
+
+    // 개발 모드에서만 인증 상태 확인 섹션 추가
+    if (__DEV__) {
+      sections.push({
+        key: 'debug',
+        title: '🔧 개발자 도구',
+        type: 'rows',
+        rows: [
+          {
+            key: 'authStatus',
+            type: 'link',
+            label: '인증 상태 확인',
+            description: accessToken
+              ? `✅ 로그인됨 (토큰: ${accessToken.substring(0, 20)}...)`
+              : '❌ 로그인 안됨',
+            onPress: () => {
+              logAuthState();
+              Alert.alert(
+                '인증 상태',
+                `Access Token: ${accessToken ? '✅ 있음' : '❌ 없음'}\nRefresh Token: ${refreshToken ? '✅ 있음' : '❌ 없음'}\n\n콘솔에서 자세한 정보를 확인하세요.`,
+              );
+            },
+          },
+        ],
+      });
+    }
+
+    return sections;
   }, [
     cleaningAlertsEnabled,
     dialogueAlertsEnabled,
     displayCharacter,
     handleAlertToggle,
+    handleDeleteAccount,
     handleDisplayToggle,
+    onLogoutPress,
     handlePlaceholder,
     handleResetOnboarding,
     pendingToggle,
     sensorAlertsEnabled,
     useMonochromeDisplay,
+    accessToken,
+    refreshToken,
   ]);
   return (
     <View style={styles.container}>

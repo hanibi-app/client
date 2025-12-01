@@ -4,12 +4,15 @@ import { CommonActions, NavigationContainerRef } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { ROOT_ROUTES } from '@/constants/routes';
+import EmailLoginScreen from '@/screens/EmailLoginScreen';
 import CharacterCustomizeScreen from '@/screens/Home/CharacterCustomizeScreen';
 import LoginScreen from '@/screens/LoginScreen';
 import NotificationRequestScreen from '@/screens/NotificationRequestScreen';
 import PrecautionsScreen from '@/screens/PrecautionsScreen';
+import RegisterScreen from '@/screens/RegisterScreen';
 import { markOnboardingComplete, readOnboardingStatus } from '@/services/storage/onboarding';
 import { useAppState } from '@/state/useAppState';
+import { restoreTokensFromStorage } from '@/store/authStore';
 
 import MainTabs from './MainTabs';
 import { RootStackParamList } from './types';
@@ -28,12 +31,16 @@ export default function RootNavigator({ navigationRef }: RootNavigatorProps) {
 
   const checkOnboardingStatus = useCallback(async () => {
     try {
+      // 앱 시작 시 토큰 복원
+      await restoreTokensFromStorage();
+
+      // 온보딩 상태 확인
       const isComplete = await readOnboardingStatus();
       if (isComplete) {
         setHasOnboarded(true);
       }
     } catch (error) {
-      console.error('온보딩 상태 확인 오류:', error);
+      console.error('초기화 오류:', error);
     } finally {
       setIsLoading(false);
     }
@@ -51,19 +58,30 @@ export default function RootNavigator({ navigationRef }: RootNavigatorProps) {
       return;
     }
 
-    // hasOnboarded가 true에서 false로 변경된 경우
+    // hasOnboarded가 true에서 false로 변경된 경우 (로그아웃)
     if (prevHasOnboardedRef.current === true && hasOnboarded === false) {
-      // 다음 렌더링 사이클에서 리셋 실행 (Login 화면이 스택에 추가된 후)
-      setTimeout(() => {
+      // 루트 네비게이터가 준비될 때까지 대기 후 리셋
+      const resetToLogin = () => {
         if (navigationRef.current?.isReady()) {
-          navigationRef.current.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [{ name: ROOT_ROUTES.LOGIN }],
-            }),
-          );
+          try {
+            navigationRef.current.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{ name: ROOT_ROUTES.LOGIN }],
+              }),
+            );
+            console.log('[RootNavigator] Login 화면으로 리셋 완료');
+          } catch (error) {
+            console.error('[RootNavigator] 리셋 에러:', error);
+          }
+        } else {
+          // 네비게이터가 준비되지 않았으면 재시도
+          setTimeout(resetToLogin, 100);
         }
-      }, 0);
+      };
+
+      // 약간의 지연을 두어 상태 업데이트가 완료되도록 함
+      setTimeout(resetToLogin, 100);
     }
 
     prevHasOnboardedRef.current = hasOnboarded;
@@ -84,23 +102,20 @@ export default function RootNavigator({ navigationRef }: RootNavigatorProps) {
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!hasOnboarded ? (
-        <>
-          <Stack.Screen name={ROOT_ROUTES.LOGIN} component={LoginScreen} />
-          <Stack.Screen
-            name={ROOT_ROUTES.NOTIFICATION_REQUEST}
-            component={NotificationRequestScreen}
-          />
-          <Stack.Screen name={ROOT_ROUTES.CAUTION_SLIDES}>
-            {(props) => <PrecautionsScreen {...props} onComplete={completeOnboarding} />}
-          </Stack.Screen>
-          <Stack.Screen
-            name={ROOT_ROUTES.CHARACTER_CUSTOMIZE}
-            component={CharacterCustomizeScreen}
-          />
-        </>
-      ) : null}
+    <Stack.Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName={hasOnboarded ? ROOT_ROUTES.MAIN_TABS : ROOT_ROUTES.LOGIN}
+    >
+      {/* 온보딩 전 화면들 - 항상 등록 (조건부 렌더링 제거) */}
+      <Stack.Screen name={ROOT_ROUTES.LOGIN} component={LoginScreen} />
+      <Stack.Screen name={ROOT_ROUTES.EMAIL_LOGIN} component={EmailLoginScreen} />
+      <Stack.Screen name={ROOT_ROUTES.REGISTER} component={RegisterScreen} />
+      <Stack.Screen name={ROOT_ROUTES.NOTIFICATION_REQUEST} component={NotificationRequestScreen} />
+      <Stack.Screen name={ROOT_ROUTES.CAUTION_SLIDES}>
+        {(props) => <PrecautionsScreen {...props} onComplete={completeOnboarding} />}
+      </Stack.Screen>
+      <Stack.Screen name={ROOT_ROUTES.CHARACTER_CUSTOMIZE} component={CharacterCustomizeScreen} />
+      {/* 메인 탭 화면 - 항상 등록 */}
       <Stack.Screen name={ROOT_ROUTES.MAIN_TABS} component={MainTabs} />
       {/* 카메라 모달 그룹 (나중에 구현) */}
     </Stack.Navigator>

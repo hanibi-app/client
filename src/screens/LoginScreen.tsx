@@ -5,6 +5,8 @@ import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-na
 import Svg, { Path } from 'react-native-svg';
 
 import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
+import PrimaryButton from '@/components/common/PrimaryButton';
+import { ROOT_ROUTES } from '@/constants/routes';
 import { RootStackParamList } from '@/navigation/types';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
@@ -19,18 +21,17 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const CHARACTER_SIZE = Math.floor(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.8));
 
   const handleKakaoLogin = () => {
-    // TODO: 카카오 로그인 구현
-    // - @react-native-seoul/kakao-login 또는 유사한 라이브러리 사용
-    // - 로그인 성공 시 사용자 정보를 상태 관리에 저장
-    // - 에러 처리 및 로딩 상태 관리 필요
-    // - 관련 이슈: #카카오로그인
-    console.log('카카오 로그인 클릭');
-    navigation.navigate('NotificationRequest');
+    // 카카오 로그인 없이 바로 다음 화면으로 이동
+    navigation.navigate(ROOT_ROUTES.NOTIFICATION_REQUEST);
+  };
+
+  const handleEmailLogin = () => {
+    navigation.navigate(ROOT_ROUTES.EMAIL_LOGIN);
   };
 
   const characterContainerStyle = {
     position: 'absolute' as const,
-    top: (SCREEN_HEIGHT - CHARACTER_SIZE) / 2 + 50,
+    top: (SCREEN_HEIGHT - CHARACTER_SIZE) / 2 + 20,
     left: (SCREEN_WIDTH - CHARACTER_SIZE) / 2,
     width: CHARACTER_SIZE,
     height: CHARACTER_SIZE,
@@ -60,6 +61,19 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             </View>
             <Text style={styles.kakaoButtonText}>카카오로 시작하기</Text>
           </Pressable>
+
+          <View style={styles.buttonSpacing} />
+
+          <PrimaryButton label="로그인하기" onPress={handleEmailLogin} />
+
+          <View style={styles.registerLinkContainer}>
+            <Text
+              style={styles.registerLink}
+              onPress={() => navigation.navigate(ROOT_ROUTES.REGISTER)}
+            >
+              회원가입하기
+            </Text>
+          </View>
         </View>
       </View>
     </View>
@@ -72,6 +86,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     position: 'absolute',
     width: '100%',
+  },
+  buttonSpacing: {
+    height: spacing.md,
   },
   container: {
     backgroundColor: colors.background,
@@ -87,7 +104,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     flexDirection: 'row',
     justifyContent: 'center',
-    minHeight: 56,
+    minHeight: 48,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     width: '100%',
@@ -103,6 +120,17 @@ const styles = StyleSheet.create({
     height: 24,
     justifyContent: 'center',
     width: 24,
+  },
+  registerLink: {
+    color: colors.primary,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.medium,
+    textAlign: 'center',
+    textDecorationLine: 'underline',
+  },
+  registerLinkContainer: {
+    alignItems: 'center',
+    marginTop: spacing.lg,
   },
   subtitle: {
     color: colors.mutedText,

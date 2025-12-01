@@ -82,7 +82,15 @@ export default function EmailLoginScreen({ navigation }: EmailLoginScreenProps) 
       });
 
       // 로그인 성공 시 NotificationRequest 화면으로 이동
-      navigation.navigate(ROOT_ROUTES.NOTIFICATION_REQUEST);
+      // 약간의 지연을 두어 상태 업데이트가 완료되도록 함
+      setTimeout(() => {
+        try {
+          navigation.navigate(ROOT_ROUTES.NOTIFICATION_REQUEST);
+        } catch (navError) {
+          console.error('[EmailLoginScreen] 네비게이션 에러:', navError);
+          Alert.alert('오류', '화면 이동 중 오류가 발생했습니다.');
+        }
+      }, 100);
     } catch (error: unknown) {
       console.error('[EmailLoginScreen] 로그인 실패:', error);
       const errorMessage =

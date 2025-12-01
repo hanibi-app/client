@@ -23,7 +23,6 @@ import PrimaryButton from '@/components/common/PrimaryButton';
 import { ROOT_ROUTES } from '@/constants/routes';
 import { useRegister } from '@/features/auth/hooks';
 import { RootStackParamList } from '@/navigation/types';
-import { useAppState } from '@/state/useAppState';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -40,7 +39,6 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
   const [nicknameError, setNicknameError] = useState('');
 
   const registerMutation = useRegister();
-  const setCharacterName = useAppState((s) => s.setCharacterName);
 
   const handleBack = () => {
     navigation.goBack();
@@ -106,16 +104,13 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
     }
 
     try {
-      const trimmedNickname = nickname.trim();
       await registerMutation.mutateAsync({
         email: email.trim(),
         password,
-        nickname: trimmedNickname,
+        nickname: nickname.trim(),
       });
 
-      // 회원가입 시 입력한 닉네임을 캐릭터 이름으로 설정
-      setCharacterName(trimmedNickname);
-
+      // useRegister 훅의 onSuccess에서 닉네임이 자동으로 캐릭터 이름으로 설정됨
       Alert.alert('회원가입 성공', '회원가입이 완료되었습니다. 로그인해주세요.', [
         {
           text: '확인',

@@ -18,11 +18,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import EditHanibiIcon from '@/assets/images/edit-hanibi.svg';
 import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
+import ModalPopup from '@/components/common/ModalPopup';
 import { DecorativeBackground } from '@/components/home/DecorativeBackground';
 import { HomeMessageCard } from '@/components/home/HomeMessageCard';
 import { NameCard } from '@/components/home/NameCard';
 import { ProgressBar } from '@/components/home/ProgressBar';
-import { useDevices } from '@/features/devices/hooks';
+import { useDevices, usePairDevice } from '@/features/devices/hooks';
 import { useMe, useUpdateProfile } from '@/features/user/hooks';
 import { HomeStackParamList } from '@/navigation/types';
 import { useAppState } from '@/state/useAppState';
@@ -43,9 +44,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { data: me, isLoading } = useMe();
   const { data: devices } = useDevices();
   const updateProfile = useUpdateProfile();
+  const pairDevice = usePairDevice();
   const { startLoading, stopLoading } = useLoadingStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(characterName);
+  const [isPairingModalVisible, setIsPairingModalVisible] = useState(false);
   const textInputRef = useRef<TextInput>(null);
 
   // 말풍선 애니메이션 (캐릭터와 동일한 둥실둥실 효과)
@@ -174,6 +177,33 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     setIsEditing(false);
   };
 
+  // 페어링 모달 열기
+  const handleOpenPairingModal = () => {
+    setIsPairingModalVisible(true);
+  };
+
+  // 페어링 모달 닫기
+  const handleClosePairingModal = () => {
+    setIsPairingModalVisible(false);
+  };
+
+  // 페어링 확인
+  const handleConfirmPairing = async () => {
+    try {
+      // TODO: 실제 기기 ID와 이름을 가져오는 로직 필요
+      // 임시로 테스트용 데이터 사용
+      await pairDevice.mutateAsync({
+        deviceId: 'DEVICE_001',
+        deviceName: '한니비 기기',
+      });
+      setIsPairingModalVisible(false);
+      // 성공 시 기기 목록이 자동으로 갱신됨
+    } catch (error) {
+      console.error('[HomeScreen] 페어링 실패:', error);
+      // 에러 처리 (나중에 토스트 메시지 등 추가 가능)
+    }
+  };
+
   // 캐릭터 크기
   const CHARACTER_SIZE = Math.floor(SCREEN_WIDTH * 0.65);
   const NAME_CARD_WIDTH = Math.min(Math.max(SCREEN_WIDTH * 0.6, 220), 320);
@@ -217,31 +247,39 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
         {/* 중앙 캐릭터 */}
         <View style={styles.characterContainer}>
-          <HanibiCharacter2D level="medium" animated={true} size={CHARACTER_SIZE} />
+          {!isPaired ? (
+            <Pressable onPress={handleOpenPairingModal} style={styles.characterPressable}>
+              <HanibiCharacter2D level="medium" animated={true} size={CHARACTER_SIZE} />
+            </Pressable>
+          ) : (
+            <HanibiCharacter2D level="medium" animated={true} size={CHARACTER_SIZE} />
+          )}
           {/* 페어링 안됨 표시 말풍선 */}
           {!isPaired && (
-            <Animated.View
-              style={[
-                styles.speechBubbleContainer,
-                {
-                  transform: [
-                    { scale: speechBubbleScaleAnim },
-                    {
-                      translateY: speechBubbleTranslateYAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [-6, 6],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              <View style={styles.speechBubble}>
-                <View style={styles.speechBubbleBody}>
-                  <MaterialIcons name="close" size={20} color={colors.danger} />
+            <Pressable onPress={handleOpenPairingModal}>
+              <Animated.View
+                style={[
+                  styles.speechBubbleContainer,
+                  {
+                    transform: [
+                      { scale: speechBubbleScaleAnim },
+                      {
+                        translateY: speechBubbleTranslateYAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [-6, 6],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              >
+                <View style={styles.speechBubble}>
+                  <View style={styles.speechBubbleBody}>
+                    <MaterialIcons name="close" size={20} color={colors.danger} />
+                  </View>
                 </View>
-              </View>
-            </Animated.View>
+              </Animated.View>
+            </Pressable>
           )}
         </View>
 
@@ -284,6 +322,15 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           />
         </View>
       </SafeAreaView>
+
+      {/* 페어링 모달 */}
+      <ModalPopup
+        visible={isPairingModalVisible}
+        title="페어링하시겠습니까?"
+        description="한니비 기기를 페어링하면 실시간으로 건강 상태를 확인할 수 있어요."
+        onConfirm={handleConfirmPairing}
+        onCancel={handleClosePairingModal}
+      />
     </LinearGradient>
   );
 }
@@ -326,6 +373,10 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
     paddingTop: 70,
     position: 'relative',
+  },
+  characterPressable: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   container: {
     flex: 1,

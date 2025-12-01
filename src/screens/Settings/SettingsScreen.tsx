@@ -5,6 +5,8 @@ import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 're
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppHeader from '@/components/common/AppHeader';
+import ModalPopup from '@/components/common/ModalPopup';
+import { useDevices, useUnpairDevice } from '@/features/devices/hooks';
 import { RootStackParamList } from '@/navigation/types';
 import { useLogoutNavigation } from '@/navigation/useLogoutNavigation';
 import { SettingsAPI } from '@/services/api/settings';
@@ -132,8 +134,11 @@ export default function SettingsScreen() {
   const accessToken = useAuthStore((state) => state.accessToken);
   const refreshToken = useAuthStore((state) => state.refreshToken);
   const { startLoading, stopLoading, withLoading } = useLoadingStore();
-  const { handleLogout, isLoggingOut } = useLogoutNavigation();
+  const { handleLogout } = useLogoutNavigation();
   const [pendingToggle, setPendingToggle] = useState<string | null>(null);
+  const { data: devices } = useDevices();
+  const unpairDevice = useUnpairDevice();
+  const [isUnpairModalVisible, setIsUnpairModalVisible] = useState(false);
 
   const handleResetOnboarding = useCallback(async () => {
     try {
@@ -191,6 +196,56 @@ export default function SettingsScreen() {
       },
     ]);
   }, [handlePlaceholder]);
+
+  // 페어링 해제 모달 열기
+  const handleOpenUnpairModal = useCallback(() => {
+    setIsUnpairModalVisible(true);
+  }, []);
+
+  // 페어링 해제 모달 닫기
+  const handleCloseUnpairModal = useCallback(() => {
+    setIsUnpairModalVisible(false);
+  }, []);
+
+  // 페어링 해제 확인
+  const handleConfirmUnpair = useCallback(async () => {
+    if (!devices || devices.length === 0) {
+      Alert.alert('오류', '페어링된 기기가 없어요.');
+      setIsUnpairModalVisible(false);
+      return;
+    }
+
+    const deviceToUnpair = devices[0];
+
+    try {
+      // 첫 번째 기기를 해제 (나중에 여러 기기 지원 시 선택 로직 추가 가능)
+      await unpairDevice.mutateAsync(deviceToUnpair.deviceId);
+      setIsUnpairModalVisible(false);
+      Alert.alert('완료', '페어링이 해제되었어요.');
+      // 성공 시 기기 목록이 자동으로 갱신됨
+    } catch (error: unknown) {
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+
+      console.error('[SettingsScreen] 페어링 해제 실패:', {
+        error,
+        deviceId: deviceToUnpair.deviceId,
+        deviceName: deviceToUnpair.deviceName,
+        response: axiosError?.response?.data,
+        message: axiosError?.message,
+      });
+
+      // 더 구체적인 에러 메시지 제공
+      const errorMessage =
+        axiosError?.response?.data?.message ||
+        axiosError?.message ||
+        '페어링 해제 중 오류가 발생했어요.';
+
+      Alert.alert('오류', errorMessage);
+    }
+  }, [devices, unpairDevice]);
 
   const handleDisplayToggle = useCallback(
     async (key: 'displayCharacter' | 'useMonochromeDisplay', value: boolean) => {
@@ -303,6 +358,17 @@ export default function SettingsScreen() {
             description: '캐릭터 설정을 초기값으로 되돌립니다',
             onPress: handleResetOnboarding,
           },
+          ...(devices && devices.length > 0
+            ? [
+                {
+                  key: 'unpair',
+                  type: 'link',
+                  label: '페어링 해제',
+                  description: '연결된 기기의 페어링을 해제합니다',
+                  onPress: handleOpenUnpairModal,
+                } as LinkRowConfig,
+              ]
+            : []),
         ],
       },
       {
@@ -446,10 +512,16 @@ export default function SettingsScreen() {
     return sections;
   }, [
     cleaningAlertsEnabled,
+    devices,
     dialogueAlertsEnabled,
     displayCharacter,
     handleAlertToggle,
     handleDeleteAccount,
+    handleOpenUnpairModal,
+    navigation,
+    startLoading,
+    stopLoading,
+    withLoading,
     handleDisplayToggle,
     onLogoutPress,
     handlePlaceholder,
@@ -511,6 +583,15 @@ export default function SettingsScreen() {
           );
         })}
       </ScrollView>
+
+      {/* 페어링 해제 모달 */}
+      <ModalPopup
+        visible={isUnpairModalVisible}
+        title="페어링 해제"
+        description="정말 페어링을 해제하시겠어요? 해제 후에는 실시간 건강 상태를 확인할 수 없어요."
+        onConfirm={handleConfirmUnpair}
+        onCancel={handleCloseUnpairModal}
+      />
     </View>
   );
 }

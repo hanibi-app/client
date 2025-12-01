@@ -187,3 +187,47 @@ export function useUpdateDevice(deviceId: string) {
     },
   });
 }
+
+/**
+ * 기기 페어링 해제 훅
+ * 등록된 기기의 페어링을 해제합니다.
+ * 성공 시 기기 목록 쿼리를 자동으로 최신화합니다.
+ *
+ * @returns useMutation 객체 - 기기 페어링 해제 요청을 처리합니다.
+ *
+ * @example
+ * ```tsx
+ * function UnpairDeviceScreen() {
+ *   const unpairDevice = useUnpairDevice();
+ *
+ *   const handleUnpair = async () => {
+ *     try {
+ *       await unpairDevice.mutateAsync('DEVICE_001');
+ *       console.log('페어링 해제 성공');
+ *       // 성공 시 기기 목록이 자동으로 갱신됨
+ *     } catch (error) {
+ *       console.error('페어링 해제 실패:', error);
+ *     }
+ *   };
+ *
+ *   return (
+ *     <Button
+ *       onPress={handleUnpair}
+ *       disabled={unpairDevice.isPending}
+ *       title={unpairDevice.isPending ? '해제 중...' : '페어링 해제'}
+ *     />
+ *   );
+ * }
+ * ```
+ */
+export function useUnpairDevice() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, string>({
+    mutationFn: devicesApi.unpairDevice,
+    onSuccess: () => {
+      // 기기 목록 쿼리 무효화하여 자동으로 최신화
+      queryClient.invalidateQueries({ queryKey: DEVICES_QUERY_KEY });
+    },
+  });
+}

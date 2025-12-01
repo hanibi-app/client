@@ -114,4 +114,34 @@ export const devicesApi = {
     );
     return response.data.data;
   },
+
+  /**
+   * 기기 페어링 해제
+   * 등록된 기기의 페어링을 해제합니다.
+   *
+   * @param deviceId 해제할 기기의 ID
+   * @returns Promise<void>
+   *
+   * @example
+   * ```tsx
+   * await devicesApi.unpairDevice('DEVICE_001');
+   * ```
+   */
+  unpairDevice: async (deviceId: string): Promise<void> => {
+    try {
+      await apiClient.post<ApiResponse<void>>(`/api/v1/devices/unpair`, {
+        deviceId,
+      });
+      console.log('[devicesApi.unpairDevice] 페어링 해제 성공:', deviceId);
+    } catch (error) {
+      const axiosError = error as { response?: { data?: unknown; status?: number } };
+      console.error('[devicesApi.unpairDevice] 페어링 해제 실패:', {
+        deviceId,
+        error,
+        response: axiosError?.response?.data,
+        status: axiosError?.response?.status,
+      });
+      throw error;
+    }
+  },
 };

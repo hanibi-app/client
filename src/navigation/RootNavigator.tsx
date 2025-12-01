@@ -9,6 +9,7 @@ import CharacterCustomizeScreen from '@/screens/Home/CharacterCustomizeScreen';
 import LoginScreen from '@/screens/LoginScreen';
 import NotificationRequestScreen from '@/screens/NotificationRequestScreen';
 import PrecautionsScreen from '@/screens/PrecautionsScreen';
+import ProfileScreen from '@/screens/ProfileScreen';
 import RegisterScreen from '@/screens/RegisterScreen';
 import { markOnboardingComplete, readOnboardingStatus } from '@/services/storage/onboarding';
 import { useAppState } from '@/state/useAppState';
@@ -117,6 +118,8 @@ export default function RootNavigator({ navigationRef }: RootNavigatorProps) {
       <Stack.Screen name={ROOT_ROUTES.CHARACTER_CUSTOMIZE} component={CharacterCustomizeScreen} />
       {/* 메인 탭 화면 - 항상 등록 */}
       <Stack.Screen name={ROOT_ROUTES.MAIN_TABS} component={MainTabs} />
+      {/* 프로필 화면 */}
+      <Stack.Screen name={ROOT_ROUTES.PROFILE} component={ProfileScreen} />
       {/* 카메라 모달 그룹 (나중에 구현) */}
     </Stack.Navigator>
   );

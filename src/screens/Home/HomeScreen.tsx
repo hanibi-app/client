@@ -20,6 +20,7 @@ import { DecorativeBackground } from '@/components/home/DecorativeBackground';
 import { HomeMessageCard } from '@/components/home/HomeMessageCard';
 import { NameCard } from '@/components/home/NameCard';
 import { ProgressBar } from '@/components/home/ProgressBar';
+import { useMe, useUpdateProfile } from '@/features/user/hooks';
 import { HomeStackParamList } from '@/navigation/types';
 import { useAppState } from '@/state/useAppState';
 import { colors } from '@/theme/Colors';
@@ -35,6 +36,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
   const characterName = useAppState((s) => s.characterName);
   const setCharacterName = useAppState((s) => s.setCharacterName);
+  const { data: me } = useMe();
+  const updateProfile = useUpdateProfile();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(characterName);
   const textInputRef = useRef<TextInput>(null);
@@ -45,6 +48,13 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       setEditValue(characterName);
     }
   }, [characterName, isEditing]);
+
+  // 서버의 닉네임이 변경되면 characterName도 동기화 (초기 로드 시)
+  useEffect(() => {
+    if (me?.nickname && me.nickname !== characterName) {
+      setCharacterName(me.nickname);
+    }
+  }, [me?.nickname]); // characterName 의존성 제외 (무한 루프 방지)
 
   // 진행률 계산 (30% 남음 = 70% 진행)
   const progress = 70;
@@ -60,14 +70,29 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     }, 100);
   };
 
-  const handleSave = () => {
-    if (editValue.trim()) {
-      setCharacterName(editValue.trim());
-    } else {
+  const handleSave = async () => {
+    const trimmedValue = editValue.trim();
+
+    if (!trimmedValue) {
       // 빈 값이면 원래 이름으로 복원
       setEditValue(characterName);
+      setIsEditing(false);
+      return;
     }
+
+    // 로컬 상태 업데이트
+    setCharacterName(trimmedValue);
     setIsEditing(false);
+
+    // 서버의 닉네임과 다르면 서버에도 업데이트
+    if (me?.nickname !== trimmedValue) {
+      try {
+        await updateProfile.mutateAsync({ nickname: trimmedValue });
+      } catch (error) {
+        console.error('[HomeScreen] 닉네임 업데이트 실패:', error);
+        // 에러가 발생해도 로컬 상태는 유지 (사용자 경험)
+      }
+    }
   };
 
   const handleCancel = () => {

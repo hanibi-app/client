@@ -24,6 +24,7 @@ export const ROOT_ROUTES = {
   CAMERA_PERMISSION: 'CameraPermission',
   CAMERA_CAPTURE: 'CameraCapture',
   CAMERA_PREVIEW: 'CameraPreview',
+  PROFILE: 'Profile',
 } as const;
 
 // Onboarding Navigator Routes (온보딩 플로우 - 현재는 RootNavigator에 통합됨)

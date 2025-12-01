@@ -24,6 +24,7 @@ export type RootStackParamList = {
   [ROOT_ROUTES.CAMERA_PERMISSION]: undefined;
   [ROOT_ROUTES.CAMERA_CAPTURE]: undefined;
   [ROOT_ROUTES.CAMERA_PREVIEW]: { uri: string };
+  [ROOT_ROUTES.PROFILE]: undefined;
 };
 
 // Main Tabs ParamList (하단 탭 네비게이터)

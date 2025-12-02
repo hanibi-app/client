@@ -37,6 +37,12 @@ export type UnpairDevicePayload = {
   deviceId: string;
 };
 
+export type UpdateDeviceRequest = {
+  deviceName?: string;
+  connectionStatus?: 'ONLINE' | 'OFFLINE' | string;
+  deviceStatus?: 'IDLE' | 'PROCESSING' | string;
+};
+
 export async function pairDevice(payload: PairDevicePayload): Promise<Device> {
   const response = await apiClient.post<ApiResponse<Device>>('/api/v1/devices/pair', payload);
   return response.data.data;
@@ -51,5 +57,21 @@ export async function unpairDevice(payload: UnpairDevicePayload): Promise<Device
 
 export async function getDevices(): Promise<Device[]> {
   const response = await apiClient.get<ApiResponse<Device[]>>('/api/v1/devices');
+  return response.data.data;
+}
+
+export async function getDeviceById(deviceId: string): Promise<Device> {
+  const response = await apiClient.get<ApiResponse<Device>>(`/api/v1/devices/${deviceId}`);
+  return response.data.data;
+}
+
+export async function updateDevice(
+  deviceId: string,
+  payload: UpdateDeviceRequest,
+): Promise<Device> {
+  const response = await apiClient.patch<ApiResponse<Device>>(
+    `/api/v1/devices/${deviceId}`,
+    payload,
+  );
   return response.data.data;
 }

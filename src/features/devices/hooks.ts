@@ -5,7 +5,13 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { devicesApi, Device, PairDevicePayload, UpdateDevicePayload } from '@/api/devicesApi';
+import { getDeviceById, updateDevice, UpdateDeviceRequest, Device } from '@/api/devices';
+import {
+  devicesApi,
+  Device as DeviceApiType,
+  PairDevicePayload,
+  UpdateDevicePayload,
+} from '@/api/devicesApi';
 import { useAuthStore } from '@/store/authStore';
 
 /**
@@ -82,10 +88,29 @@ export function useDevices() {
 export function useDevice(deviceId: string) {
   const accessToken = useAuthStore((state) => state.accessToken);
 
-  return useQuery<Device>({
+  return useQuery<DeviceApiType>({
     queryKey: deviceQueryKey(deviceId),
     queryFn: () => devicesApi.getDevice(deviceId),
     enabled: !!deviceId && !!accessToken, // deviceId와 토큰이 있을 때만 조회
+    staleTime: 1 * 60 * 1000, // 1분간 캐시 유지
+    retry: 1,
+  });
+}
+
+/**
+ * 기기 상세 조회 훅 (src/api/devices.ts 사용)
+ * deviceId로 특정 기기의 상세 정보를 조회합니다.
+ *
+ * @param deviceId 조회할 기기의 ID
+ * @returns useQuery 객체 - 기기 상세 정보를 반환합니다.
+ */
+export function useDeviceDetailQuery(deviceId: string) {
+  const accessToken = useAuthStore((state) => state.accessToken);
+
+  return useQuery<Device>({
+    queryKey: deviceQueryKey(deviceId),
+    queryFn: () => getDeviceById(deviceId),
+    enabled: !!deviceId && !!accessToken,
     staleTime: 1 * 60 * 1000, // 1분간 캐시 유지
     retry: 1,
   });
@@ -177,13 +202,41 @@ export function usePairDevice() {
 export function useUpdateDevice(deviceId: string) {
   const queryClient = useQueryClient();
 
-  return useMutation<Device, Error, UpdateDevicePayload>({
+  return useMutation<DeviceApiType, Error, UpdateDevicePayload>({
     mutationFn: (payload) => devicesApi.updateDevice(deviceId, payload),
     onSuccess: (data) => {
       // 해당 기기 상세 쿼리 데이터 직접 업데이트
       queryClient.setQueryData(deviceQueryKey(deviceId), data);
       // 기기 목록 쿼리 무효화하여 자동으로 최신화
       queryClient.invalidateQueries({ queryKey: DEVICES_QUERY_KEY });
+    },
+  });
+}
+
+/**
+ * 기기 정보 수정 훅 (src/api/devices.ts 사용)
+ * 기기의 이름, 상태 등의 정보를 수정합니다.
+ * 성공 시 해당 기기 상세 쿼리와 기기 목록 쿼리를 자동으로 최신화합니다.
+ *
+ * @returns useMutation 객체 - 기기 수정 요청을 처리합니다.
+ */
+type UpdateDeviceVariables = {
+  deviceId: string;
+  payload: UpdateDeviceRequest;
+};
+
+export function useUpdateDeviceMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<Device, Error, UpdateDeviceVariables>({
+    mutationFn: ({ deviceId, payload }) => updateDevice(deviceId, payload),
+    onSuccess: (updatedDevice, variables) => {
+      // 기기 목록 쿼리 무효화
+      queryClient.invalidateQueries({ queryKey: DEVICES_QUERY_KEY });
+      // 해당 기기 상세 쿼리 무효화
+      queryClient.invalidateQueries({ queryKey: deviceQueryKey(variables.deviceId) });
+      // 기기 상세 쿼리 데이터 직접 업데이트
+      queryClient.setQueryData(deviceQueryKey(variables.deviceId), updatedDevice);
     },
   });
 }

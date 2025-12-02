@@ -1,12 +1,16 @@
 import React from 'react';
 
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Device } from '@/api/devices';
 import AppHeader from '@/components/common/AppHeader';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { ROOT_ROUTES } from '@/constants/routes';
 import { useDevices } from '@/features/devices/hooks';
+import { RootStackParamList } from '@/navigation/types';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -20,9 +24,10 @@ type DeviceListModalProps = {
 
 type DeviceCardProps = {
   device: Device;
+  onPress: () => void;
 };
 
-function DeviceCard({ device }: DeviceCardProps) {
+function DeviceCard({ device, onPress }: DeviceCardProps) {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '없음';
     try {
@@ -52,7 +57,7 @@ function DeviceCard({ device }: DeviceCardProps) {
   };
 
   return (
-    <View style={styles.deviceCard}>
+    <Pressable style={styles.deviceCard} onPress={onPress}>
       <View style={styles.deviceCardHeader}>
         <Text style={styles.deviceName}>{device.deviceName}</Text>
         <View
@@ -78,13 +83,24 @@ function DeviceCard({ device }: DeviceCardProps) {
           <Text style={styles.deviceInfoValue}>{formatDate(device.lastHeartbeat)}</Text>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
+type DeviceListModalNavProp = NativeStackNavigationProp<
+  RootStackParamList,
+  typeof ROOT_ROUTES.DEVICE_DETAIL
+>;
+
 export default function DeviceListModal({ visible, onClose }: DeviceListModalProps) {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<DeviceListModalNavProp>();
   const { data: devices, isLoading, error } = useDevices();
+
+  const handleDevicePress = (deviceId: string) => {
+    onClose();
+    navigation.navigate(ROOT_ROUTES.DEVICE_DETAIL, { deviceId });
+  };
 
   return (
     <Modal
@@ -123,7 +139,11 @@ export default function DeviceListModal({ visible, onClose }: DeviceListModalPro
                 showsVerticalScrollIndicator={false}
               >
                 {devices.map((device) => (
-                  <DeviceCard key={device.id} device={device} />
+                  <DeviceCard
+                    key={device.id}
+                    device={device}
+                    onPress={() => handleDevicePress(device.deviceId)}
+                  />
                 ))}
               </ScrollView>
             )}

@@ -4,6 +4,7 @@ import { CommonActions, NavigationContainerRef } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { ROOT_ROUTES } from '@/constants/routes';
+import DeviceDetailScreen from '@/screens/DeviceDetailScreen';
 import DevicePairingModal from '@/screens/DevicePairingModal';
 import EmailLoginScreen from '@/screens/EmailLoginScreen';
 import CharacterCustomizeScreen from '@/screens/Home/CharacterCustomizeScreen';
@@ -127,6 +128,14 @@ export default function RootNavigator({ navigationRef }: RootNavigatorProps) {
         component={DevicePairingModal}
         options={{
           presentation: 'modal',
+          headerShown: false,
+        }}
+      />
+      {/* 기기 상세 화면 */}
+      <Stack.Screen
+        name={ROOT_ROUTES.DEVICE_DETAIL}
+        component={DeviceDetailScreen}
+        options={{
           headerShown: false,
         }}
       />

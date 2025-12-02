@@ -220,6 +220,13 @@ export default function DeviceDetailScreen() {
     }
   };
 
+  const formatCommandStatus = (status: string) => {
+    if (status === 'ACKED') return '전송 완료';
+    if (status === 'PENDING') return '대기 중';
+    if (status === 'FAILED') return '전송 실패';
+    return status;
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.centered}>
@@ -300,25 +307,6 @@ export default function DeviceDetailScreen() {
           />
         </View>
 
-        {/* Delete button */}
-        <View style={styles.deleteSection}>
-          <Pressable
-            style={[
-              styles.deleteButton,
-              unpairDeviceMutation.isPending && styles.deleteButtonDisabled,
-            ]}
-            onPress={handleDelete}
-            disabled={unpairDeviceMutation.isPending}
-          >
-            <Text style={styles.deleteButtonText}>
-              {unpairDeviceMutation.isPending ? '삭제 중...' : '기기 삭제'}
-            </Text>
-          </Pressable>
-          <Text style={styles.deleteWarningText}>
-            기기를 삭제하면 페어링이 해제되고 로컬에서도 제거됩니다.
-          </Text>
-        </View>
-
         {/* Device control section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>기기 제어</Text>
@@ -392,7 +380,7 @@ export default function DeviceDetailScreen() {
                         cmd.status === 'PENDING' && styles.commandStatusPending,
                       ]}
                     >
-                      {cmd.status}
+                      {formatCommandStatus(cmd.status)}
                     </Text>
                   </View>
                   <Text style={styles.commandPayload}>
@@ -408,6 +396,25 @@ export default function DeviceDetailScreen() {
               ))}
             </View>
           )}
+        </View>
+
+        {/* Delete button */}
+        <View style={styles.deleteSection}>
+          <Pressable
+            style={[
+              styles.deleteButton,
+              unpairDeviceMutation.isPending && styles.deleteButtonDisabled,
+            ]}
+            onPress={handleDelete}
+            disabled={unpairDeviceMutation.isPending}
+          >
+            <Text style={styles.deleteButtonText}>
+              {unpairDeviceMutation.isPending ? '삭제 중...' : '기기 삭제'}
+            </Text>
+          </Pressable>
+          <Text style={styles.deleteWarningText}>
+            기기를 삭제하면 페어링이 해제되고 로컬에서도 제거됩니다.
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -524,7 +531,7 @@ const styles = StyleSheet.create({
   },
   deleteSection: {
     marginTop: spacing.xl,
-    paddingTop: spacing.xl,
+    paddingTop: spacing.lg,
   },
   deleteWarningText: {
     color: colors.mutedText,
@@ -546,7 +553,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   footer: {
-    marginTop: spacing.xxl,
+    marginBottom: spacing.xl,
+    marginTop: spacing.lg,
   },
   half: {
     flex: 1,

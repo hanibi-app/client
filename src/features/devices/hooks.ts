@@ -5,12 +5,12 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getDeviceById, updateDevice, UpdateDeviceRequest, Device } from '@/api/devices';
+import { Device, UpdateDeviceRequest, getDeviceById, updateDevice } from '@/api/devices';
 import {
-  devicesApi,
   Device as DeviceApiType,
   PairDevicePayload,
   UpdateDevicePayload,
+  devicesApi,
 } from '@/api/devicesApi';
 import { useAuthStore } from '@/store/authStore';
 
@@ -51,7 +51,7 @@ export const deviceQueryKey = (deviceId: string) => ['devices', deviceId] as con
 export function useDevices() {
   const accessToken = useAuthStore((state) => state.accessToken);
 
-  return useQuery<Device[]>({
+  return useQuery<DeviceApiType[]>({
     queryKey: DEVICES_QUERY_KEY,
     queryFn: devicesApi.getDevices,
     enabled: !!accessToken, // 토큰이 있을 때만 조회
@@ -154,7 +154,7 @@ export function useDeviceDetailQuery(deviceId: string) {
 export function usePairDevice() {
   const queryClient = useQueryClient();
 
-  return useMutation<Device, Error, PairDevicePayload>({
+  return useMutation<DeviceApiType, Error, PairDevicePayload>({
     mutationFn: devicesApi.pairDevice,
     onSuccess: () => {
       // 기기 목록 쿼리 무효화하여 자동으로 최신화

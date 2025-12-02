@@ -7,10 +7,25 @@ export type Device = {
   id: number;
   deviceId: string;
   deviceName: string;
-  connectionStatus: string;
-  deviceStatus: string;
+  wifiSsid: string | null;
+  connectionStatus: 'ONLINE' | 'OFFLINE' | string;
+  deviceStatus: 'IDLE' | 'PROCESSING' | string;
+  lastHeartbeat: string | null;
+  deviceConfig: unknown | null;
+  rtspUrl: string | null;
+  cameraModel: string | null;
+  cameraUsername: string | null;
+  cameraPassword: string | null;
   createdAt?: string;
   updatedAt?: string;
+  user?: {
+    id: number;
+    email: string;
+    nickname: string;
+    emailVerified: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+  };
 };
 
 export type PairDevicePayload = {

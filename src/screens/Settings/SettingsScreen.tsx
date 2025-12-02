@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { pairDevice, unpairDevice } from '@/api/devices';
 import AppHeader from '@/components/common/AppHeader';
 import ModalPopup from '@/components/common/ModalPopup';
+import DeviceListModal from '@/components/DeviceListModal';
 import DevicePairingModal from '@/components/DevicePairingModal';
 import { useDevices } from '@/features/devices/hooks';
 import { useForceUnpairDevice } from '@/hooks/useForceUnpair';
@@ -241,6 +242,7 @@ export default function SettingsScreen() {
   });
 
   const [pairingModalVisible, setPairingModalVisible] = useState(false);
+  const [deviceListModalVisible, setDeviceListModalVisible] = useState(false);
   const [localPairedDevice, setLocalPairedDevice] = useState<{
     deviceId: string;
     deviceName: string;
@@ -293,6 +295,14 @@ export default function SettingsScreen() {
     setPairingModalVisible(false);
     loadLocalDevice();
   }, [loadLocalDevice]);
+
+  const handleOpenDeviceListModal = useCallback(() => {
+    setDeviceListModalVisible(true);
+  }, []);
+
+  const handleCloseDeviceListModal = useCallback(() => {
+    setDeviceListModalVisible(false);
+  }, []);
 
   const handleSyncToServer = useCallback(async () => {
     if (!localPairedDevice) {
@@ -563,15 +573,12 @@ export default function SettingsScreen() {
           {
             key: 'deviceStatus',
             type: 'link',
-            label: localPairedDevice
-              ? `연결된 기기: ${localPairedDevice.deviceName} (${localPairedDevice.deviceId})`
-              : '연결된 기기가 없습니다.',
-            description: localPairedDevice
-              ? localPairedDevice.apiSynced
-                ? '✅ 서버와 동기화됨'
-                : '⚠️ 로컬 저장만 됨 (서버 동기화 필요)'
-              : undefined,
-            onPress: () => {},
+            label:
+              devices && devices.length > 0
+                ? `연결된 기기: ${devices[0].deviceName} (${devices[0].deviceId})`
+                : '연결된 기기가 없습니다.',
+            description: devices && devices.length > 0 ? '✅ 서버와 동기화됨' : undefined,
+            onPress: handleOpenDeviceListModal,
           } as LinkRowConfig,
           ...(localPairedDevice && !localPairedDevice.apiSynced
             ? [
@@ -758,6 +765,7 @@ export default function SettingsScreen() {
     displayCharacter,
     handleAlertToggle,
     handleDeleteAccount,
+    handleOpenDeviceListModal,
     handleOpenPairingModal,
     handleSyncToServer,
     handleForceUnpair,
@@ -841,6 +849,9 @@ export default function SettingsScreen() {
 
       {/* 기기 페어링 모달 */}
       <DevicePairingModal visible={pairingModalVisible} onClose={handleClosePairingModal} />
+
+      {/* 기기 목록 모달 */}
+      <DeviceListModal visible={deviceListModalVisible} onClose={handleCloseDeviceListModal} />
     </View>
   );
 }

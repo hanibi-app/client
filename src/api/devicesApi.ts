@@ -10,13 +10,28 @@ import { apiClient } from './httpClient';
  * 기기 정보 타입
  */
 export type Device = {
+  id: number;
   deviceId: string;
   deviceName: string;
-  connectionStatus?: 'ONLINE' | 'OFFLINE' | string;
-  deviceStatus?: 'IDLE' | 'PROCESSING' | 'ERROR' | string;
-  // 추가 필드가 필요하면 여기에 확장 가능
+  wifiSsid: string | null;
+  connectionStatus: 'ONLINE' | 'OFFLINE' | string;
+  deviceStatus: 'IDLE' | 'PROCESSING' | string;
+  lastHeartbeat: string | null;
+  deviceConfig: unknown | null;
+  rtspUrl: string | null;
+  cameraModel: string | null;
+  cameraUsername: string | null;
+  cameraPassword: string | null;
   createdAt?: string;
   updatedAt?: string;
+  user?: {
+    id: number;
+    email: string;
+    nickname: string;
+    emailVerified: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+  };
 };
 
 /**

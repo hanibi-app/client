@@ -19,11 +19,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EditHanibiIcon from '@/assets/images/edit-hanibi.svg';
 import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
 import ModalPopup from '@/components/common/ModalPopup';
+import DeviceControlModal from '@/components/DeviceControlModal';
+import DeviceListModal from '@/components/DeviceListModal';
 import { DecorativeBackground } from '@/components/home/DecorativeBackground';
 import { HomeMessageCard } from '@/components/home/HomeMessageCard';
 import { NameCard } from '@/components/home/NameCard';
 import { ProgressBar } from '@/components/home/ProgressBar';
-import { useDevices, usePairDevice } from '@/features/devices/hooks';
+import { useDevice, useDevices, usePairDevice } from '@/features/devices/hooks';
 import { useMe, useUpdateProfile } from '@/features/user/hooks';
 import { HomeStackParamList } from '@/navigation/types';
 import { getPairedDevice, setPairedDevice } from '@/services/storage/deviceStorage';
@@ -43,13 +45,25 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const characterName = useAppState((s) => s.characterName);
   const setCharacterName = useAppState((s) => s.setCharacterName);
   const { data: me, isLoading } = useMe();
-  const { data: devices } = useDevices();
+  const { data: devices, refetch: refetchDevices, isLoading: isDevicesLoading } = useDevices();
   const updateProfile = useUpdateProfile();
   const pairDevice = usePairDevice();
+
+  // 첫 번째 기기 정보 조회 (연결 상태, 마지막 신호 등)
+  const firstDeviceId = devices && devices.length > 0 ? devices[0].deviceId : null;
+  const { data: deviceDetail } = useDevice(firstDeviceId || '');
   const { startLoading, stopLoading } = useLoadingStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(characterName);
   const [isPairingModalVisible, setIsPairingModalVisible] = useState(false);
+  const [isDeviceListModalVisible, setIsDeviceListModalVisible] = useState(false);
+  const [isDeviceControlModalVisible, setIsDeviceControlModalVisible] = useState(false);
+  const [selectedDeviceForModal, setSelectedDeviceForModal] = useState<{
+    deviceId: string;
+    deviceName: string;
+    connectionStatus?: string;
+    lastHeartbeat?: string | null;
+  } | null>(null);
   const [localPairedDevice, setLocalPairedDevice] = useState<{
     deviceId: string;
     deviceName: string;
@@ -75,30 +89,41 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me?.nickname]); // characterName 의존성 제외 (무한 루프 방지)
 
-  // 로컬 페어링 정보 로드
+  // 로컬 페어링 정보 로드 (앱 시작 시 및 화면 포커스 시)
+  const loadLocalDevice = async () => {
+    const localDevice = await getPairedDevice();
+    setLocalPairedDevice(localDevice);
+  };
+
   useEffect(() => {
-    const loadLocalDevice = async () => {
-      const localDevice = await getPairedDevice();
-      setLocalPairedDevice(localDevice);
-    };
     loadLocalDevice();
   }, []);
 
   // 페어링 모달이 닫힐 때 로컬 페어링 정보 다시 로드
   useEffect(() => {
     if (!isPairingModalVisible) {
-      const loadLocalDevice = async () => {
-        const localDevice = await getPairedDevice();
-        setLocalPairedDevice(localDevice);
-      };
       loadLocalDevice();
     }
   }, [isPairingModalVisible]);
 
-  // 페어링 상태 확인: 서버와 로컬 둘 다 확인
-  // 서버에 기기가 있고 로컬에도 페어링 정보가 있어야만 페어링됨으로 간주
-  // 최초 로그인 시 로컬에 페어링 정보가 없으면 서버에 기기가 있어도 페어링 안됨으로 표시
-  const isPaired = devices && devices.length > 0 && localPairedDevice !== null;
+  // 서버에서 기기 목록이 로드되면 로컬 페어링 정보와 동기화
+  useEffect(() => {
+    if (!isDevicesLoading && devices && localPairedDevice) {
+      // 로컬에 페어링 정보가 있지만 서버에 해당 기기가 없으면 동기화 시도는 하지 않음
+      // (오프라인 모드 지원을 위해 로컬 정보를 유지)
+      const serverHasDevice = devices.some((d) => d.deviceId === localPairedDevice.deviceId);
+      if (!serverHasDevice) {
+        console.log(
+          '[HomeScreen] 로컬 페어링 정보는 있지만 서버에 기기가 없음. 로컬 정보를 유지합니다.',
+        );
+      }
+    }
+  }, [devices, isDevicesLoading, localPairedDevice]);
+
+  // 페어링 상태 확인: 로컬 스토리지를 우선으로 확인
+  // 로컬에 페어링 정보가 있으면 페어링된 것으로 간주 (오프라인 모드 지원)
+  // 서버에서 기기 목록을 불러오는 동안에도 로컬 정보를 사용하여 페어링 상태 유지
+  const isPaired = localPairedDevice !== null;
 
   // React Query의 isLoading을 전역 로딩과 연동
   useEffect(() => {
@@ -215,6 +240,56 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     setIsPairingModalVisible(false);
   };
 
+  // 기기 목록 모달 열기 (캐릭터 클릭 시)
+  const handleOpenDeviceListModal = async () => {
+    // 기기 목록을 먼저 최신화 (백그라운드에서)
+    try {
+      await refetchDevices();
+    } catch (error) {
+      console.error('[HomeScreen] 기기 목록 불러오기 실패:', error);
+      // 에러가 발생해도 기기 목록 모달은 열기 (로컬 정보 사용)
+    }
+    setIsDeviceListModalVisible(true);
+  };
+
+  // 기기 목록 모달 닫기
+  const handleCloseDeviceListModal = () => {
+    setIsDeviceListModalVisible(false);
+  };
+
+  // 기기 목록에서 기기 선택 시 기기 제어 모달 열기
+  const handleDeviceSelect = (device: {
+    deviceId: string;
+    deviceName: string;
+    connectionStatus?: string;
+    lastHeartbeat?: string | null;
+  }) => {
+    setSelectedDeviceForModal(device);
+    setIsDeviceListModalVisible(false);
+    setIsDeviceControlModalVisible(true);
+  };
+
+  // 로컬 페어링 정보로 기기 제어 모달 열기 (기기 목록 없이도 가능)
+  const handleOpenDeviceControlFromLocal = () => {
+    if (localPairedDevice) {
+      setSelectedDeviceForModal({
+        deviceId: localPairedDevice.deviceId,
+        deviceName: localPairedDevice.deviceName,
+        connectionStatus: devices?.find((d) => d.deviceId === localPairedDevice.deviceId)
+          ?.connectionStatus,
+        lastHeartbeat: devices?.find((d) => d.deviceId === localPairedDevice.deviceId)
+          ?.lastHeartbeat,
+      });
+      setIsDeviceControlModalVisible(true);
+    }
+  };
+
+  // 기기 제어 모달 닫기
+  const handleCloseDeviceControlModal = () => {
+    setIsDeviceControlModalVisible(false);
+    setSelectedDeviceForModal(null);
+  };
+
   // 페어링 확인
   const handleConfirmPairing = async () => {
     try {
@@ -290,13 +365,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
         {/* 중앙 캐릭터 */}
         <View style={styles.characterContainer}>
-          {!isPaired ? (
-            <Pressable onPress={handleOpenPairingModal} style={styles.characterPressable}>
-              <HanibiCharacter2D level="medium" animated={true} size={CHARACTER_SIZE} />
-            </Pressable>
-          ) : (
+          <Pressable onPress={handleOpenDeviceListModal} style={styles.characterPressable}>
             <HanibiCharacter2D level="medium" animated={true} size={CHARACTER_SIZE} />
-          )}
+          </Pressable>
           {/* 페어링 안됨 표시 말풍선 - 캐릭터 위에 배치 */}
           {!isPaired && (
             <Pressable onPress={handleOpenPairingModal}>
@@ -375,6 +446,42 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         onConfirm={handleConfirmPairing}
         onCancel={handleClosePairingModal}
       />
+
+      {/* 기기 목록 모달 */}
+      <DeviceListModal
+        visible={isDeviceListModalVisible}
+        onClose={handleCloseDeviceListModal}
+        onDeviceSelect={handleDeviceSelect}
+      />
+
+      {/* 기기 제어 모달 */}
+      {/* 로컬 페어링 정보가 있으면 서버 기기 목록과 관계없이 모달 표시 가능 */}
+      {isDeviceControlModalVisible && (selectedDeviceForModal || localPairedDevice) && (
+        <DeviceControlModal
+          visible={isDeviceControlModalVisible}
+          deviceId={selectedDeviceForModal?.deviceId || localPairedDevice?.deviceId || null}
+          deviceName={selectedDeviceForModal?.deviceName || localPairedDevice?.deviceName}
+          connectionStatus={
+            deviceDetail?.connectionStatus ||
+            selectedDeviceForModal?.connectionStatus ||
+            devices?.find(
+              (d) =>
+                d.deviceId === (selectedDeviceForModal?.deviceId || localPairedDevice?.deviceId),
+            )?.connectionStatus ||
+            'OFFLINE'
+          }
+          lastHeartbeat={
+            deviceDetail?.lastHeartbeat ||
+            selectedDeviceForModal?.lastHeartbeat ||
+            devices?.find(
+              (d) =>
+                d.deviceId === (selectedDeviceForModal?.deviceId || localPairedDevice?.deviceId),
+            )?.lastHeartbeat ||
+            null
+          }
+          onClose={handleCloseDeviceControlModal}
+        />
+      )}
     </LinearGradient>
   );
 }

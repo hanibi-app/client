@@ -20,6 +20,7 @@ const BACKDROP_COLOR = 'rgba(0, 0, 0, 0.5)';
 type DeviceListModalProps = {
   visible: boolean;
   onClose: () => void;
+  onDeviceSelect?: (device: Device) => void;
 };
 
 type DeviceCardProps = {
@@ -92,14 +93,24 @@ type DeviceListModalNavProp = NativeStackNavigationProp<
   typeof ROOT_ROUTES.DEVICE_DETAIL
 >;
 
-export default function DeviceListModal({ visible, onClose }: DeviceListModalProps) {
+export default function DeviceListModal({
+  visible,
+  onClose,
+  onDeviceSelect,
+}: DeviceListModalProps) {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<DeviceListModalNavProp>();
   const { data: devices, isLoading, error } = useDevices();
 
-  const handleDevicePress = (deviceId: string) => {
-    onClose();
-    navigation.navigate(ROOT_ROUTES.DEVICE_DETAIL, { deviceId });
+  const handleDevicePress = (device: Device) => {
+    if (onDeviceSelect) {
+      // 콜백이 있으면 콜백 호출 (기기 제어 모달 열기)
+      onDeviceSelect(device);
+    } else {
+      // 콜백이 없으면 기존 동작 (기기 상세 화면으로 이동)
+      onClose();
+      navigation.navigate(ROOT_ROUTES.DEVICE_DETAIL, { deviceId: device.deviceId });
+    }
   };
 
   return (
@@ -142,7 +153,7 @@ export default function DeviceListModal({ visible, onClose }: DeviceListModalPro
                   <DeviceCard
                     key={device.id}
                     device={device}
-                    onPress={() => handleDevicePress(device.deviceId)}
+                    onPress={() => handleDevicePress(device)}
                   />
                 ))}
               </ScrollView>

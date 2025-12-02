@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   ActivityIndicator,
   Alert,
@@ -16,8 +17,10 @@ import {
 } from 'react-native';
 
 import { ROOT_ROUTES } from '@/constants/routes';
+import { useDevice, usePairDevice } from '@/features/devices/hooks';
 import { useDeviceCommandsQuery, useSendDeviceCommandMutation } from '@/hooks/useDeviceCommands';
 import { RootStackParamList } from '@/navigation/types';
+import { setPairedDevice } from '@/services/storage/deviceStorage';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -25,7 +28,7 @@ import { formatRelativeTime } from '@/utils/formatRelativeTime';
 
 type DeviceControlModalNavProp = NativeStackNavigationProp<
   RootStackParamList,
-  typeof ROOT_ROUTES.DEVICE_DETAIL
+  typeof ROOT_ROUTES.DEVICE_DETAIL | typeof ROOT_ROUTES.DEVICE_PAIRING_MODAL
 >;
 
 type DeviceControlModalProps = {
@@ -46,22 +49,33 @@ export default function DeviceControlModal({
   onClose,
 }: DeviceControlModalProps) {
   const navigation = useNavigation<DeviceControlModalNavProp>();
+  const pairDeviceMutation = usePairDevice();
+  const queryClient = useQueryClient();
+
+  // 최신 기기 정보 조회 (deviceId가 있을 때만)
+  const { data: latestDevice, refetch: refetchDevice } = useDevice(deviceId || '');
 
   // 기기 정보가 없으면 에러 메시지 표시
   const hasDevice = !!deviceId;
-  const isOnline = connectionStatus === 'ONLINE';
+
+  // 최신 기기 정보를 우선적으로 사용 (props보다 우선)
+  const actualConnectionStatus = latestDevice?.connectionStatus || connectionStatus || 'OFFLINE';
+  const actualLastHeartbeat = latestDevice?.lastHeartbeat || lastHeartbeat || null;
+  const actualDeviceName = latestDevice?.deviceName || deviceName || '한니비 기기';
+  const isOnline = actualConnectionStatus === 'ONLINE';
 
   // 디버깅: deviceId 확인
   useEffect(() => {
     if (visible) {
       console.log('[DeviceControlModal] 모달 열림:', {
         deviceId,
-        deviceName,
-        connectionStatus,
+        deviceName: actualDeviceName,
+        connectionStatus: actualConnectionStatus,
         hasDevice,
+        latestDevice: latestDevice?.connectionStatus,
       });
     }
-  }, [visible, deviceId, deviceName, connectionStatus, hasDevice]);
+  }, [visible, deviceId, actualDeviceName, actualConnectionStatus, hasDevice, latestDevice]);
 
   // 명령 이력 조회 (deviceId가 있을 때만)
   const {
@@ -134,6 +148,42 @@ export default function DeviceControlModal({
   // 버튼 비활성화 조건: 전송 중이거나, 기기가 없거나, 오프라인일 때
   const isButtonDisabled = isSending || !hasDevice || !isOnline;
 
+  // 페어링 시작 핸들러
+  const handleStartPairing = async () => {
+    if (!deviceId || !actualDeviceName) {
+      Alert.alert('오류', '기기 정보가 없어요.');
+      return;
+    }
+
+    try {
+      const device = await pairDeviceMutation.mutateAsync({
+        deviceId,
+        deviceName: actualDeviceName,
+      });
+
+      // 페어링 성공 시 로컬 저장소에 저장
+      await setPairedDevice({
+        deviceId: device.deviceId,
+        deviceName: device.deviceName,
+        apiSynced: true,
+        syncedAt: new Date().toISOString(),
+      });
+
+      // 기기 정보 쿼리 무효화하여 최신 정보 다시 가져오기
+      queryClient.invalidateQueries({ queryKey: ['devices', deviceId] });
+      queryClient.invalidateQueries({ queryKey: ['devices'] });
+
+      // 기기 정보 즉시 refetch
+      await refetchDevice();
+
+      Alert.alert('완료', '기기 페어링이 완료되었어요.');
+      // 모달은 닫지 않고 최신 상태로 업데이트
+    } catch (error) {
+      console.error('[DeviceControlModal] 페어링 실패:', error);
+      Alert.alert('오류', '기기 페어링에 실패했어요.');
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -157,7 +207,7 @@ export default function DeviceControlModal({
           {/* 헤더 */}
           <View style={styles.header}>
             <Text style={styles.title}>기기 제어</Text>
-            <Text style={styles.deviceName}>{deviceName || '한니비 기기'}</Text>
+            <Text style={styles.deviceName}>{actualDeviceName}</Text>
             <Pressable style={styles.closeButton} onPress={onClose}>
               <Text style={styles.closeButtonText}>×</Text>
             </Pressable>
@@ -181,12 +231,26 @@ export default function DeviceControlModal({
                 {isOnline ? (
                   <View style={styles.connectionStatusOnline}>
                     <Text style={styles.connectionStatusText}>
-                      상태: 온라인 · 마지막 신호: {formatRelativeTime(lastHeartbeat || null)}
+                      상태: 온라인 · 마지막 신호: {formatRelativeTime(actualLastHeartbeat)}
                     </Text>
                   </View>
                 ) : (
                   <View style={styles.connectionStatusOffline}>
-                    <Text style={styles.connectionStatusWarningText}>기기가 오프라인이에요.</Text>
+                    <View style={styles.connectionStatusOfflineRow}>
+                      <Text style={styles.connectionStatusWarningText}>기기가 오프라인이에요.</Text>
+                      <Pressable
+                        style={[
+                          styles.pairingButton,
+                          pairDeviceMutation.isPending && styles.pairingButtonDisabled,
+                        ]}
+                        onPress={handleStartPairing}
+                        disabled={pairDeviceMutation.isPending}
+                      >
+                        <Text style={styles.pairingButtonText}>
+                          {pairDeviceMutation.isPending ? '페어링 중...' : '페어링 시작'}
+                        </Text>
+                      </Pressable>
+                    </View>
                     <Text style={styles.connectionStatusSubText}>
                       전원과 네트워크를 확인한 뒤 다시 시도해 주세요.
                     </Text>
@@ -358,6 +422,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: spacing.md,
   },
+  connectionStatusOfflineRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.md,
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
+  },
   connectionStatusOnline: {
     backgroundColor: colors.success + '15',
     borderRadius: 8,
@@ -458,6 +529,30 @@ const styles = StyleSheet.create({
     color: colors.warning,
     fontSize: typography.sizes.xs,
     marginBottom: spacing.sm,
+  },
+  pairingButton: {
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 6,
+    elevation: 4,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    shadowColor: colors.primary,
+    shadowOffset: {
+      height: 2,
+      width: 0,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+  },
+  pairingButtonDisabled: {
+    opacity: 0.5,
+  },
+  pairingButtonText: {
+    color: colors.white,
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.bold,
   },
   row: {
     flexDirection: 'row',

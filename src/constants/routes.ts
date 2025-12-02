@@ -26,6 +26,7 @@ export const ROOT_ROUTES = {
   CAMERA_PREVIEW: 'CameraPreview',
   PROFILE: 'Profile',
   DEVICE_PAIRING_MODAL: 'DevicePairingModal',
+  DEVICE_DETAIL: 'DeviceDetail',
 } as const;
 
 // Onboarding Navigator Routes (온보딩 플로우 - 현재는 RootNavigator에 통합됨)

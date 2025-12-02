@@ -26,6 +26,7 @@ import { ProgressBar } from '@/components/home/ProgressBar';
 import { useDevices, usePairDevice } from '@/features/devices/hooks';
 import { useMe, useUpdateProfile } from '@/features/user/hooks';
 import { HomeStackParamList } from '@/navigation/types';
+import { getPairedDevice, setPairedDevice } from '@/services/storage/deviceStorage';
 import { useAppState } from '@/state/useAppState';
 import { useLoadingStore } from '@/store/loadingStore';
 import { colors } from '@/theme/Colors';
@@ -49,6 +50,10 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(characterName);
   const [isPairingModalVisible, setIsPairingModalVisible] = useState(false);
+  const [localPairedDevice, setLocalPairedDevice] = useState<{
+    deviceId: string;
+    deviceName: string;
+  } | null>(null);
   const textInputRef = useRef<TextInput>(null);
 
   // 말풍선 애니메이션 (캐릭터와 동일한 둥실둥실 효과)
@@ -70,9 +75,30 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me?.nickname]); // characterName 의존성 제외 (무한 루프 방지)
 
-  // 페어링 상태 확인: 서버 기기 목록을 우선 확인
-  // 서버에 기기가 있으면 페어링됨, 서버에 기기가 없으면 페어링 안됨 (로컬 저장소는 무시)
-  const isPaired = devices && devices.length > 0;
+  // 로컬 페어링 정보 로드
+  useEffect(() => {
+    const loadLocalDevice = async () => {
+      const localDevice = await getPairedDevice();
+      setLocalPairedDevice(localDevice);
+    };
+    loadLocalDevice();
+  }, []);
+
+  // 페어링 모달이 닫힐 때 로컬 페어링 정보 다시 로드
+  useEffect(() => {
+    if (!isPairingModalVisible) {
+      const loadLocalDevice = async () => {
+        const localDevice = await getPairedDevice();
+        setLocalPairedDevice(localDevice);
+      };
+      loadLocalDevice();
+    }
+  }, [isPairingModalVisible]);
+
+  // 페어링 상태 확인: 서버와 로컬 둘 다 확인
+  // 서버에 기기가 있고 로컬에도 페어링 정보가 있어야만 페어링됨으로 간주
+  // 최초 로그인 시 로컬에 페어링 정보가 없으면 서버에 기기가 있어도 페어링 안됨으로 표시
+  const isPaired = devices && devices.length > 0 && localPairedDevice !== null;
 
   // React Query의 isLoading을 전역 로딩과 연동
   useEffect(() => {
@@ -194,10 +220,25 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     try {
       // TODO: 실제 기기 ID와 이름을 가져오는 로직 필요
       // 임시로 테스트용 데이터 사용
-      await pairDevice.mutateAsync({
+      const device = await pairDevice.mutateAsync({
         deviceId: 'DEVICE_001',
         deviceName: '한니비 기기',
       });
+
+      // 페어링 성공 시 로컬 저장소에 저장
+      await setPairedDevice({
+        deviceId: device.deviceId,
+        deviceName: device.deviceName,
+        apiSynced: true,
+        syncedAt: new Date().toISOString(),
+      });
+
+      // 로컬 상태 업데이트
+      setLocalPairedDevice({
+        deviceId: device.deviceId,
+        deviceName: device.deviceName,
+      });
+
       setIsPairingModalVisible(false);
       // 성공 시 기기 목록이 자동으로 갱신됨
     } catch (error) {

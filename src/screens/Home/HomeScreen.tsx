@@ -19,11 +19,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EditHanibiIcon from '@/assets/images/edit-hanibi.svg';
 import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
 import ModalPopup from '@/components/common/ModalPopup';
+import DeviceControlModal from '@/components/DeviceControlModal';
+import DeviceListModal from '@/components/DeviceListModal';
 import { DecorativeBackground } from '@/components/home/DecorativeBackground';
 import { HomeMessageCard } from '@/components/home/HomeMessageCard';
 import { NameCard } from '@/components/home/NameCard';
 import { ProgressBar } from '@/components/home/ProgressBar';
-import { useDevices, usePairDevice } from '@/features/devices/hooks';
+import { useDevice, useDevices, usePairDevice } from '@/features/devices/hooks';
 import { useMe, useUpdateProfile } from '@/features/user/hooks';
 import { HomeStackParamList } from '@/navigation/types';
 import { getPairedDevice, setPairedDevice } from '@/services/storage/deviceStorage';
@@ -43,13 +45,25 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const characterName = useAppState((s) => s.characterName);
   const setCharacterName = useAppState((s) => s.setCharacterName);
   const { data: me, isLoading } = useMe();
-  const { data: devices } = useDevices();
+  const { data: devices, refetch: refetchDevices } = useDevices();
   const updateProfile = useUpdateProfile();
   const pairDevice = usePairDevice();
+
+  // 첫 번째 기기 정보 조회 (연결 상태, 마지막 신호 등)
+  const firstDeviceId = devices && devices.length > 0 ? devices[0].deviceId : null;
+  const { data: deviceDetail } = useDevice(firstDeviceId || '');
   const { startLoading, stopLoading } = useLoadingStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(characterName);
   const [isPairingModalVisible, setIsPairingModalVisible] = useState(false);
+  const [isDeviceListModalVisible, setIsDeviceListModalVisible] = useState(false);
+  const [isDeviceControlModalVisible, setIsDeviceControlModalVisible] = useState(false);
+  const [selectedDeviceForModal, setSelectedDeviceForModal] = useState<{
+    deviceId: string;
+    deviceName: string;
+    connectionStatus?: string;
+    lastHeartbeat?: string | null;
+  } | null>(null);
   const [localPairedDevice, setLocalPairedDevice] = useState<{
     deviceId: string;
     deviceName: string;
@@ -215,6 +229,42 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     setIsPairingModalVisible(false);
   };
 
+  // 기기 목록 모달 열기 (캐릭터 클릭 시)
+  const handleOpenDeviceListModal = async () => {
+    // 기기 목록을 먼저 최신화
+    try {
+      await refetchDevices();
+      setIsDeviceListModalVisible(true);
+    } catch (error) {
+      console.error('[HomeScreen] 기기 목록 불러오기 실패:', error);
+      // 에러가 발생해도 기기 목록 모달 열기 시도
+      setIsDeviceListModalVisible(true);
+    }
+  };
+
+  // 기기 목록 모달 닫기
+  const handleCloseDeviceListModal = () => {
+    setIsDeviceListModalVisible(false);
+  };
+
+  // 기기 목록에서 기기 선택 시 기기 제어 모달 열기
+  const handleDeviceSelect = (device: {
+    deviceId: string;
+    deviceName: string;
+    connectionStatus?: string;
+    lastHeartbeat?: string | null;
+  }) => {
+    setSelectedDeviceForModal(device);
+    setIsDeviceListModalVisible(false);
+    setIsDeviceControlModalVisible(true);
+  };
+
+  // 기기 제어 모달 닫기
+  const handleCloseDeviceControlModal = () => {
+    setIsDeviceControlModalVisible(false);
+    setSelectedDeviceForModal(null);
+  };
+
   // 페어링 확인
   const handleConfirmPairing = async () => {
     try {
@@ -290,13 +340,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
         {/* 중앙 캐릭터 */}
         <View style={styles.characterContainer}>
-          {!isPaired ? (
-            <Pressable onPress={handleOpenPairingModal} style={styles.characterPressable}>
-              <HanibiCharacter2D level="medium" animated={true} size={CHARACTER_SIZE} />
-            </Pressable>
-          ) : (
+          <Pressable onPress={handleOpenDeviceListModal} style={styles.characterPressable}>
             <HanibiCharacter2D level="medium" animated={true} size={CHARACTER_SIZE} />
-          )}
+          </Pressable>
           {/* 페어링 안됨 표시 말풍선 - 캐릭터 위에 배치 */}
           {!isPaired && (
             <Pressable onPress={handleOpenPairingModal}>
@@ -375,6 +421,29 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         onConfirm={handleConfirmPairing}
         onCancel={handleClosePairingModal}
       />
+
+      {/* 기기 목록 모달 */}
+      <DeviceListModal
+        visible={isDeviceListModalVisible}
+        onClose={handleCloseDeviceListModal}
+        onDeviceSelect={handleDeviceSelect}
+      />
+
+      {/* 기기 제어 모달 */}
+      {isDeviceControlModalVisible && selectedDeviceForModal && (
+        <DeviceControlModal
+          visible={isDeviceControlModalVisible}
+          deviceId={selectedDeviceForModal.deviceId}
+          deviceName={selectedDeviceForModal.deviceName}
+          connectionStatus={
+            deviceDetail?.connectionStatus || selectedDeviceForModal.connectionStatus || 'OFFLINE'
+          }
+          lastHeartbeat={
+            deviceDetail?.lastHeartbeat || selectedDeviceForModal.lastHeartbeat || null
+          }
+          onClose={handleCloseDeviceControlModal}
+        />
+      )}
     </LinearGradient>
   );
 }

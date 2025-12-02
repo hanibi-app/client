@@ -125,6 +125,12 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   // 서버에서 기기 목록을 불러오는 동안에도 로컬 정보를 사용하여 페어링 상태 유지
   const isPaired = localPairedDevice !== null;
 
+  // 페어링된 기기의 연결 상태 확인
+  const pairedDeviceStatus = localPairedDevice
+    ? devices?.find((d) => d.deviceId === localPairedDevice.deviceId)?.connectionStatus
+    : null;
+  const isPairedDeviceOnline = pairedDeviceStatus === 'ONLINE';
+
   // React Query의 isLoading을 전역 로딩과 연동
   useEffect(() => {
     if (isLoading) {
@@ -346,17 +352,31 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           paddingTop={messageTopPadding}
           icon={
             isPaired ? (
-              <MaterialIcons name="local-fire-department" size={24} color="#FF6B35" />
+              isPairedDeviceOnline ? (
+                <MaterialIcons name="local-fire-department" size={24} color="#FF6B35" />
+              ) : (
+                <MaterialIcons name="bluetooth-disabled" size={24} color="#ED5B5B" />
+              )
             ) : (
               <MaterialIcons name="bluetooth-disabled" size={24} color="#ED5B5B" />
             )
           }
-          title={isPaired ? '너무 더워서 힘들어요 😩' : '기기가 연결되지 않았어요'}
+          title={
+            isPaired
+              ? isPairedDeviceOnline
+                ? '너무 더워서 힘들어요 😩'
+                : '기기가 오프라인이에요'
+              : '기기가 연결되지 않았어요'
+          }
           description={
             isPaired ? (
-              <Text>
-                <Text style={styles.temperatureHighlight}>온도</Text> 한 번만 확인해 주세요!
-              </Text>
+              isPairedDeviceOnline ? (
+                <Text>
+                  <Text style={styles.temperatureHighlight}>온도</Text> 한 번만 확인해 주세요!
+                </Text>
+              ) : (
+                <Text>전원과 네트워크를 확인한 뒤{'\n'}다시 시도해 주세요</Text>
+              )
             ) : (
               <Text>한니비 기기를 페어링하면{'\n'}실시간으로 건강 상태를 확인할 수 있어요</Text>
             )

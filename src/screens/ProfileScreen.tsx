@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { NavigationProp, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppHeader from '@/components/common/AppHeader';
@@ -11,6 +11,7 @@ import ToastMessage from '@/components/common/ToastMessage';
 import { useMe, useUpdateProfile } from '@/features/user/hooks';
 import { RootStackParamList } from '@/navigation/types';
 import { useAppState } from '@/state/useAppState';
+import { useLoadingStore } from '@/store/loadingStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -21,6 +22,7 @@ export default function ProfileScreen() {
   const { data: me, isLoading, isError, refetch } = useMe();
   const updateProfile = useUpdateProfile();
   const setCharacterName = useAppState((s) => s.setCharacterName);
+  const { startLoading, stopLoading } = useLoadingStore();
   const [nickname, setNickname] = useState('');
   const [nicknameError, setNicknameError] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -105,7 +107,16 @@ export default function ProfileScreen() {
     nickname.trim().length === 0 ||
     nickname.trim().length > 20;
 
-  // 로딩 상태
+  // React Query의 isLoading을 전역 로딩과 연동
+  useEffect(() => {
+    if (isLoading) {
+      startLoading('프로필 정보를 불러오는 중...');
+    } else {
+      stopLoading();
+    }
+  }, [isLoading, startLoading, stopLoading]);
+
+  // 로딩 상태 (전역 로딩이 표시되므로 로컬 로딩 UI 제거)
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -114,10 +125,6 @@ export default function ProfileScreen() {
             title="프로필 및 계정"
             onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
           />
-        </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>프로필 정보를 불러오는 중...</Text>
         </View>
       </View>
     );
@@ -220,16 +227,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderBottomColor: colors.border,
     borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-  },
-  loadingText: {
-    color: colors.mutedText,
-    fontSize: typography.sizes.md,
-    marginTop: spacing.md,
   },
   readOnlyField: {
     backgroundColor: colors.background,

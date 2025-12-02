@@ -25,6 +25,7 @@ export const ROOT_ROUTES = {
   CAMERA_CAPTURE: 'CameraCapture',
   CAMERA_PREVIEW: 'CameraPreview',
   PROFILE: 'Profile',
+  DEVICE_PAIRING_MODAL: 'DevicePairingModal',
 } as const;
 
 // Onboarding Navigator Routes (온보딩 플로우 - 현재는 RootNavigator에 통합됨)
@@ -47,6 +48,7 @@ export const HOME_STACK_ROUTES = {
   HOME: 'Home',
   CHARACTER_CUSTOMIZE: 'CharacterCustomize',
   CHARACTER_NAME_EDIT: 'CharacterNameEdit',
+  PAIR_DEVICE: 'PairDevice',
 } as const;
 
 // Dashboard Stack Routes (대시보드 스택 네비게이터)

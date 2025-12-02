@@ -19,6 +19,7 @@ import AppButton from '@/components/common/AppButton';
 import { CameraStatusModal } from '@/components/dashboard/CameraStatusModal';
 import { useCameraStatus } from '@/hooks/useCameraStatus';
 import { DashboardStackParamList } from '@/navigation/types';
+import { useLoadingStore } from '@/store/loadingStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -63,9 +64,9 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isCameraModalVisible, setCameraModalVisible] = useState(false);
   const { cameraStatus, isChecking, error: cameraError, refresh } = useCameraStatus();
+  const { withLoading } = useLoadingStore();
 
   // 상태 바 너비 계산 (패딩 제외)
   const STATUS_BAR_WIDTH = SCREEN_WIDTH - spacing.xl * 2;
@@ -86,8 +87,10 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
     // - 관련 이슈: #대시보드API
     // fetchDashboardData().then(setDashboardData).finally(() => setIsLoading(false));
 
-    // 임시 데이터
-    setTimeout(() => {
+    // 전역 로딩과 함께 데이터 불러오기
+    withLoading(async () => {
+      // 임시 데이터
+      await new Promise((resolve) => setTimeout(resolve, 500));
       setDashboardData({
         healthScore: {
           total: 36,
@@ -100,9 +103,8 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
           voc: 120,
         },
       });
-      setIsLoading(false);
-    }, 500);
-  }, []);
+    }, '대시보드 데이터를 불러오는 중...');
+  }, [withLoading]);
 
   // 화살표 애니메이션 효과
   useEffect(() => {
@@ -202,12 +204,9 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
     return 75 + ((score - 75) / 25) * 25; // 위험 구간
   };
 
-  if (isLoading || !dashboardData) {
-    return (
-      <View style={styles.container}>
-        <Text>로딩 중...</Text>
-      </View>
-    );
+  if (!dashboardData) {
+    // 전역 로딩이 표시되므로 빈 화면 반환
+    return <View style={styles.container} />;
   }
 
   const { healthScore, metrics } = dashboardData;

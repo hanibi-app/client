@@ -4,6 +4,8 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
+  Animated,
+  Easing,
   Pressable,
   SafeAreaView,
   StyleSheet,
@@ -16,13 +18,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import EditHanibiIcon from '@/assets/images/edit-hanibi.svg';
 import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
+import ModalPopup from '@/components/common/ModalPopup';
 import { DecorativeBackground } from '@/components/home/DecorativeBackground';
 import { HomeMessageCard } from '@/components/home/HomeMessageCard';
 import { NameCard } from '@/components/home/NameCard';
 import { ProgressBar } from '@/components/home/ProgressBar';
+import { useDevices, usePairDevice } from '@/features/devices/hooks';
 import { useMe, useUpdateProfile } from '@/features/user/hooks';
 import { HomeStackParamList } from '@/navigation/types';
+import { getPairedDevice, setPairedDevice } from '@/services/storage/deviceStorage';
 import { useAppState } from '@/state/useAppState';
+import { useLoadingStore } from '@/store/loadingStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -36,11 +42,23 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
   const characterName = useAppState((s) => s.characterName);
   const setCharacterName = useAppState((s) => s.setCharacterName);
-  const { data: me } = useMe();
+  const { data: me, isLoading } = useMe();
+  const { data: devices } = useDevices();
   const updateProfile = useUpdateProfile();
+  const pairDevice = usePairDevice();
+  const { startLoading, stopLoading } = useLoadingStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(characterName);
+  const [isPairingModalVisible, setIsPairingModalVisible] = useState(false);
+  const [localPairedDevice, setLocalPairedDevice] = useState<{
+    deviceId: string;
+    deviceName: string;
+  } | null>(null);
   const textInputRef = useRef<TextInput>(null);
+
+  // 말풍선 애니메이션 (캐릭터와 동일한 둥실둥실 효과)
+  const speechBubbleScaleAnim = useRef(new Animated.Value(1)).current;
+  const speechBubbleTranslateYAnim = useRef(new Animated.Value(0)).current;
 
   // characterName이 변경되면 editValue도 업데이트 (편집 중이 아닐 때만)
   useEffect(() => {
@@ -54,7 +72,94 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     if (me?.nickname && me.nickname !== characterName) {
       setCharacterName(me.nickname);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me?.nickname]); // characterName 의존성 제외 (무한 루프 방지)
+
+  // 로컬 페어링 정보 로드
+  useEffect(() => {
+    const loadLocalDevice = async () => {
+      const localDevice = await getPairedDevice();
+      setLocalPairedDevice(localDevice);
+    };
+    loadLocalDevice();
+  }, []);
+
+  // 페어링 모달이 닫힐 때 로컬 페어링 정보 다시 로드
+  useEffect(() => {
+    if (!isPairingModalVisible) {
+      const loadLocalDevice = async () => {
+        const localDevice = await getPairedDevice();
+        setLocalPairedDevice(localDevice);
+      };
+      loadLocalDevice();
+    }
+  }, [isPairingModalVisible]);
+
+  // 페어링 상태 확인: 서버와 로컬 둘 다 확인
+  // 서버에 기기가 있고 로컬에도 페어링 정보가 있어야만 페어링됨으로 간주
+  // 최초 로그인 시 로컬에 페어링 정보가 없으면 서버에 기기가 있어도 페어링 안됨으로 표시
+  const isPaired = devices && devices.length > 0 && localPairedDevice !== null;
+
+  // React Query의 isLoading을 전역 로딩과 연동
+  useEffect(() => {
+    if (isLoading) {
+      startLoading('홈 데이터를 불러오는 중...');
+    } else {
+      stopLoading();
+    }
+  }, [isLoading, startLoading, stopLoading]);
+
+  // 말풍선 둥실둥실 애니메이션 (캐릭터와 동일하게 복사)
+  useEffect(() => {
+    if (!isPaired) {
+      // 호흡 효과 (캐릭터와 동일)
+      const scaleAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(speechBubbleScaleAnim, {
+            toValue: 1.03,
+            duration: 2000,
+            useNativeDriver: true,
+            easing: Easing.inOut(Easing.ease),
+          }),
+          Animated.timing(speechBubbleScaleAnim, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+            easing: Easing.inOut(Easing.ease),
+          }),
+        ]),
+      );
+
+      // 둥둥 떠다니는 효과 (캐릭터와 동일)
+      const translateYAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(speechBubbleTranslateYAnim, {
+            toValue: 1,
+            duration: 2500,
+            useNativeDriver: true,
+            easing: Easing.inOut(Easing.quad),
+          }),
+          Animated.timing(speechBubbleTranslateYAnim, {
+            toValue: 0,
+            duration: 2500,
+            useNativeDriver: true,
+            easing: Easing.inOut(Easing.quad),
+          }),
+        ]),
+      );
+
+      // 캐릭터와 동일하게 즉시 시작
+      scaleAnimation.start();
+      translateYAnimation.start();
+
+      return () => {
+        scaleAnimation.stop();
+        translateYAnimation.stop();
+        speechBubbleScaleAnim.stopAnimation();
+        speechBubbleTranslateYAnim.stopAnimation();
+      };
+    }
+  }, [isPaired, speechBubbleScaleAnim, speechBubbleTranslateYAnim]);
 
   // 진행률 계산 (30% 남음 = 70% 진행)
   const progress = 70;
@@ -100,6 +205,48 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     setIsEditing(false);
   };
 
+  // 페어링 모달 열기
+  const handleOpenPairingModal = () => {
+    setIsPairingModalVisible(true);
+  };
+
+  // 페어링 모달 닫기
+  const handleClosePairingModal = () => {
+    setIsPairingModalVisible(false);
+  };
+
+  // 페어링 확인
+  const handleConfirmPairing = async () => {
+    try {
+      // TODO: 실제 기기 ID와 이름을 가져오는 로직 필요
+      // 임시로 테스트용 데이터 사용
+      const device = await pairDevice.mutateAsync({
+        deviceId: 'DEVICE_001',
+        deviceName: '한니비 기기',
+      });
+
+      // 페어링 성공 시 로컬 저장소에 저장
+      await setPairedDevice({
+        deviceId: device.deviceId,
+        deviceName: device.deviceName,
+        apiSynced: true,
+        syncedAt: new Date().toISOString(),
+      });
+
+      // 로컬 상태 업데이트
+      setLocalPairedDevice({
+        deviceId: device.deviceId,
+        deviceName: device.deviceName,
+      });
+
+      setIsPairingModalVisible(false);
+      // 성공 시 기기 목록이 자동으로 갱신됨
+    } catch (error) {
+      console.error('[HomeScreen] 페어링 실패:', error);
+      // 에러 처리 (나중에 토스트 메시지 등 추가 가능)
+    }
+  };
+
   // 캐릭터 크기
   const CHARACTER_SIZE = Math.floor(SCREEN_WIDTH * 0.65);
   const NAME_CARD_WIDTH = Math.min(Math.max(SCREEN_WIDTH * 0.6, 220), 320);
@@ -122,18 +269,62 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
         <HomeMessageCard
           paddingTop={messageTopPadding}
-          icon={<MaterialIcons name="local-fire-department" size={24} color="#FF6B35" />}
-          title="너무 더워서 힘들어요 😩"
+          icon={
+            isPaired ? (
+              <MaterialIcons name="local-fire-department" size={24} color="#FF6B35" />
+            ) : (
+              <MaterialIcons name="bluetooth-disabled" size={24} color="#ED5B5B" />
+            )
+          }
+          title={isPaired ? '너무 더워서 힘들어요 😩' : '기기가 연결되지 않았어요'}
           description={
-            <Text>
-              <Text style={styles.temperatureHighlight}>온도</Text> 한 번만 확인해 주세요!
-            </Text>
+            isPaired ? (
+              <Text>
+                <Text style={styles.temperatureHighlight}>온도</Text> 한 번만 확인해 주세요!
+              </Text>
+            ) : (
+              <Text>한니비 기기를 페어링하면{'\n'}실시간으로 건강 상태를 확인할 수 있어요</Text>
+            )
           }
         />
 
         {/* 중앙 캐릭터 */}
         <View style={styles.characterContainer}>
-          <HanibiCharacter2D level="medium" animated={true} size={CHARACTER_SIZE} />
+          {!isPaired ? (
+            <Pressable onPress={handleOpenPairingModal} style={styles.characterPressable}>
+              <HanibiCharacter2D level="medium" animated={true} size={CHARACTER_SIZE} />
+            </Pressable>
+          ) : (
+            <HanibiCharacter2D level="medium" animated={true} size={CHARACTER_SIZE} />
+          )}
+          {/* 페어링 안됨 표시 말풍선 - 캐릭터 위에 배치 */}
+          {!isPaired && (
+            <Pressable onPress={handleOpenPairingModal}>
+              <Animated.View
+                style={[
+                  styles.speechBubbleContainer,
+                  {
+                    top: -CHARACTER_SIZE / 2 - 140,
+                    transform: [
+                      { scale: speechBubbleScaleAnim },
+                      {
+                        translateY: speechBubbleTranslateYAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [-6, 6],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              >
+                <View style={styles.speechBubble}>
+                  <View style={styles.speechBubbleBody}>
+                    <MaterialIcons name="close" size={20} color={colors.danger} />
+                  </View>
+                </View>
+              </Animated.View>
+            </Pressable>
+          )}
         </View>
 
         {/* 캐릭터 아래 버튼 및 진행바 */}
@@ -175,6 +366,15 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           />
         </View>
       </SafeAreaView>
+
+      {/* 페어링 모달 */}
+      <ModalPopup
+        visible={isPairingModalVisible}
+        title="페어링하시겠습니까?"
+        description="한니비 기기를 페어링하면 실시간으로 건강 상태를 확인할 수 있어요."
+        onConfirm={handleConfirmPairing}
+        onCancel={handleClosePairingModal}
+      />
     </LinearGradient>
   );
 }
@@ -216,6 +416,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
     paddingBottom: spacing.lg,
     paddingTop: 70,
+    position: 'relative',
+  },
+  characterPressable: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   container: {
     flex: 1,
@@ -236,6 +441,34 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     zIndex: 1,
+  },
+  speechBubble: {
+    alignItems: 'center',
+    position: 'relative',
+  },
+  speechBubbleBody: {
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderColor: colors.danger,
+    borderRadius: 12,
+    borderWidth: 3,
+    elevation: 4,
+    height: 48,
+    justifyContent: 'center',
+    shadowColor: colors.danger,
+    shadowOffset: {
+      height: 2,
+      width: 0,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    width: 48,
+  },
+  speechBubbleContainer: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    position: 'absolute',
+    zIndex: 10,
   },
   temperatureHighlight: {
     color: colors.danger,

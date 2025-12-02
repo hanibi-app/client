@@ -6,6 +6,7 @@ import { HOME_STACK_ROUTES } from '@/constants/routes';
 import CharacterCustomizeScreen from '@/screens/Home/CharacterCustomizeScreen';
 import CharacterNameEditScreen from '@/screens/Home/CharacterNameEditScreen';
 import HomeScreen from '@/screens/Home/HomeScreen';
+import PairDeviceScreen from '@/screens/Home/PairDeviceScreen';
 
 import { HomeStackParamList } from './types';
 
@@ -29,6 +30,13 @@ export default function HomeStack() {
       <Stack.Screen
         name={HOME_STACK_ROUTES.CHARACTER_NAME_EDIT}
         component={CharacterNameEditScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name={HOME_STACK_ROUTES.PAIR_DEVICE}
+        component={PairDeviceScreen}
         options={{
           headerShown: false,
         }}

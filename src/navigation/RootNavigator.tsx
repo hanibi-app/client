@@ -4,6 +4,7 @@ import { CommonActions, NavigationContainerRef } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { ROOT_ROUTES } from '@/constants/routes';
+import DevicePairingModal from '@/screens/DevicePairingModal';
 import EmailLoginScreen from '@/screens/EmailLoginScreen';
 import CharacterCustomizeScreen from '@/screens/Home/CharacterCustomizeScreen';
 import LoginScreen from '@/screens/LoginScreen';
@@ -120,6 +121,15 @@ export default function RootNavigator({ navigationRef }: RootNavigatorProps) {
       <Stack.Screen name={ROOT_ROUTES.MAIN_TABS} component={MainTabs} />
       {/* 프로필 화면 */}
       <Stack.Screen name={ROOT_ROUTES.PROFILE} component={ProfileScreen} />
+      {/* 기기 페어링 모달 */}
+      <Stack.Screen
+        name={ROOT_ROUTES.DEVICE_PAIRING_MODAL}
+        component={DevicePairingModal}
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+        }}
+      />
       {/* 카메라 모달 그룹 (나중에 구현) */}
     </Stack.Navigator>
   );

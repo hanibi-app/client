@@ -25,6 +25,7 @@ export type RootStackParamList = {
   [ROOT_ROUTES.CAMERA_CAPTURE]: undefined;
   [ROOT_ROUTES.CAMERA_PREVIEW]: { uri: string };
   [ROOT_ROUTES.PROFILE]: undefined;
+  [ROOT_ROUTES.DEVICE_PAIRING_MODAL]: undefined;
 };
 
 // Main Tabs ParamList (하단 탭 네비게이터)
@@ -39,6 +40,7 @@ export type HomeStackParamList = {
   [HOME_STACK_ROUTES.HOME]: undefined;
   [HOME_STACK_ROUTES.CHARACTER_CUSTOMIZE]: undefined;
   [HOME_STACK_ROUTES.CHARACTER_NAME_EDIT]: undefined;
+  [HOME_STACK_ROUTES.PAIR_DEVICE]: undefined;
 };
 
 // Dashboard Stack ParamList (대시보드 스택 네비게이터)

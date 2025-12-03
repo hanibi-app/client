@@ -16,14 +16,16 @@ import Svg, { Defs, Rect, Stop, LinearGradient as SvgLinearGradient } from 'reac
 
 import ThreeArrowIcon from '@/assets/images/three-arrow.svg';
 import AppButton from '@/components/common/AppButton';
+import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { CameraStatusModal } from '@/components/dashboard/CameraStatusModal';
 import { useSensorLatest } from '@/features/dashboard/hooks/useSensorLatest';
 import {
+  SensorStatus,
   calculateHealthScore,
   getGasStatus,
   getHumidityStatus,
   getTemperatureStatus,
-  SensorStatus,
 } from '@/features/dashboard/utils/healthScore';
 import { useCameraStatus } from '@/hooks/useCameraStatus';
 import { DashboardStackParamList } from '@/navigation/types';
@@ -196,8 +198,8 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
           <Text style={styles.headerTitle}>대시보드</Text>
           <View style={styles.headerRight} />
         </View>
-        <View style={styles.content}>
-          <Text style={styles.loadingText}>센서 데이터를 불러오는 중...</Text>
+        <View style={[styles.content, styles.loadingContainer]}>
+          <LoadingSpinner message="센서 데이터를 불러오는 중..." />
         </View>
       </View>
     );
@@ -213,7 +215,10 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
           <Text style={styles.headerTitle}>대시보드</Text>
           <View style={styles.headerRight} />
         </View>
-        <View style={styles.content}>
+        <View style={[styles.content, styles.errorContainer]}>
+          <View style={styles.errorCharacterContainer}>
+            <HanibiCharacter2D size={120} emotion="sad" animated={true} />
+          </View>
           <Text style={styles.errorText}>센서 데이터를 불러오지 못했어요. 다시 시도해 주세요.</Text>
           <Pressable onPress={() => refetchSensor()} style={styles.retryButton}>
             <Text style={styles.retryButtonText}>다시 시도</Text>
@@ -500,10 +505,17 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     width: '100%',
   },
+  errorCharacterContainer: {
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  errorContainer: {
+    justifyContent: 'center',
+  },
   errorText: {
     color: colors.danger,
     fontSize: typography.sizes.md,
-    marginTop: spacing.xl,
+    marginTop: spacing.xs,
     textAlign: 'center',
   },
   header: {
@@ -555,11 +567,8 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.bold,
     textAlign: 'center',
   },
-  loadingText: {
-    color: colors.mutedText,
-    fontSize: typography.sizes.md,
-    marginTop: spacing.xl,
-    textAlign: 'center',
+  loadingContainer: {
+    justifyContent: 'center',
   },
   metricCard: {
     alignItems: 'center',

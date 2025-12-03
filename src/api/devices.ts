@@ -1,5 +1,3 @@
-import { AxiosError } from 'axios';
-
 import { ApiResponse } from './authTypes';
 import { apiClient } from './httpClient';
 

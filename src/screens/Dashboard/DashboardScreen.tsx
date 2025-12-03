@@ -16,57 +16,57 @@ import Svg, { Defs, Rect, Stop, LinearGradient as SvgLinearGradient } from 'reac
 
 import ThreeArrowIcon from '@/assets/images/three-arrow.svg';
 import AppButton from '@/components/common/AppButton';
+import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { CameraStatusModal } from '@/components/dashboard/CameraStatusModal';
+import { useSensorLatest } from '@/features/dashboard/hooks/useSensorLatest';
+import {
+  SensorStatus,
+  calculateHealthScore,
+  getGasStatus,
+  getHumidityStatus,
+  getTemperatureStatus,
+} from '@/features/dashboard/utils/healthScore';
 import { useCameraStatus } from '@/hooks/useCameraStatus';
 import { DashboardStackParamList } from '@/navigation/types';
-import { useLoadingStore } from '@/store/loadingStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 
 type DashboardScreenProps = NativeStackScreenProps<DashboardStackParamList, 'Dashboard'>;
 
-// API 응답 타입 정의
-type HealthMetrics = {
-  temperature: number; // 체온 (°C)
-  humidity: number; // 수분컨디션 (습도 %)
-  weight: number; // 급식량 (무게 kg)
-  voc: number; // 향기지수 (VOC ppb)
-};
-
-type HealthScore = {
-  total: number; // 총 점수 (0-100)
-  status: 'safe' | 'caution' | 'warning' | 'danger'; // 상태
-};
-
-type DashboardData = {
-  healthScore: HealthScore;
-  metrics: HealthMetrics;
-};
+// TODO: deviceId는 나중에 스토어/설정에서 가져오도록 변경 필요
+const DEVICE_ID = 'HANIBI-ESP32-001';
 
 // 건강 점수 상태별 색상
 const STATUS_COLORS = {
-  safe: '#40EA87', // 초록
-  caution: '#FFD700', // 노랑
-  warning: '#FF7017', // 주황
-  danger: '#ED5B5B', // 빨강
+  SAFE: '#40EA87', // 초록
+  CAUTION: '#FFD700', // 노랑
+  WARNING: '#FF7017', // 주황
+  CRITICAL: '#ED5B5B', // 빨강
 };
 
 // 건강 점수 상태별 한글
 const STATUS_LABELS = {
-  safe: '안전',
-  caution: '주의',
-  warning: '경고',
-  danger: '위험',
+  SAFE: '안전',
+  CAUTION: '주의',
+  WARNING: '경고',
+  CRITICAL: '위험',
 };
 
 export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isCameraModalVisible, setCameraModalVisible] = useState(false);
   const { cameraStatus, isChecking, error: cameraError, refresh } = useCameraStatus();
-  const { withLoading } = useLoadingStore();
+
+  // 센서 데이터 조회 (5초마다 자동 폴링)
+  const {
+    data: sensorData,
+    isLoading: isSensorLoading,
+    isError: isSensorError,
+    refetch: refetchSensor,
+  } = useSensorLatest(DEVICE_ID);
 
   // 상태 바 너비 계산 (패딩 제외)
   const STATUS_BAR_WIDTH = SCREEN_WIDTH - spacing.xl * 2;
@@ -77,34 +77,6 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
 
   // 리포트보기 버튼 펄스 애니메이션
   const buttonPulseAnim = useRef(new Animated.Value(1)).current;
-
-  // API 호출 (나중에 실제 API로 교체)
-  useEffect(() => {
-    // TODO: 실제 API 호출로 교체
-    // - GET /api/dashboard 엔드포인트 호출
-    // - 응답 형식: { healthScore: {...}, metrics: {...}, alerts: [...] }
-    // - 로딩 상태 및 에러 처리 필요
-    // - 관련 이슈: #대시보드API
-    // fetchDashboardData().then(setDashboardData).finally(() => setIsLoading(false));
-
-    // 전역 로딩과 함께 데이터 불러오기
-    withLoading(async () => {
-      // 임시 데이터
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setDashboardData({
-        healthScore: {
-          total: 36,
-          status: 'caution',
-        },
-        metrics: {
-          temperature: 32,
-          humidity: 58,
-          weight: 1.2,
-          voc: 120,
-        },
-      });
-    }, '대시보드 데이터를 불러오는 중...');
-  }, [withLoading]);
 
   // 화살표 애니메이션 효과
   useEffect(() => {
@@ -186,32 +158,92 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
     }
   }, [isCameraModalVisible, refresh]);
 
-  const getMetricStatus = (metric: keyof HealthMetrics, value: number): 'good' | 'bad' => {
-    // 임시 로직 - 실제로는 각 메트릭의 임계값에 따라 결정
-    if (metric === 'temperature') return value >= 18 && value <= 30 ? 'good' : 'bad';
-    if (metric === 'humidity') return value >= 30 && value <= 60 ? 'good' : 'bad';
-    if (metric === 'weight') return value > 0 ? 'good' : 'bad';
-    if (metric === 'voc') return value < 200 ? 'good' : 'bad';
-    return 'good';
+  /**
+   * 센서 상태에 따른 색상을 반환합니다.
+   */
+  const getStatusColor = (status: SensorStatus): string => {
+    switch (status) {
+      case 'SAFE':
+        return STATUS_COLORS.SAFE;
+      case 'CAUTION':
+        return STATUS_COLORS.CAUTION;
+      case 'WARNING':
+        return STATUS_COLORS.WARNING;
+      default:
+        return STATUS_COLORS.CRITICAL;
+    }
   };
 
+  /**
+   * 상태 바 위치를 계산합니다.
+   * 점수(0~40)를 퍼센트(0~100%)로 변환합니다.
+   */
   const getStatusBarPosition = (score: number): number => {
-    // 점수에 따라 상태 바 위치 계산 (0-100 점수를 0-100%로 변환)
+    // 점수에 따라 상태 바 위치 계산 (0-40 점수를 0-100%로 변환)
     // 안전: 0-25%, 주의: 25-50%, 경고: 50-75%, 위험: 75-100%
-    if (score <= 25) return (score / 25) * 25; // 안전 구간
-    if (score <= 50) return 25 + ((score - 25) / 25) * 25; // 주의 구간
-    if (score <= 75) return 50 + ((score - 50) / 25) * 25; // 경고 구간
-    return 75 + ((score - 75) / 25) * 25; // 위험 구간
+    if (score <= 10) return (score / 10) * 25; // 안전 구간
+    if (score <= 20) return 25 + ((score - 10) / 10) * 25; // 주의 구간
+    if (score <= 30) return 50 + ((score - 20) / 10) * 25; // 경고 구간
+    return 75 + ((score - 30) / 10) * 25; // 위험 구간
   };
 
-  if (!dashboardData) {
-    // 전역 로딩이 표시되므로 빈 화면 반환
-    return <View style={styles.container} />;
+  // 센서 데이터가 없으면 로딩 또는 에러 처리
+  if (isSensorLoading && !sensorData) {
+    return (
+      <View style={styles.container}>
+        <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+          <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Text style={styles.backButtonIcon}>←</Text>
+          </Pressable>
+          <Text style={styles.headerTitle}>대시보드</Text>
+          <View style={styles.headerRight} />
+        </View>
+        <View style={[styles.content, styles.loadingContainer]}>
+          <LoadingSpinner message="센서 데이터를 불러오는 중..." />
+        </View>
+      </View>
+    );
   }
 
-  const { healthScore, metrics } = dashboardData;
-  const statusLabel = STATUS_LABELS[healthScore.status];
-  const indicatorPosition = getStatusBarPosition(healthScore.total);
+  if (isSensorError || !sensorData) {
+    return (
+      <View style={styles.container}>
+        <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+          <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Text style={styles.backButtonIcon}>←</Text>
+          </Pressable>
+          <Text style={styles.headerTitle}>대시보드</Text>
+          <View style={styles.headerRight} />
+        </View>
+        <View style={[styles.content, styles.errorContainer]}>
+          <View style={styles.errorCharacterContainer}>
+            <HanibiCharacter2D size={120} emotion="sad" animated={true} />
+          </View>
+          <Text style={styles.errorText}>센서 데이터를 불러오지 못했어요. 다시 시도해 주세요.</Text>
+          <Pressable onPress={() => refetchSensor()} style={styles.retryButton}>
+            <Text style={styles.retryButtonText}>다시 시도</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
+  // 건강 점수 계산
+  const healthScore = calculateHealthScore({
+    temperature: sensorData.temperature,
+    humidity: sensorData.humidity,
+    weight: sensorData.weight,
+    gas: sensorData.gas,
+  });
+
+  const statusLabel = STATUS_LABELS[healthScore.level];
+  const indicatorPosition = getStatusBarPosition(healthScore.score);
+
+  // 각 센서별 상태
+  const tempStatus = getTemperatureStatus(sensorData.temperature);
+  const humidityStatus = getHumidityStatus(sensorData.humidity);
+  const gasStatus = getGasStatus(sensorData.gas);
+  const weightStatus: SensorStatus = sensorData.weight > 0 ? 'SAFE' : 'WARNING';
 
   return (
     <View style={styles.container}>
@@ -247,7 +279,7 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
         <View style={styles.scoreSection}>
           <Text style={styles.scoreLabel}>생명점수</Text>
           <Text style={styles.scoreDescription}>
-            총 {healthScore.total}점으로 {statusLabel} 상태에 속해 있어요
+            총 {healthScore.score}점으로 {statusLabel} 상태에 속해 있어요
           </Text>
 
           {/* 건강 상태 바 */}
@@ -257,10 +289,10 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
               <Svg height={STATUS_BAR_HEIGHT} width={STATUS_BAR_WIDTH} style={styles.statusBarSvg}>
                 <Defs>
                   <SvgLinearGradient id="healthGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <Stop offset="0%" stopColor={STATUS_COLORS.safe} stopOpacity="1" />
-                    <Stop offset="33.33%" stopColor={STATUS_COLORS.caution} stopOpacity="1" />
-                    <Stop offset="66.66%" stopColor={STATUS_COLORS.warning} stopOpacity="1" />
-                    <Stop offset="100%" stopColor={STATUS_COLORS.danger} stopOpacity="1" />
+                    <Stop offset="0%" stopColor={STATUS_COLORS.SAFE} stopOpacity="1" />
+                    <Stop offset="33.33%" stopColor={STATUS_COLORS.CAUTION} stopOpacity="1" />
+                    <Stop offset="66.66%" stopColor={STATUS_COLORS.WARNING} stopOpacity="1" />
+                    <Stop offset="100%" stopColor={STATUS_COLORS.CRITICAL} stopOpacity="1" />
                   </SvgLinearGradient>
                 </Defs>
                 {/* 양 끝이 둥근 캡 형태 */}
@@ -277,7 +309,10 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
                   style={[
                     styles.indicatorTriangle,
                     styles.indicatorTrianglePosition,
-                    { left: `${indicatorPosition}%` },
+                    {
+                      left: `${indicatorPosition}%`,
+                      borderTopColor: getStatusColor(healthScore.level as SensorStatus),
+                    },
                   ]}
                 />
               </View>
@@ -301,16 +336,15 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
                 style={[
                   styles.statusDot,
                   {
-                    backgroundColor:
-                      getMetricStatus('temperature', metrics.temperature) === 'good'
-                        ? STATUS_COLORS.safe
-                        : STATUS_COLORS.danger,
+                    backgroundColor: getStatusColor(tempStatus),
                   },
                 ]}
               />
               <Text style={styles.metricLabel}>체온 (온도)</Text>
             </View>
-            <Text style={styles.metricValue}>{metrics.temperature} °C</Text>
+            <Text style={styles.metricValue}>
+              {isSensorLoading ? '—' : `${Math.round(sensorData.temperature)} °C`}
+            </Text>
           </View>
 
           {/* 수분컨디션 */}
@@ -320,16 +354,15 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
                 style={[
                   styles.statusDot,
                   {
-                    backgroundColor:
-                      getMetricStatus('humidity', metrics.humidity) === 'good'
-                        ? STATUS_COLORS.safe
-                        : STATUS_COLORS.danger,
+                    backgroundColor: getStatusColor(humidityStatus),
                   },
                 ]}
               />
               <Text style={styles.metricLabel}>수분컨디션 (습도)</Text>
             </View>
-            <Text style={styles.metricValue}>{metrics.humidity} %</Text>
+            <Text style={styles.metricValue}>
+              {isSensorLoading ? '—' : `${Math.round(sensorData.humidity)} %`}
+            </Text>
           </View>
 
           {/* 급식량 */}
@@ -339,16 +372,15 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
                 style={[
                   styles.statusDot,
                   {
-                    backgroundColor:
-                      getMetricStatus('weight', metrics.weight) === 'good'
-                        ? STATUS_COLORS.safe
-                        : STATUS_COLORS.danger,
+                    backgroundColor: getStatusColor(weightStatus),
                   },
                 ]}
               />
               <Text style={styles.metricLabel}>급식량 (무게)</Text>
             </View>
-            <Text style={styles.metricValue}>{metrics.weight} kg</Text>
+            <Text style={styles.metricValue}>
+              {isSensorLoading ? '—' : `${sensorData.weight.toFixed(1)} kg`}
+            </Text>
           </View>
 
           {/* 향기지수 */}
@@ -358,16 +390,15 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
                 style={[
                   styles.statusDot,
                   {
-                    backgroundColor:
-                      getMetricStatus('voc', metrics.voc) === 'good'
-                        ? STATUS_COLORS.safe
-                        : STATUS_COLORS.danger,
+                    backgroundColor: getStatusColor(gasStatus),
                   },
                 ]}
               />
               <Text style={styles.metricLabel}>향기지수 (VOC)</Text>
             </View>
-            <Text style={styles.metricValue}>{metrics.voc} ppb</Text>
+            <Text style={styles.metricValue}>
+              {isSensorLoading ? '—' : `${Math.round(sensorData.gas)} ppb`}
+            </Text>
           </View>
         </View>
 
@@ -474,6 +505,19 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     width: '100%',
   },
+  errorCharacterContainer: {
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  errorContainer: {
+    justifyContent: 'center',
+  },
+  errorText: {
+    color: colors.danger,
+    fontSize: typography.sizes.md,
+    marginTop: spacing.xs,
+    textAlign: 'center',
+  },
   header: {
     alignItems: 'center',
     backgroundColor: colors.white,
@@ -506,7 +550,6 @@ const styles = StyleSheet.create({
     borderLeftWidth: 8,
     borderRightColor: colors.transparent,
     borderRightWidth: 8,
-    borderTopColor: colors.lightGray,
     borderTopWidth: 10,
     position: 'absolute',
     top: 0,
@@ -523,6 +566,9 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
     textAlign: 'center',
+  },
+  loadingContainer: {
+    justifyContent: 'center',
   },
   metricCard: {
     alignItems: 'center',
@@ -575,6 +621,19 @@ const styles = StyleSheet.create({
   reportButtonContainer: {
     marginTop: spacing.lg,
     width: '100%',
+  },
+  retryButton: {
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  retryButtonText: {
+    color: colors.white,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.bold,
   },
   scoreDescription: {
     color: colors.mutedText,

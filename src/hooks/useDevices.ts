@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { pairDevice, Device, PairDeviceBody, NormalizedError } from '@/api/devices';
+import { Device, PairDevicePayload, pairDevice } from '@/api/devices';
 import { clearPairedDevice, setPairedDevice } from '@/services/storage/deviceStorage';
 
 export function usePairDeviceMutation() {
   const queryClient = useQueryClient();
 
-  return useMutation<Device, NormalizedError, PairDeviceBody>({
+  return useMutation<Device, Error, PairDevicePayload>({
     mutationFn: async (body) => {
       const device = await pairDevice(body);
       await setPairedDevice({

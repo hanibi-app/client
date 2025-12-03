@@ -43,5 +43,8 @@ yarn-error.*
 # cursor IDE workspace
 .cursor/
 
+# IntelliJ IDEA / WebStorm
+.idea/
+
 # 
 .env

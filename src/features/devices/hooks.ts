@@ -92,7 +92,8 @@ export function useDevice(deviceId: string) {
     queryKey: deviceQueryKey(deviceId),
     queryFn: () => devicesApi.getDevice(deviceId),
     enabled: !!deviceId && !!accessToken, // deviceId와 토큰이 있을 때만 조회
-    staleTime: 1 * 60 * 1000, // 1분간 캐시 유지
+    staleTime: 30 * 1000, // 30초간 캐시 유지 (더 자주 업데이트)
+    refetchInterval: 10 * 1000, // 10초마다 자동 refetch (실시간 상태 확인)
     retry: 1,
   });
 }

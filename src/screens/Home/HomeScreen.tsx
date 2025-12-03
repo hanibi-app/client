@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -52,6 +53,13 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   // 첫 번째 기기 정보 조회 (연결 상태, 마지막 신호 등)
   const firstDeviceId = devices && devices.length > 0 ? devices[0].deviceId : null;
   const { data: deviceDetail } = useDevice(firstDeviceId || '');
+
+  // 페어링된 기기의 실시간 상태 조회 (주기적으로 업데이트)
+  const pairedDeviceId = localPairedDevice?.deviceId;
+  const { data: pairedDeviceDetail, refetch: refetchPairedDevice } = useDevice(
+    pairedDeviceId || '',
+  );
+
   const { startLoading, stopLoading } = useLoadingStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(characterName);
@@ -126,10 +134,24 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const isPaired = localPairedDevice !== null;
 
   // 페어링된 기기의 연결 상태 확인
+  // 우선순위: 1) pairedDeviceDetail (실시간 조회), 2) devices 배열, 3) null
   const pairedDeviceStatus = localPairedDevice
-    ? devices?.find((d) => d.deviceId === localPairedDevice.deviceId)?.connectionStatus
+    ? pairedDeviceDetail?.connectionStatus ||
+      devices?.find((d) => d.deviceId === localPairedDevice.deviceId)?.connectionStatus ||
+      null
     : null;
   const isPairedDeviceOnline = pairedDeviceStatus === 'ONLINE';
+
+  // 화면 포커스 시 기기 상태 즉시 갱신
+  useFocusEffect(
+    useCallback(() => {
+      // 기기 목록과 페어링된 기기 상태를 즉시 refetch
+      refetchDevices();
+      if (pairedDeviceId) {
+        refetchPairedDevice();
+      }
+    }, [refetchDevices, refetchPairedDevice, pairedDeviceId]),
+  );
 
   // React Query의 isLoading을 전역 로딩과 연동
   useEffect(() => {

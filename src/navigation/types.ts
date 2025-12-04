@@ -27,6 +27,8 @@ export type RootStackParamList = {
   [ROOT_ROUTES.PROFILE]: undefined;
   [ROOT_ROUTES.DEVICE_PAIRING_MODAL]: undefined;
   [ROOT_ROUTES.DEVICE_DETAIL]: { deviceId: string };
+  [ROOT_ROUTES.DEVELOPER_MODE]: undefined;
+  [ROOT_ROUTES.CAMERA_PREVIEW_DEBUG]: undefined;
 };
 
 // Main Tabs ParamList (하단 탭 네비게이터)

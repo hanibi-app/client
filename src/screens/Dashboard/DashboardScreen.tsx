@@ -29,14 +29,12 @@ import {
 } from '@/features/dashboard/utils/healthScore';
 import { useCameraStatus } from '@/hooks/useCameraStatus';
 import { DashboardStackParamList } from '@/navigation/types';
+import { useCurrentDeviceId } from '@/store/deviceStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 
 type DashboardScreenProps = NativeStackScreenProps<DashboardStackParamList, 'Dashboard'>;
-
-// TODO: deviceId는 나중에 스토어/설정에서 가져오도록 변경 필요
-const DEVICE_ID = 'HANIBI-ESP32-001';
 
 // 건강 점수 상태별 색상
 const STATUS_COLORS = {
@@ -60,13 +58,17 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const [isCameraModalVisible, setCameraModalVisible] = useState(false);
   const { cameraStatus, isChecking, error: cameraError, refresh } = useCameraStatus();
 
+  // 현재 선택된 기기 ID 가져오기 (deviceStore에서)
+  // 기본값으로 기존 하드코딩된 값 사용 (호환성 유지)
+  const deviceId = useCurrentDeviceId('HANIBI-ESP32-001');
+
   // 센서 데이터 조회 (5초마다 자동 폴링)
   const {
     data: sensorData,
     isLoading: isSensorLoading,
     isError: isSensorError,
     refetch: refetchSensor,
-  } = useSensorLatest(DEVICE_ID);
+  } = useSensorLatest(deviceId);
 
   // 상태 바 너비 계산 (패딩 제외)
   const STATUS_BAR_WIDTH = SCREEN_WIDTH - spacing.xl * 2;

@@ -14,6 +14,7 @@ import OutlinedButton from '@/components/common/OutlinedButton';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import ToastMessage from '@/components/common/ToastMessage';
 import { clearPairedDevice, setPairedDevice } from '@/services/storage/deviceStorage';
+import { useDeviceStore } from '@/store/deviceStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -28,6 +29,7 @@ type DevicePairingModalProps = {
 export default function DevicePairingModal({ visible, onClose }: DevicePairingModalProps) {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+  const { setCurrentDeviceId } = useDeviceStore();
   const [deviceId, setDeviceId] = useState('HANIBI-ESP32-001');
   const [deviceName, setDeviceName] = useState('주방 음식물 처리기');
   const [toastMessage, setToastMessage] = useState<{
@@ -52,6 +54,8 @@ export default function DevicePairingModal({ visible, onClose }: DevicePairingMo
         apiSynced: true,
         syncedAt: new Date().toISOString(),
       });
+      // 페어링 성공 시 deviceStore에 현재 기기 ID 설정
+      setCurrentDeviceId(device.deviceId);
       queryClient.invalidateQueries({ queryKey: ['devices'] });
       setToastMessage({
         message: '기기 페어링이 완료되었습니다.',
@@ -99,6 +103,8 @@ export default function DevicePairingModal({ visible, onClose }: DevicePairingMo
               apiSynced: false,
               syncedAt: new Date().toISOString(),
             });
+            // 페어링 성공 시 deviceStore에 현재 기기 ID 설정
+            setCurrentDeviceId(trimmedDeviceId);
             queryClient.invalidateQueries({ queryKey: ['devices'] });
             setToastMessage({
               message: '기기 페어링이 완료되었습니다. (로컬 저장 - API 동기화 필요)',

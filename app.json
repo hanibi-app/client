@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "client",
-    "slug": "client",
+    "name": "Hanibi",
+    "slug": "hanibi",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./src/assets/images/iOS 1024 1024.png",
-    "scheme": "client",
+    "scheme": "hanibi",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "splash": {

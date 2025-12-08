@@ -29,6 +29,7 @@ import {
   getTemperatureStatus,
 } from '@/features/dashboard/utils/healthScore';
 import { EcoScorePreviewCard } from '@/features/reports/components/EcoScorePreviewCard';
+import { WeeklySummarySection } from '@/features/reports/components/WeeklySummarySection';
 import { useCameraStatus } from '@/hooks/useCameraStatus';
 import { DashboardStackParamList } from '@/navigation/types';
 import { useCurrentDeviceId } from '@/store/deviceStore';
@@ -339,6 +340,11 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
         {/* 환경 점수 미리보기 카드 */}
         <View style={styles.ecoScoreContainer}>
           <EcoScorePreviewCard onPress={handleViewEcoScore} />
+        </View>
+
+        {/* 주간 성과 요약 섹션 */}
+        <View style={styles.weeklySummaryContainer}>
+          <WeeklySummarySection />
         </View>
 
         {/* 메트릭 카드들 */}
@@ -718,5 +724,8 @@ const styles = StyleSheet.create({
     color: colors.black,
     fontSize: typography.sizes.xxl,
     fontWeight: typography.weights.bold,
+  },
+  weeklySummaryContainer: {
+    marginTop: spacing.xl,
   },
 });

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "client",
-    "slug": "client",
+    "name": "hanibi",
+    "slug": "hanibi",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./src/assets/images/iOS 1024 1024.png",

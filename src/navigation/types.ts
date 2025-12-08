@@ -50,6 +50,7 @@ export type HomeStackParamList = {
 export type DashboardStackParamList = {
   [DASHBOARD_STACK_ROUTES.DASHBOARD]: undefined;
   [DASHBOARD_STACK_ROUTES.REPORTS]: undefined;
+  [DASHBOARD_STACK_ROUTES.ECO_SCORE]: undefined;
 };
 
 // 도메인 타입

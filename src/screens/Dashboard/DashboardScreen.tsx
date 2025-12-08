@@ -6,6 +6,7 @@ import {
   Animated,
   Easing,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -27,6 +28,7 @@ import {
   getHumidityStatus,
   getTemperatureStatus,
 } from '@/features/dashboard/utils/healthScore';
+import { EcoScorePreviewCard } from '@/features/reports/components/EcoScorePreviewCard';
 import { useCameraStatus } from '@/hooks/useCameraStatus';
 import { DashboardStackParamList } from '@/navigation/types';
 import { useCurrentDeviceId } from '@/store/deviceStore';
@@ -136,6 +138,10 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
 
   const handleViewReport = () => {
     navigation.navigate('Reports');
+  };
+
+  const handleViewEcoScore = () => {
+    navigation.navigate('EcoScore');
   };
 
   const handleCloseCameraModal = () => setCameraModalVisible(false);
@@ -255,7 +261,11 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
         <View style={styles.headerRight} />
       </View>
 
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* 메인 타이틀 섹션 */}
         <View style={styles.titleSection}>
           <View style={styles.titleContainer}>
@@ -324,6 +334,11 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
               <Text style={styles.statusLabelText}>위험</Text>
             </View>
           </View>
+        </View>
+
+        {/* 환경 점수 미리보기 카드 */}
+        <View style={styles.ecoScoreContainer}>
+          <EcoScorePreviewCard onPress={handleViewEcoScore} />
         </View>
 
         {/* 메트릭 카드들 */}
@@ -443,7 +458,7 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
             textColor={colors.black}
           />
         </Animated.View>
-      </View>
+      </ScrollView>
 
       <CameraStatusModal
         visible={isCameraModalVisible}
@@ -493,8 +508,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    flex: 1,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.xl,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.sm,
   },
@@ -503,6 +517,9 @@ const styles = StyleSheet.create({
     height: 1,
     marginTop: spacing.md,
     width: '100%',
+  },
+  ecoScoreContainer: {
+    marginTop: spacing.xl,
   },
   errorCharacterContainer: {
     alignItems: 'center',
@@ -646,6 +663,9 @@ const styles = StyleSheet.create({
   },
   scoreSection: {
     marginTop: spacing.xl,
+  },
+  scrollView: {
+    flex: 1,
   },
   statusBarContainer: {
     marginTop: spacing.lg,

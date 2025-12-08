@@ -178,15 +178,12 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
 
   /**
    * 상태 바 위치를 계산합니다.
-   * 점수(0~40)를 퍼센트(0~100%)로 변환합니다.
+   * 점수(0~40)를 그대로 퍼센트(0~40%)로 사용합니다.
+   * 0점 → 0% (왼쪽), 40점 → 40% (오른쪽으로 이동)
    */
   const getStatusBarPosition = (score: number): number => {
-    // 점수에 따라 상태 바 위치 계산 (0-40 점수를 0-100%로 변환)
-    // 안전: 0-25%, 주의: 25-50%, 경고: 50-75%, 위험: 75-100%
-    if (score <= 10) return (score / 10) * 25; // 안전 구간
-    if (score <= 20) return 25 + ((score - 10) / 10) * 25; // 주의 구간
-    if (score <= 30) return 50 + ((score - 20) / 10) * 25; // 경고 구간
-    return 75 + ((score - 30) / 10) * 25; // 위험 구간
+    // 점수를 그대로 퍼센트로 사용
+    return score;
   };
 
   // 센서 데이터가 없으면 로딩 또는 에러 처리

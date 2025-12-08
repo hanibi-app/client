@@ -101,6 +101,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const loadLocalDevice = async () => {
     const localDevice = await getPairedDevice();
     setLocalPairedDevice(localDevice);
+    return localDevice;
   };
 
   useEffect(() => {
@@ -113,6 +114,28 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       loadLocalDevice();
     }
   }, [isPairingModalVisible]);
+
+  // 앱 시작 시 페어링된 기기가 있으면 자동으로 탐색
+  useEffect(() => {
+    const autoDiscoverPairedDevice = async () => {
+      if (localPairedDevice?.deviceId) {
+        console.log('[HomeScreen] 페어링된 기기 자동 탐색 시작:', localPairedDevice.deviceId);
+        try {
+          // 기기 목록과 페어링된 기기 상태를 즉시 refetch
+          await Promise.all([refetchDevices(), refetchPairedDevice()]);
+          console.log('[HomeScreen] 페어링된 기기 자동 탐색 완료');
+        } catch (error) {
+          console.error('[HomeScreen] 페어링된 기기 자동 탐색 실패:', error);
+          // 에러가 발생해도 계속 진행 (오프라인 모드 지원)
+        }
+      }
+    };
+
+    // 로컬 페어링 정보가 로드되고, 기기 목록 로딩이 완료된 후에 탐색
+    if (localPairedDevice && !isDevicesLoading) {
+      autoDiscoverPairedDevice();
+    }
+  }, [localPairedDevice, isDevicesLoading, refetchDevices, refetchPairedDevice]);
 
   // 서버에서 기기 목록이 로드되면 로컬 페어링 정보와 동기화
   useEffect(() => {

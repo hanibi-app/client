@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppButton from '@/components/common/AppButton';
 import AppHeader from '@/components/common/AppHeader';
-import { ROOT_ROUTES, MAIN_TAB_ROUTES } from '@/constants/routes';
+import { ROOT_ROUTES, MAIN_TAB_ROUTES, DASHBOARD_STACK_ROUTES } from '@/constants/routes';
 import { RootStackParamList } from '@/navigation/types';
 import { DEBUG_DEVICE_ID, useDeviceStore } from '@/store/deviceStore';
 import { colors } from '@/theme/Colors';
@@ -52,6 +52,22 @@ export default function DeveloperModeScreen() {
   const handleOpenCamera = useCallback(() => {
     setDebugDevice();
     navigation.navigate(ROOT_ROUTES.CAMERA_PREVIEW_DEBUG);
+  }, [navigation, setDebugDevice]);
+
+  /**
+   * 디버그 기기로 리포트 스크린을 엽니다.
+   */
+  const handleOpenReports = useCallback(() => {
+    setDebugDevice();
+    // MainTabs로 이동
+    // TODO: 중첩 네비게이션 타입 문제로 인해 현재는 MainTabs로만 이동
+    // 사용자가 Dashboard 탭을 선택한 후 "리포트보기" 버튼을 눌러야 함
+    // 또는 navigationRef를 사용하여 직접 이동하는 방법 고려 필요
+    navigation.navigate(ROOT_ROUTES.MAIN_TABS);
+    Alert.alert(
+      '알림',
+      '디버그 기기를 선택했어요.\n대시보드 탭에서 "리포트보기" 버튼을 눌러주세요.',
+    );
   }, [navigation, setDebugDevice]);
 
   /**
@@ -135,6 +151,13 @@ export default function DeveloperModeScreen() {
             <AppButton
               label="디버그 기기로 대시보드 열기"
               onPress={handleOpenDashboard}
+              variant="primary"
+              size="lg"
+              style={styles.button}
+            />
+            <AppButton
+              label="디버그 기기로 리포트 열기"
+              onPress={handleOpenReports}
               variant="primary"
               size="lg"
               style={styles.button}

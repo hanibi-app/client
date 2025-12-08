@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
@@ -326,33 +326,33 @@ export default function HanibiCharacter2D({
   useEffect(() => {
     if (!animated) return;
 
-    const leftListener = leftArmRotateAnim.addListener(({ value }) => {
+    const leftListener = leftArmRotateAnim.addListener(({ value }: { value: number }) => {
       const angle = -5 + value * 10; // -5deg to 5deg
       setLeftArmAngle(angle);
     });
 
-    const rightListener = rightArmRotateAnim.addListener(({ value }) => {
+    const rightListener = rightArmRotateAnim.addListener(({ value }: { value: number }) => {
       const angle = 5 - value * 10; // 5deg to -5deg (왼쪽과 대칭)
       setRightArmAngle(angle);
     });
 
-    const blinkListener = blinkAnim.addListener(({ value }) => {
+    const blinkListener = blinkAnim.addListener(({ value }: { value: number }) => {
       setBlinkHeight(value); // 1 = 열림, 0 = 닫힘
     });
 
-    const tearLeftListener = tearLeftAnim.addListener(({ value }) => {
+    const tearLeftListener = tearLeftAnim.addListener(({ value }: { value: number }) => {
       setTearLeftY(value); // 0 = 시작, 1 = 끝
     });
 
-    const tearRightListener = tearRightAnim.addListener(({ value }) => {
+    const tearRightListener = tearRightAnim.addListener(({ value }: { value: number }) => {
       setTearRightY(value); // 0 = 시작, 1 = 끝
     });
 
-    const tearWaveLeftListener = tearWaveLeftAnim.addListener(({ value }) => {
+    const tearWaveLeftListener = tearWaveLeftAnim.addListener(({ value }: { value: number }) => {
       setTearLeftWave(value); // 0~1 사이의 값으로 좌우 움직임
     });
 
-    const tearWaveRightListener = tearWaveRightAnim.addListener(({ value }) => {
+    const tearWaveRightListener = tearWaveRightAnim.addListener(({ value }: { value: number }) => {
       setTearRightWave(value); // 0~1 사이의 값으로 좌우 움직임
     });
 
@@ -453,8 +453,22 @@ export default function HanibiCharacter2D({
     const eyeY = 70;
 
     if (level === 'high') {
+      // 깜빡임 애니메이션: blinkHeight가 1이면 열림, 0이면 닫힘
+      const isBlinking = blinkHeight < 0.5;
+
+      if (isBlinking) {
+        // 깜빡일 때는 눈을 닫음 (수평선)
+        return (
+          <G stroke={palette.eyeColor} strokeWidth={7} strokeLinecap="round">
+            <Path d={`M 70 ${eyeY} L 90 ${eyeY}`} />
+            <Path d={`M 110 ${eyeY} L 130 ${eyeY}`} />
+          </G>
+        );
+      }
+
+      // 열렸을 때는 X자 형태 (화난 눈)
       return (
-        <G stroke={palette.eyeColor} strokeWidth="6" strokeLinecap="round">
+        <G stroke={palette.eyeColor} strokeWidth={7} strokeLinecap="round">
           <Path d={`M 70 ${eyeY - 10} L 90 ${eyeY + 10}`} />
           <Path d={`M 90 ${eyeY - 10} L 70 ${eyeY + 10}`} />
           <Path d={`M 110 ${eyeY - 10} L 130 ${eyeY + 10}`} />

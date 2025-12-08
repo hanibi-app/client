@@ -16,10 +16,15 @@ import { useForceUnpairDevice } from '@/hooks/useForceUnpair';
 import { RootStackParamList } from '@/navigation/types';
 import { useLogoutNavigation } from '@/navigation/useLogoutNavigation';
 import { SettingsAPI } from '@/services/api/settings';
-import { clearPairedDevice, getPairedDevice } from '@/services/storage/deviceStorage';
+import {
+  clearPairedDevice,
+  getPairedDevice,
+  setPairedDevice,
+} from '@/services/storage/deviceStorage';
 import { resetOnboardingProgress } from '@/services/storage/onboarding';
 import { useAppState } from '@/state/useAppState';
 import { useAuthStore } from '@/store/authStore';
+import { useDeviceStore } from '@/store/deviceStore';
 import { useLoadingStore } from '@/store/loadingStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
@@ -141,6 +146,7 @@ export default function SettingsScreen() {
   const accessToken = useAuthStore((state) => state.accessToken);
   const refreshToken = useAuthStore((state) => state.refreshToken);
   const { startLoading, stopLoading, withLoading } = useLoadingStore();
+  const { setCurrentDeviceId } = useDeviceStore();
   const { handleLogout } = useLogoutNavigation();
   const DEFAULT_DEVICE_ID = 'HANIBI-ESP32-001';
   const { forceUnpair } = useForceUnpairDevice(DEFAULT_DEVICE_ID);
@@ -148,6 +154,8 @@ export default function SettingsScreen() {
   const [pendingToggle, setPendingToggle] = useState<string | null>(null);
   const { data: devices } = useDevices();
   const [isUnpairModalVisible, setIsUnpairModalVisible] = useState(false);
+  const [versionTapCount, setVersionTapCount] = useState(0);
+  const versionTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const unpairMutation = useMutation({
     mutationFn: unpairDevice,
@@ -175,6 +183,8 @@ export default function SettingsScreen() {
         apiSynced: true,
         syncedAt: new Date().toISOString(),
       });
+      // 페어링 성공 시 deviceStore에 현재 기기 ID 설정
+      setCurrentDeviceId(device.deviceId);
       queryClient.invalidateQueries({ queryKey: ['devices'] });
       await loadLocalDevice();
       Alert.alert('완료', '서버와 동기화되었습니다.');
@@ -210,6 +220,8 @@ export default function SettingsScreen() {
                       apiSynced: true,
                       syncedAt: new Date().toISOString(),
                     });
+                    // 페어링 성공 시 deviceStore에 현재 기기 ID 설정
+                    setCurrentDeviceId(localPairedDevice.deviceId);
                     queryClient.invalidateQueries({ queryKey: ['devices'] });
                     await loadLocalDevice();
                     Alert.alert('완료', '서버와 동기화되었습니다.');
@@ -286,6 +298,15 @@ export default function SettingsScreen() {
       loadLocalDevice();
     }, [loadLocalDevice]),
   );
+
+  // 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (versionTapTimeoutRef.current) {
+        clearTimeout(versionTapTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleOpenPairingModal = useCallback(() => {
     setPairingModalVisible(true);
@@ -374,6 +395,34 @@ export default function SettingsScreen() {
   const handlePlaceholder = useCallback((feature: string) => {
     Alert.alert('준비 중', `${feature} 기능은 곧 제공될 예정입니다.`);
   }, []);
+
+  /**
+   * 앱 버전 정보를 탭하면 카운트를 증가시키고,
+   * 5-7회 연속 탭하면 개발자 모드로 진입합니다.
+   */
+  const handleVersionTap = useCallback(() => {
+    // 기존 타이머가 있으면 취소
+    if (versionTapTimeoutRef.current) {
+      clearTimeout(versionTapTimeoutRef.current);
+    }
+
+    const newCount = versionTapCount + 1;
+    setVersionTapCount(newCount);
+
+    // 5-7회 탭하면 개발자 모드로 진입
+    if (newCount >= 5 && newCount <= 7) {
+      navigation.navigate('DeveloperMode');
+      setVersionTapCount(0);
+    } else if (newCount > 7) {
+      // 7회를 넘으면 카운트 리셋
+      setVersionTapCount(0);
+    }
+
+    // 2초 후 카운트 리셋
+    versionTapTimeoutRef.current = setTimeout(() => {
+      setVersionTapCount(0);
+    }, 2000);
+  }, [versionTapCount, navigation]);
 
   const onLogoutPress = useCallback(() => {
     Alert.alert('로그아웃', '정말 로그아웃하시겠어요?', [
@@ -701,7 +750,7 @@ export default function SettingsScreen() {
             type: 'link',
             label: '앱 버전 정보',
             description: '1.0.0 (데모)',
-            onPress: () => handlePlaceholder('앱 버전 정보'),
+            onPress: handleVersionTap,
           },
         ],
       },

@@ -13,6 +13,8 @@ import NotificationRequestScreen from '@/screens/NotificationRequestScreen';
 import PrecautionsScreen from '@/screens/PrecautionsScreen';
 import ProfileScreen from '@/screens/ProfileScreen';
 import RegisterScreen from '@/screens/RegisterScreen';
+import CameraPreviewDebugScreen from '@/screens/Settings/CameraPreviewDebugScreen';
+import DeveloperModeScreen from '@/screens/Settings/DeveloperModeScreen';
 import { markOnboardingComplete, readOnboardingStatus } from '@/services/storage/onboarding';
 import { useAppState } from '@/state/useAppState';
 import { restoreTokensFromStorage } from '@/store/authStore';
@@ -135,6 +137,22 @@ export default function RootNavigator({ navigationRef }: RootNavigatorProps) {
       <Stack.Screen
         name={ROOT_ROUTES.DEVICE_DETAIL}
         component={DeviceDetailScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      {/* 개발자 모드 화면 */}
+      <Stack.Screen
+        name={ROOT_ROUTES.DEVELOPER_MODE}
+        component={DeveloperModeScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      {/* 카메라 미리보기 디버그 화면 */}
+      <Stack.Screen
+        name={ROOT_ROUTES.CAMERA_PREVIEW_DEBUG}
+        component={CameraPreviewDebugScreen}
         options={{
           headerShown: false,
         }}

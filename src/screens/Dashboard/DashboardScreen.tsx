@@ -29,14 +29,12 @@ import {
 } from '@/features/dashboard/utils/healthScore';
 import { useCameraStatus } from '@/hooks/useCameraStatus';
 import { DashboardStackParamList } from '@/navigation/types';
+import { useCurrentDeviceId } from '@/store/deviceStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 
 type DashboardScreenProps = NativeStackScreenProps<DashboardStackParamList, 'Dashboard'>;
-
-// TODO: deviceId는 나중에 스토어/설정에서 가져오도록 변경 필요
-const DEVICE_ID = 'HANIBI-ESP32-001';
 
 // 건강 점수 상태별 색상
 const STATUS_COLORS = {
@@ -60,13 +58,17 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const [isCameraModalVisible, setCameraModalVisible] = useState(false);
   const { cameraStatus, isChecking, error: cameraError, refresh } = useCameraStatus();
 
+  // 현재 선택된 기기 ID 가져오기 (deviceStore에서)
+  // 기본값으로 기존 하드코딩된 값 사용 (호환성 유지)
+  const deviceId = useCurrentDeviceId('HANIBI-ESP32-001');
+
   // 센서 데이터 조회 (5초마다 자동 폴링)
   const {
     data: sensorData,
     isLoading: isSensorLoading,
     isError: isSensorError,
     refetch: refetchSensor,
-  } = useSensorLatest(DEVICE_ID);
+  } = useSensorLatest(deviceId);
 
   // 상태 바 너비 계산 (패딩 제외)
   const STATUS_BAR_WIDTH = SCREEN_WIDTH - spacing.xl * 2;
@@ -176,15 +178,12 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
 
   /**
    * 상태 바 위치를 계산합니다.
-   * 점수(0~40)를 퍼센트(0~100%)로 변환합니다.
+   * 점수(0~40)를 그대로 퍼센트(0~40%)로 사용합니다.
+   * 0점 → 0% (왼쪽), 40점 → 40% (오른쪽으로 이동)
    */
   const getStatusBarPosition = (score: number): number => {
-    // 점수에 따라 상태 바 위치 계산 (0-40 점수를 0-100%로 변환)
-    // 안전: 0-25%, 주의: 25-50%, 경고: 50-75%, 위험: 75-100%
-    if (score <= 10) return (score / 10) * 25; // 안전 구간
-    if (score <= 20) return 25 + ((score - 10) / 10) * 25; // 주의 구간
-    if (score <= 30) return 50 + ((score - 20) / 10) * 25; // 경고 구간
-    return 75 + ((score - 30) / 10) * 25; // 위험 구간
+    // 점수를 그대로 퍼센트로 사용
+    return score;
   };
 
   // 센서 데이터가 없으면 로딩 또는 에러 처리

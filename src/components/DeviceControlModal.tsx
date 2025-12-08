@@ -21,6 +21,7 @@ import { useDevice, usePairDevice } from '@/features/devices/hooks';
 import { useDeviceCommandsQuery, useSendDeviceCommandMutation } from '@/hooks/useDeviceCommands';
 import { RootStackParamList } from '@/navigation/types';
 import { setPairedDevice } from '@/services/storage/deviceStorage';
+import { useDeviceStore } from '@/store/deviceStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -51,6 +52,7 @@ export default function DeviceControlModal({
   const navigation = useNavigation<DeviceControlModalNavProp>();
   const pairDeviceMutation = usePairDevice();
   const queryClient = useQueryClient();
+  const { setCurrentDeviceId } = useDeviceStore();
 
   // 최신 기기 정보 조회 (deviceId가 있을 때만)
   const { data: latestDevice, refetch: refetchDevice } = useDevice(deviceId || '');
@@ -168,6 +170,9 @@ export default function DeviceControlModal({
         apiSynced: true,
         syncedAt: new Date().toISOString(),
       });
+
+      // 페어링 성공 시 deviceStore에 현재 기기 ID 설정
+      setCurrentDeviceId(device.deviceId);
 
       // 기기 정보 쿼리 무효화하여 최신 정보 다시 가져오기
       queryClient.invalidateQueries({ queryKey: ['devices', deviceId] });

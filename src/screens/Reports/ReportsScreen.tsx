@@ -17,6 +17,7 @@ import { VictoryAxis, VictoryChart, VictoryLine, VictoryTheme } from 'victory-na
 import AppHeader from '@/components/common/AppHeader';
 import ReportTabs, { ReportTabType } from '@/components/common/ReportTabs';
 import { DashboardStackParamList } from '@/navigation/types';
+import { useCurrentDeviceId } from '@/store/deviceStore';
 import { useLoadingStore } from '@/store/loadingStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
@@ -79,17 +80,28 @@ const TAB_CONFIG: Record<
 };
 
 // 임시 더미 데이터 생성 함수 (나중에 API로 교체)
-const generateDummyData = (type: ReportTabType, range: TimeRange): ReportData => {
+// deviceId를 받아서 디버그 기기인 경우 특별한 가상 데이터 생성
+const generateDummyData = (
+  type: ReportTabType,
+  range: TimeRange,
+  deviceId?: string,
+): ReportData => {
   const now = new Date();
   const dataPoints: ReportDataPoint[] = [];
   const hours = range === '1일' ? 24 : range === '1주일' ? 168 : range === '1개월' ? 720 : 8760;
   const interval = range === '1일' ? 1 : range === '1주일' ? 1 : range === '1개월' ? 1 : 1;
 
+  // 디버그 기기인 경우 특별한 가상 데이터 생성
+  const isDebugDevice = deviceId === 'HANIBI-DEBUG-001';
+
   let baseValue = 0;
-  if (type === 'temp') baseValue = 25;
-  else if (type === 'humidity') baseValue = 50;
-  else if (type === 'weight') baseValue = 1.2;
-  else baseValue = 100;
+  if (type === 'temp')
+    baseValue = isDebugDevice ? 28 : 25; // 디버그 기기는 약간 높은 온도
+  else if (type === 'humidity')
+    baseValue = isDebugDevice ? 55 : 50; // 디버그 기기는 약간 높은 습도
+  else if (type === 'weight')
+    baseValue = isDebugDevice ? 1.5 : 1.2; // 디버그 기기는 약간 높은 무게
+  else baseValue = isDebugDevice ? 120 : 100; // 디버그 기기는 약간 높은 VOC
 
   for (let i = 0; i < hours; i += interval) {
     const timestamp = now.getTime() - (hours - i) * 60 * 60 * 1000;
@@ -137,6 +149,10 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const { withLoading } = useLoadingStore();
 
+  // 현재 선택된 기기 ID 가져오기 (deviceStore에서)
+  // 개발자 모드에서 디버그 기기를 선택했을 때도 사용됨
+  const deviceId = useCurrentDeviceId('HANIBI-ESP32-001');
+
   // 차트 애니메이션
   const chartOpacity = useRef(new Animated.Value(0)).current;
 
@@ -144,47 +160,26 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
   const fetchReportData = async (type: ReportTabType, range: TimeRange): Promise<ReportData> => {
     try {
       // TODO: 실제 API 엔드포인트로 교체
-      // - GET /api/reports/{type}?range={range} 엔드포인트 호출
+      // - GET /api/v1/reports/{deviceId}/{type}?range={range} 엔드포인트 호출
+      // - deviceId: 현재 선택된 기기 ID (deviceStore에서 가져옴)
       // - type: 'temp' | 'humidity' | 'moisture' | 'voc'
       // - range: '1일' | '1주' | '1개월' | '3개월'
       // - 응답 형식: { dataPoints: [...], summary: {...} }
       // - 인증 토큰 헤더 추가 필요
       // - 관련 이슈: #리포트API
-      // const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.example.com';
-      // const response = await fetch(`${API_BASE_URL}/api/reports/${type}?range=${range}`, {
-      //   method: 'GET',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     // 'Authorization': `Bearer ${token}`,
-      //   },
-      // });
-      //
-      // if (!response.ok) {
-      //   throw new Error(`API Error: ${response.status}`);
-      // }
-      //
-      // const data = await response.json();
-      // return {
-      //   dataPoints: data.dataPoints.map((dp: any) => ({
-      //     time: dp.time,
-      //     value: dp.value,
-      //     timestamp: dp.timestamp,
-      //   })),
-      //   summary: {
-      //     current: data.summary.current,
-      //     max: data.summary.max,
-      //     min: data.summary.min,
-      //     average: data.summary.average,
-      //     referenceDate: data.summary.referenceDate,
-      //   },
-      // };
+      // const { apiClient } = await import('@/api/httpClient');
+      // const response = await apiClient.get<ApiResponse<ReportData>>(
+      //   `/api/v1/reports/${deviceId}/${type}?range=${range}`
+      // );
+      // return response.data.data;
 
-      // 임시: 더미 데이터 반환
-      return generateDummyData(type, range);
+      // 임시: 더미 데이터 반환 (개발자 모드에서 디버그 기기 선택 시에도 사용)
+      // deviceId를 기반으로 가상 데이터 생성 (디버그 기기인 경우 특별한 값 사용)
+      return generateDummyData(type, range, deviceId);
     } catch (error) {
       console.error('리포트 데이터 가져오기 실패:', error);
       // 에러 발생 시 더미 데이터 반환 (폴백)
-      return generateDummyData(type, range);
+      return generateDummyData(type, range, deviceId);
     }
   };
 
@@ -197,10 +192,10 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
       } catch (error: unknown) {
         console.error('리포트 데이터 로딩 실패:', error);
         // 에러 발생 시 더미 데이터 사용
-        setReportData(generateDummyData(activeTab, timeRange));
+        setReportData(generateDummyData(activeTab, timeRange, deviceId));
       }
     }, '리포트 데이터를 불러오는 중...');
-  }, [activeTab, timeRange, withLoading]);
+  }, [activeTab, timeRange, deviceId, withLoading]);
 
   // 차트 애니메이션 효과
   useEffect(() => {
@@ -226,7 +221,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
         setReportData(data);
       } catch (error: unknown) {
         console.error('리포트 데이터 새로고침 실패:', error);
-        setReportData(generateDummyData(activeTab, timeRange));
+        setReportData(generateDummyData(activeTab, timeRange, deviceId));
       }
     }, '리포트 데이터를 새로고침하는 중...');
   };

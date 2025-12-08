@@ -26,6 +26,18 @@ export type CameraSnapshotResponse = {
 };
 
 /**
+ * 디버그 기기용 가상 카메라 스냅샷 데이터 생성
+ * 개발자 모드에서 사용할 가짜 카메라 스냅샷 데이터입니다.
+ */
+function generateDebugCameraSnapshot(): CameraSnapshotResponse {
+  // 디버그 기기용 가상 이미지 URL (placeholder 이미지)
+  return {
+    imageUrl: 'https://via.placeholder.com/800x600/4F46E5/FFFFFF?text=Debug+Camera+Snapshot',
+    timestamp: new Date().toISOString(),
+  };
+}
+
+/**
  * 카메라 스냅샷 조회
  * 특정 기기의 카메라 스냅샷을 가져옵니다.
  *
@@ -42,6 +54,14 @@ export type CameraSnapshotResponse = {
  * 현재는 placeholder URL(/api/v1/camera/{deviceId}/snapshot)을 사용합니다.
  */
 export async function fetchCameraSnapshot(deviceId: string): Promise<CameraSnapshotResponse> {
+  // 디버그 기기인 경우 가상 데이터 반환 (개발자 모드용)
+  if (deviceId === 'HANIBI-DEBUG-001') {
+    console.log('[Camera API] 디버그 기기 감지 - 가상 데이터 반환');
+    // 약간의 지연을 추가하여 실제 API 호출처럼 보이게 함
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    return generateDebugCameraSnapshot();
+  }
+
   // TODO: 실제 카메라 API 엔드포인트로 교체 필요
   // 예상 엔드포인트: /api/v1/camera/{deviceId}/snapshot
   const response = await apiClient.get<ApiResponse<CameraSnapshotResponse>>(

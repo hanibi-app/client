@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { DASHBOARD_STACK_ROUTES } from '@/constants/routes';
 import DashboardScreen from '@/screens/Dashboard/DashboardScreen';
+import EcoScoreScreen from '@/screens/EcoScore/EcoScoreScreen';
 import ReportsScreen from '@/screens/Reports/ReportsScreen';
 
 import { DashboardStackParamList } from './types';
@@ -21,6 +22,11 @@ export default function DashboardStack() {
       <Stack.Screen
         name={DASHBOARD_STACK_ROUTES.REPORTS}
         component={ReportsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name={DASHBOARD_STACK_ROUTES.ECO_SCORE}
+        component={EcoScoreScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

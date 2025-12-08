@@ -58,6 +58,7 @@ export const HOME_STACK_ROUTES = {
 export const DASHBOARD_STACK_ROUTES = {
   DASHBOARD: 'Dashboard',
   REPORTS: 'Reports',
+  ECO_SCORE: 'EcoScore',
 } as const;
 
 // 모든 라우트를 하나로 통합 (타입 체크용)

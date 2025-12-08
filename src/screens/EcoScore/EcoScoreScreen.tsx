@@ -4,6 +4,8 @@
  */
 
 import React from 'react';
+
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, Rect, Stop, LinearGradient as SvgLinearGradient } from 'react-native-svg';
@@ -11,16 +13,15 @@ import Svg, { Defs, Rect, Stop, LinearGradient as SvgLinearGradient } from 'reac
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useEcoScore } from '@/features/reports/hooks/useEcoScore';
 import {
-    ECO_SCORE_COLORS,
-    getEcoScoreBarPosition,
-    getEcoScoreColor,
-    getEcoScoreLabel
+  ECO_SCORE_COLORS,
+  getEcoScoreBarPosition,
+  getEcoScoreColor,
+  getEcoScoreLabel,
 } from '@/features/reports/utils/ecoScore';
 import { DashboardStackParamList } from '@/navigation/types';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 type EcoScoreScreenProps = NativeStackScreenProps<DashboardStackParamList, 'EcoScore'>;
 
@@ -172,22 +173,16 @@ export default function EcoScoreScreen({ navigation }: EcoScoreScreenProps) {
                 {formatValue(data.components.processedAmount, 'kg')}
               </Text>
             </View>
-            <Text style={styles.metricCardDescription}>
-              한니비가 처리한 총량입니다
-            </Text>
+            <Text style={styles.metricCardDescription}>한니비가 처리한 총량입니다</Text>
           </View>
 
           {/* 효율 카드 */}
           <View style={styles.metricCard}>
             <View style={styles.metricCardHeader}>
               <Text style={styles.metricCardTitle}>효율</Text>
-              <Text style={styles.metricCardValue}>
-                {data.components.efficiency.toFixed(1)}%
-              </Text>
+              <Text style={styles.metricCardValue}>{data.components.efficiency.toFixed(1)}%</Text>
             </View>
-            <Text style={styles.metricCardDescription}>
-              에너지 효율을 나타냅니다
-            </Text>
+            <Text style={styles.metricCardDescription}>에너지 효율을 나타냅니다</Text>
           </View>
 
           {/* CO₂ 절감 카드 */}
@@ -198,9 +193,7 @@ export default function EcoScoreScreen({ navigation }: EcoScoreScreenProps) {
                 {formatValue(data.components.co2Savings, 'kg')}
               </Text>
             </View>
-            <Text style={styles.metricCardDescription}>
-              절감한 이산화탄소 양입니다
-            </Text>
+            <Text style={styles.metricCardDescription}>절감한 이산화탄소 양입니다</Text>
           </View>
         </View>
       </ScrollView>
@@ -209,19 +202,6 @@ export default function EcoScoreScreen({ navigation }: EcoScoreScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.background,
-    flex: 1,
-  },
-  header: {
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingBottom: spacing.md,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
   backButton: {
     alignItems: 'center',
     height: 44,
@@ -233,60 +213,37 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xl,
     fontWeight: typography.weights.bold,
   },
-  headerTitle: {
-    color: colors.text,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-  },
-  headerRight: {
-    width: 44,
-  },
-  scrollView: {
+  container: {
+    backgroundColor: colors.background,
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: spacing.xl,
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
-  },
-  scoreSection: {
-    marginBottom: spacing.xl,
-  },
-  scoreContainer: {
-    alignItems: 'baseline',
-    flexDirection: 'row',
+  errorContainer: {
+    alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.sm,
+    paddingVertical: spacing.xl,
   },
-  scoreValue: {
-    fontSize: typography.sizes.xxl * 2, // 56px
-    fontWeight: typography.weights.bold,
-  },
-  scoreUnit: {
-    color: colors.text,
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.medium,
-    marginLeft: spacing.xs,
-  },
-  scoreDescription: {
-    color: colors.mutedText,
+  errorText: {
+    color: colors.danger,
     fontSize: typography.sizes.md,
     marginBottom: spacing.lg,
     textAlign: 'center',
   },
-  statusBarContainer: {
-    marginTop: spacing.md,
-    position: 'relative',
+  header: {
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
-  statusBarWrapper: {
-    borderRadius: 8,
-    height: 16,
-    overflow: 'visible',
-    width: '100%',
+  headerRight: {
+    width: 44,
   },
-  statusBarSvg: {
-    borderRadius: 8,
-    overflow: 'hidden',
+  headerTitle: {
+    color: colors.text,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
   },
   indicatorContainer: {
     height: 10,
@@ -310,26 +267,8 @@ const styles = StyleSheet.create({
   indicatorTrianglePosition: {
     marginLeft: -6,
   },
-  statusLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: spacing.sm,
-    width: '100%',
-  },
-  statusLabelText: {
-    color: colors.mutedText,
-    flex: 1,
-    fontSize: typography.sizes.xs,
-    textAlign: 'center',
-  },
-  metricsSection: {
-    marginTop: spacing.xl,
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    marginBottom: spacing.md,
+  loadingContainer: {
+    justifyContent: 'center',
   },
   metricCard: {
     backgroundColor: colors.white,
@@ -341,6 +280,10 @@ const styles = StyleSheet.create({
     shadowOffset: { height: 2, width: 0 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  metricCardDescription: {
+    color: colors.mutedText,
+    fontSize: typography.sizes.sm,
   },
   metricCardHeader: {
     alignItems: 'baseline',
@@ -358,23 +301,8 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xl,
     fontWeight: typography.weights.bold,
   },
-  metricCardDescription: {
-    color: colors.mutedText,
-    fontSize: typography.sizes.sm,
-  },
-  loadingContainer: {
-    justifyContent: 'center',
-  },
-  errorContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.xl,
-  },
-  errorText: {
-    color: colors.danger,
-    fontSize: typography.sizes.md,
-    marginBottom: spacing.lg,
-    textAlign: 'center',
+  metricsSection: {
+    marginTop: spacing.xl,
   },
   retryButton: {
     alignItems: 'center',
@@ -387,5 +315,70 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
+  },
+  scoreContainer: {
+    alignItems: 'baseline',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
+  scoreDescription: {
+    color: colors.mutedText,
+    fontSize: typography.sizes.md,
+    marginBottom: spacing.lg,
+    textAlign: 'center',
+  },
+  scoreSection: {
+    marginBottom: spacing.xl,
+  },
+  scoreUnit: {
+    color: colors.text,
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.medium,
+    marginLeft: spacing.xs,
+  },
+  scoreValue: {
+    fontSize: typography.sizes.xxl * 2, // 56px
+    fontWeight: typography.weights.bold,
+  },
+  scrollContent: {
+    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  sectionTitle: {
+    color: colors.text,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    marginBottom: spacing.md,
+  },
+  statusBarContainer: {
+    marginTop: spacing.md,
+    position: 'relative',
+  },
+  statusBarSvg: {
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  statusBarWrapper: {
+    borderRadius: 8,
+    height: 16,
+    overflow: 'visible',
+    width: '100%',
+  },
+  statusLabelText: {
+    color: colors.mutedText,
+    flex: 1,
+    fontSize: typography.sizes.xs,
+    textAlign: 'center',
+  },
+  statusLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
+    width: '100%',
   },
 });

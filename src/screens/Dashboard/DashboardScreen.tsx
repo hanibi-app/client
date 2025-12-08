@@ -512,9 +512,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.sm,
   },
-  scrollView: {
-    flex: 1,
-  },
   divider: {
     backgroundColor: colors.border,
     height: 1,
@@ -666,6 +663,9 @@ const styles = StyleSheet.create({
   },
   scoreSection: {
     marginTop: spacing.xl,
+  },
+  scrollView: {
+    flex: 1,
   },
   statusBarContainer: {
     marginTop: spacing.lg,

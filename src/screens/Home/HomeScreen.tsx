@@ -122,8 +122,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   useEffect(() => {
     if (!isPairingModalVisible) {
       loadLocalDevice();
-      // 페어링 모달이 닫힐 때 자동 탐색 플래그 리셋 (새로 페어링했을 수 있음)
-      hasAutoDiscoveredRef.current = false;
     }
   }, [isPairingModalVisible]);
 

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -18,10 +19,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import EditHanibiIcon from '@/assets/images/edit-hanibi.svg';
-import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
-import ModalPopup from '@/components/common/ModalPopup';
 import DeviceControlModal from '@/components/DeviceControlModal';
 import DeviceListModal from '@/components/DeviceListModal';
+import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
+import ModalPopup from '@/components/common/ModalPopup';
 import { DecorativeBackground } from '@/components/home/DecorativeBackground';
 import { HomeMessageCard } from '@/components/home/HomeMessageCard';
 import { NameCard } from '@/components/home/NameCard';
@@ -341,6 +342,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     setSelectedDeviceForModal(null);
   };
 
+  // 랭킹 화면으로 이동
+  const handleViewRanking = () => {
+    navigation.navigate('Ranking');
+  };
+
   // 페어링 확인
   const handleConfirmPairing = async () => {
     try {
@@ -547,6 +553,13 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           onClose={handleCloseDeviceControlModal}
         />
       )}
+
+      {/* 랭킹 버튼 (우측 하단) */}
+      <View style={[styles.rankingButtonContainer, { bottom: insets.bottom + spacing.lg }]}>
+        <Pressable onPress={handleViewRanking} style={styles.rankingButton}>
+          <FontAwesome name="trophy" size={24} color={colors.white} />
+        </Pressable>
+      </View>
     </LinearGradient>
   );
 }
@@ -644,5 +657,23 @@ const styles = StyleSheet.create({
   },
   temperatureHighlight: {
     color: colors.danger,
+  },
+  rankingButton: {
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 28,
+    elevation: 6,
+    height: 56,
+    justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    width: 56,
+  },
+  rankingButtonContainer: {
+    position: 'absolute',
+    right: spacing.lg,
+    zIndex: 10,
   },
 });

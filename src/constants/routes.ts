@@ -52,6 +52,7 @@ export const HOME_STACK_ROUTES = {
   CHARACTER_CUSTOMIZE: 'CharacterCustomize',
   CHARACTER_NAME_EDIT: 'CharacterNameEdit',
   PAIR_DEVICE: 'PairDevice',
+  RANKING: 'Ranking',
 } as const;
 
 // Dashboard Stack Routes (대시보드 스택 네비게이터)

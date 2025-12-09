@@ -905,6 +905,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
+    flex: 1,
     paddingBottom: spacing.xl,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.sm,
@@ -923,6 +924,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   errorContainer: {
+    alignItems: 'center',
     justifyContent: 'center',
   },
   errorText: {
@@ -981,6 +983,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   loadingContainer: {
+    alignItems: 'center',
     justifyContent: 'center',
   },
   metricCard: {

@@ -12,7 +12,6 @@ import ModalPopup from '@/components/common/ModalPopup';
 import DeviceListModal from '@/components/DeviceListModal';
 import DevicePairingModal from '@/components/DevicePairingModal';
 import { useDevices } from '@/features/devices/hooks';
-import { useForceUnpairDevice } from '@/hooks/useForceUnpair';
 import { RootStackParamList } from '@/navigation/types';
 import { useLogoutNavigation } from '@/navigation/useLogoutNavigation';
 import { SettingsAPI } from '@/services/api/settings';
@@ -148,8 +147,6 @@ export default function SettingsScreen() {
   const { startLoading, stopLoading, withLoading } = useLoadingStore();
   const { setCurrentDeviceId } = useDeviceStore();
   const { handleLogout } = useLogoutNavigation();
-  const DEFAULT_DEVICE_ID = 'HANIBI-ESP32-001';
-  const { forceUnpair } = useForceUnpairDevice(DEFAULT_DEVICE_ID);
   const queryClient = useQueryClient();
   const [pendingToggle, setPendingToggle] = useState<string | null>(null);
   const { data: devices } = useDevices();
@@ -270,26 +267,10 @@ export default function SettingsScreen() {
     }
   }, []);
 
-  const hasAttemptedUnpairRef = useRef(false);
-
+  // Settings 화면 마운트 시 로컬 기기 정보만 로드
+  // forceUnpair 자동 실행 제거 (429 에러 방지)
   useEffect(() => {
-    if (hasAttemptedUnpairRef.current) {
-      return;
-    }
-
-    hasAttemptedUnpairRef.current = true;
-
-    const performForceUnpair = async () => {
-      try {
-        await forceUnpair();
-      } catch {
-        // 에러는 무시하고 로컬 기기만 로드
-      } finally {
-        loadLocalDevice();
-      }
-    };
-
-    performForceUnpair();
+    loadLocalDevice();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

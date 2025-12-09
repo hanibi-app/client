@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Alert } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { pairDevice, unpairDevice } from '@/api/devices';
@@ -30,13 +29,23 @@ export default function DevicePairingModal({ visible, onClose }: DevicePairingMo
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { setCurrentDeviceId } = useDeviceStore();
-  const [deviceId, setDeviceId] = useState('HANIBI-ESP32-001');
-  const [deviceName, setDeviceName] = useState('주방 음식물 처리기');
+  const [deviceId, setDeviceId] = useState('ETCOM-001');
+  const [deviceName, setDeviceName] = useState('내 기기');
   const [toastMessage, setToastMessage] = useState<{
     message: string;
     type: 'success' | 'error';
   } | null>(null);
   const [isUnpairing, setIsUnpairing] = useState(false);
+
+  // 모달이 열릴 때마다 입력 필드 초기화
+  useEffect(() => {
+    if (visible) {
+      setDeviceId('ETCOM-001');
+      setDeviceName('내 기기');
+      setToastMessage(null);
+      setIsUnpairing(false);
+    }
+  }, [visible]);
 
   const unpairMutation = useMutation({
     mutationFn: unpairDevice,
@@ -340,6 +349,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: spacing.lg,
   },
   modalContent: {

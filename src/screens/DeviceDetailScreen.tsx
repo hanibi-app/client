@@ -4,7 +4,6 @@ import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
-  ActivityIndicator,
   Alert,
   Pressable,
   SafeAreaView,
@@ -18,7 +17,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppHeader from '@/components/common/AppHeader';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import PrimaryButton from '@/components/common/PrimaryButton';
 import { FoodSessionTimeline } from '@/components/food/FoodSessionTimeline';
 import { ROOT_ROUTES } from '@/constants/routes';
 import {
@@ -26,7 +24,6 @@ import {
   useUnpairDevice,
   useUpdateDeviceMutation,
 } from '@/features/devices/hooks';
-import { useDeviceCommandsQuery, useSendDeviceCommandMutation } from '@/hooks/useDeviceCommands';
 import { RootStackParamList } from '@/navigation/types';
 import { clearPairedDevice } from '@/services/storage/deviceStorage';
 import { colors } from '@/theme/Colors';
@@ -50,22 +47,6 @@ export default function DeviceDetailScreen() {
   const { mutate: updateDevice, isPending: isSaving } = updateDeviceMutation;
   const unpairDeviceMutation = useUnpairDevice();
 
-  // Device commands hooks
-  const {
-    data: commands,
-    isLoading: isCommandsLoading,
-    isError: isCommandsError,
-  } = useDeviceCommandsQuery(deviceId);
-
-  const { mutate: sendCommand, isPending: isSending } = useSendDeviceCommandMutation({
-    onSuccess: () => {
-      Alert.alert('완료', '기기에 명령을 전송했어요.');
-    },
-    onError: () => {
-      Alert.alert('오류', '기기에 명령을 전송하지 못했어요.');
-    },
-  });
-
   useEffect(() => {
     if (updateDeviceMutation.isSuccess) {
       Alert.alert('완료', '기기 정보가 저장되었어요.');
@@ -79,8 +60,6 @@ export default function DeviceDetailScreen() {
   }, [updateDeviceMutation.isError]);
 
   const [name, setName] = useState('');
-  const [commandTemperature, setCommandTemperature] = useState('22');
-  const [commandInterval, setCommandInterval] = useState('5');
 
   useEffect(() => {
     if (device) {
@@ -153,34 +132,6 @@ export default function DeviceDetailScreen() {
     );
   };
 
-  const handleStart = () => {
-    const temp = Number(commandTemperature);
-    const interval = Number(commandInterval);
-    sendCommand({
-      deviceId,
-      body: {
-        commandType: 'START',
-        temperature: Number.isNaN(temp) ? undefined : temp,
-        intervalSeconds: Number.isNaN(interval) ? undefined : interval,
-        extraPayload: {
-          custom: true,
-        },
-      },
-    });
-  };
-
-  const handleStop = () => {
-    sendCommand({
-      deviceId,
-      body: {
-        commandType: 'STOP',
-        extraPayload: {
-          custom: true,
-        },
-      },
-    });
-  };
-
   const renderStatusBadge = (status: string, type: 'connection' | 'device') => {
     const isOnline = type === 'connection' && status === 'ONLINE';
     const isProcessing = type === 'device' && status === 'PROCESSING';
@@ -219,13 +170,6 @@ export default function DeviceDetailScreen() {
     } catch {
       return iso;
     }
-  };
-
-  const formatCommandStatus = (status: string) => {
-    if (status === 'ACKED') return '전송 완료';
-    if (status === 'PENDING') return '대기 중';
-    if (status === 'FAILED') return '전송 실패';
-    return status;
   };
 
   if (isLoading) {
@@ -272,13 +216,25 @@ export default function DeviceDetailScreen() {
         {/* Device Name (editable) */}
         <View style={styles.section}>
           <Text style={styles.label}>기기 이름</Text>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="기기 이름을 입력하세요"
-            style={styles.textInput}
-            editable={!isSaving}
-          />
+          <View style={styles.nameRow}>
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              placeholder="기기 이름을 입력하세요"
+              style={styles.nameInput}
+              editable={!isSaving}
+            />
+            <Pressable
+              style={[
+                styles.saveButton,
+                (isSaving || name.trim() === device.deviceName) && styles.saveButtonDisabled,
+              ]}
+              onPress={handleSave}
+              disabled={isSaving || name.trim() === device.deviceName}
+            >
+              <Text style={styles.saveButtonText}>{isSaving ? '저장 중...' : '저장'}</Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* Statuses */}
@@ -297,106 +253,6 @@ export default function DeviceDetailScreen() {
         <View style={styles.section}>
           <Text style={styles.label}>마지막 신호</Text>
           <Text style={styles.value}>{formatHeartbeat(device.lastHeartbeat ?? null)}</Text>
-        </View>
-
-        {/* Save button */}
-        <View style={styles.footer}>
-          <PrimaryButton
-            label={isSaving ? '저장 중...' : '저장'}
-            onPress={handleSave}
-            disabled={isSaving || name.trim() === device.deviceName}
-          />
-        </View>
-
-        {/* Device control section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>기기 제어</Text>
-          <View style={styles.row}>
-            <View style={styles.half}>
-              <Text style={styles.label}>온도 (°C)</Text>
-              <TextInput
-                style={styles.textInput}
-                keyboardType="numeric"
-                value={commandTemperature}
-                onChangeText={setCommandTemperature}
-                editable={!isSending}
-                placeholder="22"
-              />
-            </View>
-            <View style={styles.half}>
-              <Text style={styles.label}>인터벌 (초)</Text>
-              <TextInput
-                style={styles.textInput}
-                keyboardType="numeric"
-                value={commandInterval}
-                onChangeText={setCommandInterval}
-                editable={!isSending}
-                placeholder="5"
-              />
-            </View>
-          </View>
-          <View style={styles.row}>
-            <Pressable
-              style={[styles.controlButton, isSending && styles.controlButtonDisabled]}
-              onPress={handleStart}
-              disabled={isSending}
-            >
-              <Text style={styles.controlButtonText}>가동 시작</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.controlButtonSecondary, isSending && styles.controlButtonDisabled]}
-              onPress={handleStop}
-              disabled={isSending}
-            >
-              <Text style={styles.controlButtonSecondaryText}>정지</Text>
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Command history section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>명령 이력</Text>
-          {isCommandsLoading && (
-            <View style={styles.historyState}>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={styles.helperText}>명령 이력을 불러오는 중이에요...</Text>
-            </View>
-          )}
-          {isCommandsError && !isCommandsLoading && (
-            <Text style={styles.errorText}>명령 이력을 불러오지 못했습니다.</Text>
-          )}
-          {!isCommandsLoading && !isCommandsError && (!commands || commands.length === 0) && (
-            <Text style={styles.helperText}>아직 전송된 명령이 없어요.</Text>
-          )}
-          {!isCommandsLoading && !isCommandsError && commands && commands.length > 0 && (
-            <View style={styles.commandList}>
-              {commands.map((cmd) => (
-                <View key={cmd.id} style={styles.commandItem}>
-                  <View style={styles.commandHeaderRow}>
-                    <Text style={styles.commandType}>{cmd.commandType}</Text>
-                    <Text
-                      style={[
-                        styles.commandStatus,
-                        cmd.status === 'ACKED' && styles.commandStatusAcked,
-                        cmd.status === 'PENDING' && styles.commandStatusPending,
-                      ]}
-                    >
-                      {formatCommandStatus(cmd.status)}
-                    </Text>
-                  </View>
-                  <Text style={styles.commandPayload}>
-                    온도: {cmd.payload.temperature ?? '-'}°C | 인터벌:{' '}
-                    {cmd.payload.intervalSeconds ?? '-'}초
-                  </Text>
-                  <Text style={styles.commandTime}>
-                    {cmd.sentAt
-                      ? new Date(cmd.sentAt).toLocaleString('ko-KR')
-                      : new Date(cmd.createdAt).toLocaleString('ko-KR')}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
         </View>
 
         {/* Food input sessions timeline */}
@@ -446,45 +302,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
   },
-  commandHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xs,
-  },
-  commandItem: {
-    backgroundColor: colors.white,
-    borderColor: colors.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  commandList: {
-    gap: spacing.md,
-  },
-  commandPayload: {
-    color: colors.mutedText,
-    fontSize: typography.sizes.sm,
-    marginBottom: spacing.xs,
-  },
-  commandStatus: {
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
-  },
-  commandStatusAcked: {
-    color: colors.success,
-  },
-  commandStatusPending: {
-    color: colors.warning,
-  },
-  commandTime: {
-    color: colors.mutedText,
-    fontSize: typography.sizes.xs,
-  },
-  commandType: {
-    color: colors.text,
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.bold,
-  },
   container: {
     backgroundColor: colors.background,
     flex: 1,
@@ -492,35 +309,6 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.xl,
     paddingBottom: spacing.xxxl,
-  },
-  controlButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    flex: 1,
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-  },
-  controlButtonDisabled: {
-    opacity: 0.5,
-  },
-  controlButtonSecondary: {
-    alignItems: 'center',
-    backgroundColor: colors.danger,
-    borderRadius: 8,
-    flex: 1,
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-  },
-  controlButtonSecondaryText: {
-    color: colors.white,
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.bold,
-  },
-  controlButtonText: {
-    color: colors.white,
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.bold,
   },
   deleteButton: {
     alignItems: 'center',
@@ -559,38 +347,47 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     textAlign: 'center',
   },
-  footer: {
-    marginBottom: spacing.xl,
-    marginTop: spacing.lg,
-  },
-  half: {
-    flex: 1,
-  },
   headerContainer: {
     backgroundColor: colors.background,
     borderBottomColor: colors.border,
     borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  helperText: {
-    color: colors.mutedText,
-    fontSize: typography.sizes.sm,
-  },
-  historyState: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-    justifyContent: 'center',
-    paddingVertical: spacing.lg,
   },
   label: {
     color: colors.mutedText,
     fontSize: typography.sizes.sm,
     marginBottom: spacing.xs,
   },
-  row: {
+  nameInput: {
+    backgroundColor: colors.white,
+    borderColor: colors.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    color: colors.text,
+    flex: 1,
+    fontSize: typography.sizes.md,
+    marginRight: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  nameRow: {
     flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.md,
+  },
+  saveButton: {
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  saveButtonDisabled: {
+    opacity: 0.5,
+  },
+  saveButtonText: {
+    color: colors.primaryForeground,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.bold,
   },
   section: {
     marginBottom: spacing.xl,
@@ -608,16 +405,6 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.lg,
     fontWeight: typography.weights.bold,
     marginBottom: spacing.md,
-  },
-  textInput: {
-    backgroundColor: colors.white,
-    borderColor: colors.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    color: colors.text,
-    fontSize: typography.sizes.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
   },
   title: {
     color: colors.text,

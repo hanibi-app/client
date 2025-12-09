@@ -37,19 +37,20 @@ export function getTemperatureStatus(temp: number): SensorStatus {
 
 /**
  * 습도 상태를 계산합니다.
+ * 습도가 낮을수록 초록색(SAFE)입니다.
  *
  * @param humidity 습도 (%)
  * @returns 센서 상태
  */
 export function getHumidityStatus(humidity: number): SensorStatus {
-  // TODO: 임계값/점수 로직은 도메인 담당과 논의 후 조정 필요
-  if (humidity >= 40 && humidity <= 60) {
-    return 'SAFE';
+  // 습도가 낮을수록 좋음 (초록색)
+  if (humidity >= 0 && humidity <= 30) {
+    return 'SAFE'; // 0~30%: 초록색
   }
-  if ((humidity >= 30 && humidity < 40) || (humidity > 60 && humidity <= 70)) {
-    return 'CAUTION';
+  if (humidity > 30 && humidity <= 50) {
+    return 'CAUTION'; // 30~50%: 노란색
   }
-  return 'WARNING';
+  return 'WARNING'; // 50% 이상: 주황/빨강
 }
 
 /**

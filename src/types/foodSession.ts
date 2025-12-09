@@ -27,14 +27,14 @@ export interface SensorEvent {
 
 /**
  * 스냅샷 메타데이터 인터페이스
- * TODO: 카메라 API가 정상 작동하면 주석 해제
+ * 카메라 이미지는 RTSP가 안되어서 에러가 날 수 있지만 메타데이터는 받을 수 있음
  */
 export interface SnapshotMeta {
   id: string;
   deviceId: string;
   triggerType?: 'FOOD_INPUT_BEFORE' | 'FOOD_INPUT_AFTER';
   createdAt: string;
-  imageUrl: string; // GET /snapshots/:snapshotId/image 에 대한 URL
+  imageUrl: string; // GET /snapshots/:snapshotId/image 에 대한 URL (이미지는 에러가 날 수 있음)
 }
 
 /**
@@ -49,9 +49,9 @@ export interface FoodInputSession {
   beforeEvent?: SensorEvent;
   afterEvent?: SensorEvent;
   processingCompletedEvent?: SensorEvent;
-  // TODO: 카메라 API가 정상 작동하면 주석 해제
-  // beforeSnapshot?: SnapshotMeta;
-  // afterSnapshot?: SnapshotMeta;
+  // 카메라 이미지는 RTSP가 안되어서 에러가 날 수 있지만 스냅샷 메타데이터는 받을 수 있음
+  beforeSnapshot?: SnapshotMeta;
+  afterSnapshot?: SnapshotMeta;
   weightChange?: {
     before?: number;
     after?: number;

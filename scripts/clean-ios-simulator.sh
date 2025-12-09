@@ -22,3 +22,4 @@ echo "🔄 Expo 캐시 정리 중..."
 npx expo start --clear
 
 echo "✅ 정리 완료!"
+

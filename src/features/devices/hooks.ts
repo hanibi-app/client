@@ -95,8 +95,8 @@ export function useDevice(
     queryKey: deviceQueryKey(deviceId),
     queryFn: () => devicesApi.getDevice(deviceId),
     enabled: options?.enabled !== false && !!deviceId && !!accessToken, // deviceId와 토큰이 있을 때만 조회
-    staleTime: 60 * 1000, // 60초간 캐시 유지 (최적화)
-    refetchInterval: options?.refetchInterval ?? 30000, // 기본 30초마다 자동 refetch (최적화)
+    staleTime: 20 * 1000, // 20초간 캐시 유지 (429 에러 방지)
+    refetchInterval: options?.refetchInterval ?? 30000, // 기본 30초마다 자동 refetch (429 에러 방지)
     retry: 1,
   });
 }

@@ -115,11 +115,12 @@ export interface SensorRequestLogsParams {
  */
 export interface SensorRequestLogResponse {
   id: string;
-  deviceId: string;
+  deviceId?: string;
   eventType?: string;
   status: string;
   createdAt: string;
   payload?: Record<string, unknown>;
+  requestBody?: string | Record<string, unknown>; // JSON 문자열 또는 파싱된 객체
   // 기타 필드들...
 }
 
@@ -155,23 +156,93 @@ export async function fetchSensorRequestLogs(
     },
   );
 
+  // 디버깅: API 응답 확인
+  if (__DEV__) {
+    console.log('[fetchSensorRequestLogs] API 응답:', {
+      deviceId,
+      status,
+      totalLogs: response.data.data?.length || 0,
+      sampleLogs: response.data.data?.slice(0, 3).map((log) => ({
+        id: log.id,
+        eventType: log.eventType,
+        requestBody: log.requestBody,
+        status: log.status,
+        createdAt: log.createdAt,
+      })),
+    });
+  }
+
+  // requestBody 파싱 헬퍼 함수
+  const parseRequestBody = (
+    requestBody: string | Record<string, unknown> | undefined,
+  ): Record<string, unknown> | undefined => {
+    if (!requestBody) return undefined;
+    try {
+      return typeof requestBody === 'string' ? JSON.parse(requestBody) : requestBody;
+    } catch (e) {
+      if (__DEV__) {
+        console.warn('[fetchSensorRequestLogs] requestBody 파싱 실패:', requestBody, e);
+      }
+      return undefined;
+    }
+  };
+
   // 백엔드 응답을 SensorEvent 형태로 변환
-  return response.data.data
-    .filter((log) => {
-      // eventType이 있는 로그만 필터링 (FOOD_INPUT_BEFORE, FOOD_INPUT_AFTER 등)
+  const events = response.data.data
+    .map((log) => {
+      // eventType 추출: 직접 필드가 있으면 사용, 없으면 requestBody에서 파싱
+      let eventType: string | undefined = log.eventType;
+
+      // requestBody에서 eventType 추출 시도
+      if (!eventType && log.requestBody) {
+        const parsedBody = parseRequestBody(log.requestBody);
+        eventType = parsedBody?.eventType as string | undefined;
+      }
+
+      // deviceId 추출: 직접 필드가 있으면 사용, 없으면 requestBody에서 파싱
+      let extractedDeviceId: string | undefined = log.deviceId;
+      if (!extractedDeviceId && log.requestBody) {
+        const parsedBody = parseRequestBody(log.requestBody);
+        extractedDeviceId = parsedBody?.deviceId as string | undefined;
+      }
+
+      return {
+        log,
+        eventType,
+        deviceId: extractedDeviceId,
+        parsedBody: log.requestBody ? parseRequestBody(log.requestBody) : undefined,
+      };
+    })
+    .filter(({ eventType }) => {
+      // eventType이 있고, 유효한 이벤트 타입인지 확인
       return (
-        log.eventType &&
+        eventType &&
         ['FOOD_INPUT_BEFORE', 'FOOD_INPUT_AFTER', 'PROCESSING_COMPLETED', 'DOOR_OPENED'].includes(
-          log.eventType,
+          eventType,
         )
       );
     })
-    .map((log) => ({
+    .map(({ log, eventType, deviceId: extractedDeviceId, parsedBody }) => ({
       id: log.id,
-      deviceId: log.deviceId,
-      eventType: log.eventType as SensorEvent['eventType'],
+      deviceId: extractedDeviceId || log.deviceId || '',
+      eventType: eventType as SensorEvent['eventType'],
       createdAt: log.createdAt,
-      payload: log.payload,
+      payload: log.payload || parsedBody,
       requestLogId: log.id,
     }));
+
+  // 디버깅: 변환된 이벤트 확인
+  if (__DEV__) {
+    console.log('[fetchSensorRequestLogs] 변환된 이벤트:', {
+      deviceId,
+      eventsCount: events.length,
+      events: events.slice(0, 5).map((e) => ({
+        id: e.id,
+        eventType: e.eventType,
+        createdAt: e.createdAt,
+      })),
+    });
+  }
+
+  return events;
 }

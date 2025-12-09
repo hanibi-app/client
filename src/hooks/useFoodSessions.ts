@@ -9,6 +9,7 @@ import type { FoodInputSession } from '@/types/foodSession';
 import { buildSessionsFromEventsAndSnapshots } from '@/utils/foodSession';
 
 import { useSensorEvents } from './useSensorEvents';
+import { useSnapshots } from './useSnapshots';
 
 /**
  * 음식 투입 세션을 조회하는 훅
@@ -36,24 +37,24 @@ import { useSensorEvents } from './useSensorEvents';
  * }
  * ```
  */
-export function useFoodSessions(deviceId: string) {
+export function useFoodSessions(
+  deviceId: string,
+  options?: { refetchInterval?: number | false; enabled?: boolean },
+) {
   const {
     data: events,
     isLoading: eventsLoading,
     isError: eventsError,
-  } = useSensorEvents(deviceId);
+    refetch: refetchEvents,
+  } = useSensorEvents(deviceId, 100, options);
 
-  // TODO: 카메라 API가 정상 작동하면 주석 해제
-  // const {
-  //   data: snapshots,
-  //   isLoading: snapshotsLoading,
-  //   isError: snapshotsError,
-  // } = useSnapshots(deviceId);
-
-  // 임시: 카메라 API가 정상 작동할 때까지 undefined 전달
-  const snapshots = undefined;
-  const snapshotsLoading = false;
-  const snapshotsError = false;
+  // 카메라 스냅샷 조회 (이미지 URL은 에러가 나도 괜찮지만 메타데이터는 받을 수 있음)
+  const {
+    data: snapshots,
+    isLoading: snapshotsLoading,
+    isError: snapshotsError,
+    refetch: refetchSnapshots,
+  } = useSnapshots(deviceId, 20, undefined, undefined, options);
 
   const sessions = useMemo<FoodInputSession[] | undefined>(() => {
     if (!events) return undefined;
@@ -62,9 +63,35 @@ export function useFoodSessions(deviceId: string) {
     return buildSessionsFromEventsAndSnapshots(events, snapshots);
   }, [events, snapshots]);
 
+  // 디버깅: 이벤트 및 세션 데이터 확인
+  if (__DEV__ && events) {
+    console.log('[useFoodSessions] 데이터 확인:', {
+      deviceId,
+      eventsCount: events.length,
+      events: events.map((e) => ({
+        id: e.id,
+        eventType: e.eventType,
+        createdAt: e.createdAt,
+      })),
+      sessionsCount: sessions?.length || 0,
+      sessions: sessions?.map((s) => ({
+        sessionId: s.sessionId,
+        status: s.status,
+        startedAt: s.startedAt,
+      })),
+    });
+  }
+
+  // refetch 함수: 이벤트를 다시 가져오면 세션도 자동으로 재계산됨
+  const refetch = async () => {
+    const result = await refetchEvents();
+    return result;
+  };
+
   return {
     data: sessions,
     isLoading: eventsLoading || snapshotsLoading,
     isError: eventsError || snapshotsError,
+    refetch,
   };
 }

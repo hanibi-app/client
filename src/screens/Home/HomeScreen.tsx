@@ -29,6 +29,7 @@ import { NameCard } from '@/components/home/NameCard';
 import { ProgressBar } from '@/components/home/ProgressBar';
 import { useDevice, useDevices, usePairDevice } from '@/features/devices/hooks';
 import { useMe, useUpdateProfile } from '@/features/user/hooks';
+import { useFoodSessions } from '@/hooks/useFoodSessions';
 import { HomeStackParamList } from '@/navigation/types';
 import { getPairedDevice, setPairedDevice } from '@/services/storage/deviceStorage';
 import { useAppState } from '@/state/useAppState';
@@ -36,6 +37,7 @@ import { useLoadingStore } from '@/store/loadingStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
+import { calculateProcessingProgress } from '@/utils/processingProgress';
 
 const DEFAULT_EDIT_ACTION_WIDTH = 64;
 
@@ -66,8 +68,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
   // 중복 조회 방지: pairedDeviceId가 있으면 그것만 조회, 없으면 firstDeviceId 조회
   const targetDeviceId = pairedDeviceId || firstDeviceId || '';
+  // 기기 상태 조회 - 진행률 바를 위해 빠르게 갱신
   const { data: deviceDetail, refetch: refetchDevice } = useDevice(targetDeviceId, {
-    refetchInterval: isFocused ? 30000 : false, // 포커스되어 있을 때만 30초마다 폴링
+    refetchInterval: isFocused ? 15000 : false, // 포커스되어 있을 때만 15초마다 폴링 (진행률 바 빠른 업데이트)
     enabled: !!targetDeviceId, // deviceId가 있을 때만 조회
   });
 
@@ -156,6 +159,14 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     : null;
   const isPairedDeviceOnline = pairedDeviceStatus === 'ONLINE';
 
+  // 음식 투입 세션 조회 (최근 1개만) - 진행률 바를 위해 빠르게 갱신
+  const targetDeviceIdForSession = localPairedDevice?.deviceId || firstDeviceId || '';
+  const { data: sessions } = useFoodSessions(targetDeviceIdForSession, {
+    refetchInterval: isFocused ? 10000 : false, // 포커스되어 있을 때만 10초마다 폴링 (진행률 바 빠른 업데이트)
+    enabled: !!targetDeviceIdForSession,
+  });
+  const latestSession = sessions && sessions.length > 0 ? sessions[0] : null;
+
   // 화면 포커스 시 기기 상태 갱신 (최적화: staleTime 체크 후 필요시에만 refetch)
   useFocusEffect(
     useCallback(() => {
@@ -226,8 +237,53 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     }
   }, [isPaired, speechBubbleScaleAnim, speechBubbleTranslateYAnim]);
 
-  // 진행률 계산 (30% 남음 = 70% 진행)
-  const progress = 70;
+  // 진행률 계산 - 실시간 업데이트를 위한 상태
+  const isProcessing = pairedDeviceDetail?.deviceStatus === 'PROCESSING';
+  const isInputInProgress = latestSession?.status === 'in_progress';
+
+  // 진행률을 실시간으로 업데이트하기 위한 상태
+  const [currentProgress, setCurrentProgress] = useState(0);
+  const [currentRemainingPercent, setCurrentRemainingPercent] = useState(0);
+
+  // 진행률 계산 및 실시간 업데이트
+  useEffect(() => {
+    if (isProcessing && latestSession) {
+      const calculateProgress = () => {
+        const progressData = calculateProcessingProgress(latestSession);
+        if (progressData) {
+          setCurrentProgress(progressData.progress);
+          setCurrentRemainingPercent(progressData.remainingPercent);
+        } else {
+          setCurrentProgress(0);
+          setCurrentRemainingPercent(0);
+        }
+      };
+
+      // 즉시 계산
+      calculateProgress();
+
+      // 1초마다 실시간 업데이트 (진행률 바 빠른 업데이트)
+      const interval = setInterval(calculateProgress, 1000);
+
+      return () => clearInterval(interval);
+    } else {
+      setCurrentProgress(0);
+      setCurrentRemainingPercent(0);
+    }
+  }, [isProcessing, latestSession]);
+
+  const progress = currentProgress;
+  const remainingPercent = currentRemainingPercent;
+
+  // 진행률 설명 텍스트
+  // 우선순위: 1) 투입 중, 2) 처리 중 (진행률 표시 또는 처리 중), 3) 대기 중
+  const progressDescription = isInputInProgress
+    ? '투입 중'
+    : isProcessing
+      ? progress > 0
+        ? `다 먹기까지 ${Math.round(remainingPercent)}% 남음`
+        : '처리 중' // 진행률 계산이 안되도 처리 중 표시
+      : '대기 중';
 
   const handleEditPress = () => {
     setEditValue(characterName);
@@ -427,6 +483,69 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <Pressable onPress={handleOpenDeviceListModal} style={styles.characterPressable}>
             <HanibiCharacter2D level="medium" animated={true} size={CHARACTER_SIZE} />
           </Pressable>
+          {/* 상태 태그들 - 캐릭터 위에 배치 */}
+          {isPaired && latestSession && (
+            <View
+              style={[
+                styles.statusTagsContainer,
+                {
+                  top: -CHARACTER_SIZE / 2 - 80,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.statusTag,
+                  latestSession.status === 'in_progress'
+                    ? styles.sessionTagInProgress
+                    : styles.sessionTagCompleted,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusTagText,
+                    {
+                      color:
+                        latestSession.status === 'in_progress' ? colors.warning : colors.success,
+                    },
+                  ]}
+                >
+                  {latestSession.status === 'in_progress' ? '투입 중' : '투입 완료'}
+                </Text>
+              </View>
+              {pairedDeviceDetail?.deviceStatus && (
+                <View
+                  style={[
+                    styles.statusTag,
+                    {
+                      backgroundColor:
+                        pairedDeviceDetail.deviceStatus === 'PROCESSING'
+                          ? colors.primary + '20'
+                          : colors.gray100,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusTagText,
+                      {
+                        color:
+                          pairedDeviceDetail.deviceStatus === 'PROCESSING'
+                            ? colors.primary
+                            : colors.text,
+                      },
+                    ]}
+                  >
+                    {pairedDeviceDetail.deviceStatus === 'PROCESSING'
+                      ? '처리 중'
+                      : pairedDeviceDetail.deviceStatus === 'IDLE'
+                        ? '대기 중'
+                        : pairedDeviceDetail.deviceStatus}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
           {/* 페어링 안됨 표시 말풍선 - 캐릭터 위에 배치 */}
           {!isPaired && (
             <Pressable onPress={handleOpenPairingModal}>
@@ -491,8 +610,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
           <ProgressBar
             progress={progress}
-            description="다 먹기까지 30% 남음"
+            description={progressDescription}
             textColor={PROGRESS_TEXT_COLOR}
+            isWaiting={!isProcessing && !isInputInProgress}
           />
         </View>
       </SafeAreaView>
@@ -633,6 +753,12 @@ const styles = StyleSheet.create({
     flex: 1,
     zIndex: 1,
   },
+  sessionTagCompleted: {
+    backgroundColor: colors.success + '20',
+  },
+  sessionTagInProgress: {
+    backgroundColor: colors.warning + '20',
+  },
   speechBubble: {
     alignItems: 'center',
     position: 'relative',
@@ -659,6 +785,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     position: 'absolute',
+    zIndex: 10,
+  },
+  statusTag: {
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  statusTagText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.bold,
+  },
+  statusTagsContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
+    left: 0,
+    position: 'absolute',
+    right: 0,
     zIndex: 10,
   },
   temperatureHighlight: {

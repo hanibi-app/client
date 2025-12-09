@@ -39,18 +39,38 @@ export const SENSOR_EVENTS_QUERY_KEY = (deviceId: string, limit?: number) =>
  * }
  * ```
  */
-export function useSensorEvents(deviceId: string, limit = 100) {
+export function useSensorEvents(
+  deviceId: string,
+  limit = 100,
+  options?: { refetchInterval?: number | false; enabled?: boolean },
+) {
   return useQuery<SensorEvent[], Error>({
     queryKey: SENSOR_EVENTS_QUERY_KEY(deviceId, limit),
     queryFn: async () => {
-      return fetchSensorRequestLogs({
+      const events = await fetchSensorRequestLogs({
         deviceId,
         status: 'SUCCESS',
         limit,
       });
+
+      // 디버깅: 이벤트 데이터 확인
+      if (__DEV__) {
+        console.log('[useSensorEvents] 이벤트 조회 완료:', {
+          deviceId,
+          eventsCount: events.length,
+          events: events.slice(0, 5).map((e) => ({
+            id: e.id,
+            eventType: e.eventType,
+            createdAt: e.createdAt,
+          })),
+        });
+      }
+
+      return events;
     },
-    enabled: !!deviceId,
-    staleTime: 1000 * 30, // 30초
+    enabled: options?.enabled !== false && !!deviceId,
+    staleTime: 0, // 캐시 없이 항상 최신 데이터 가져오기
     refetchOnWindowFocus: false,
+    refetchInterval: options?.refetchInterval ?? false, // 기본값은 자동 갱신 안 함, 옵션으로 전달 가능
   });
 }

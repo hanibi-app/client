@@ -130,8 +130,8 @@ export function buildSessionsFromEventsAndSnapshots(
         deviceId: event.deviceId,
         startedAt: event.createdAt,
         beforeEvent: event,
-        // TODO: 카메라 API가 정상 작동하면 주석 해제
-        // beforeSnapshot: findNearestSnapshot(event.createdAt, sortedSnapshots, 'FOOD_INPUT_BEFORE'),
+        // 카메라 이미지는 RTSP가 안되어서 에러가 날 수 있지만 스냅샷 메타데이터는 받을 수 있음
+        beforeSnapshot: findNearestSnapshot(event.createdAt, sortedSnapshots, 'FOOD_INPUT_BEFORE'),
         weightChange: {
           before: extractWeightFromEvent(event),
         },
@@ -143,12 +143,12 @@ export function buildSessionsFromEventsAndSnapshots(
       currentSession.afterEvent = event;
       currentSession.endedAt = event.createdAt;
       currentSession.status = 'completed';
-      // TODO: 카메라 API가 정상 작동하면 주석 해제
-      // currentSession.afterSnapshot = findNearestSnapshot(
-      //   event.createdAt,
-      //   sortedSnapshots,
-      //   'FOOD_INPUT_AFTER',
-      // );
+      // 카메라 이미지는 RTSP가 안되어서 에러가 날 수 있지만 스냅샷 메타데이터는 받을 수 있음
+      currentSession.afterSnapshot = findNearestSnapshot(
+        event.createdAt,
+        sortedSnapshots,
+        'FOOD_INPUT_AFTER',
+      );
 
       // 무게 정보 업데이트
       const afterWeight = extractWeightFromEvent(event);

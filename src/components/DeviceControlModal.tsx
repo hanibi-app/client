@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useQueryClient } from '@tanstack/react-query';
 import {
   ActivityIndicator,
   Modal,
@@ -14,6 +13,7 @@ import {
   View,
 } from 'react-native';
 
+import type { DeviceProcessingStatus } from '@/api/types/devices';
 import { ROOT_ROUTES } from '@/constants/routes';
 import { useDevice } from '@/features/devices/hooks';
 import { useFoodSessions } from '@/hooks/useFoodSessions';
@@ -49,7 +49,7 @@ export default function DeviceControlModal({
 
   // 최신 기기 정보 조회 (모달이 열려있을 때만 폴링 - 최적화)
   const { data: latestDevice, refetch: refetchDevice } = useDevice(deviceId || '', {
-    refetchInterval: visible ? 30000 : false, // 모달이 열려있을 때만 30초마다 폴링
+    refetchInterval: visible ? 30000 : false, // 모달이 열려있을 때만 30초마다 폴링 (429 에러 방지)
   });
 
   // 기기 정보가 없으면 에러 메시지 표시
@@ -57,12 +57,52 @@ export default function DeviceControlModal({
 
   // 최신 기기 정보를 우선적으로 사용 (props보다 우선)
   const actualConnectionStatus = latestDevice?.connectionStatus || connectionStatus || 'OFFLINE';
-  const actualDeviceStatus = latestDevice?.deviceStatus || 'IDLE';
   const actualDeviceName = latestDevice?.deviceName || deviceName || '한니비 기기';
 
-  // 음식 투입 세션 조회 (최근 1개만)
-  const { data: sessions, isLoading: isSessionsLoading } = useFoodSessions(deviceId || '');
+  // 동작 상태는 deviceStatus로 받음 (DeviceStatusCard와 동일한 로직)
+  const rawDeviceStatus = latestDevice?.deviceStatus || 'IDLE';
+  const actualDeviceStatus = (
+    typeof rawDeviceStatus === 'string' ? rawDeviceStatus.toUpperCase() : 'IDLE'
+  ) as DeviceProcessingStatus;
+
+  // 음식 투입 세션 조회 (최근 1개만) - 모달이 열려있을 때만 자동 갱신
+  const {
+    data: sessions,
+    isLoading: isSessionsLoading,
+    refetch: refetchSessions,
+  } = useFoodSessions(deviceId || '', {
+    refetchInterval: visible ? 20000 : false, // 모달이 열려있을 때만 20초마다 폴링 (429 에러 방지)
+    enabled: visible && !!deviceId, // 모달이 열려있고 deviceId가 있을 때만 조회
+  });
   const latestSession = sessions && sessions.length > 0 ? sessions[0] : null;
+
+  // 모달이 열릴 때마다 즉시 데이터 갱신
+  useEffect(() => {
+    if (visible && deviceId) {
+      console.log('[DeviceControlModal] 모달 열림 - 즉시 세션 데이터 갱신');
+      refetchSessions();
+    }
+  }, [visible, deviceId, refetchSessions]);
+
+  // 디버깅: 세션 데이터 확인
+  useEffect(() => {
+    if (visible && __DEV__) {
+      console.log('[DeviceControlModal] 음식 투입 세션 데이터:', {
+        deviceId,
+        sessionsCount: sessions?.length || 0,
+        latestSession: latestSession
+          ? {
+              sessionId: latestSession.sessionId,
+              status: latestSession.status,
+              startedAt: latestSession.startedAt,
+              beforeEvent: latestSession.beforeEvent?.eventType,
+              afterEvent: latestSession.afterEvent?.eventType,
+            }
+          : null,
+        isLoading: isSessionsLoading,
+      });
+    }
+  }, [visible, deviceId, sessions, latestSession, isSessionsLoading]);
 
   // 디버깅: deviceId 확인
   useEffect(() => {
@@ -83,25 +123,82 @@ export default function DeviceControlModal({
     navigation.navigate(ROOT_ROUTES.DEVICE_DETAIL, { deviceId });
   };
 
-  const renderStatusBadge = (status: string, type: 'connection' | 'device') => {
-    const isOnline = type === 'connection' && status === 'ONLINE';
-    const isProcessing = type === 'device' && status === 'PROCESSING';
-    const backgroundColor = isOnline ? colors.success : isProcessing ? '#6366f1' : colors.mutedText;
+  /**
+   * 처리 상태에 따른 배지 색상 및 텍스트 (DeviceStatusCard와 동일한 로직)
+   */
+  const getStatusBadgeConfig = (status: DeviceProcessingStatus) => {
+    switch (status) {
+      case 'IDLE':
+        return {
+          label: '대기 중',
+          backgroundColor: colors.gray100,
+          textColor: colors.text,
+        };
+      case 'PROCESSING':
+        return {
+          label: '처리 중',
+          backgroundColor: '#8B5CF6', // 보라색 계열
+          textColor: colors.white,
+        };
+      case 'ERROR':
+        return {
+          label: '오류',
+          backgroundColor: colors.danger,
+          textColor: colors.white,
+        };
+      default:
+        return {
+          label: '알 수 없음',
+          backgroundColor: colors.gray100,
+          textColor: colors.text,
+        };
+    }
+  };
 
-    const label =
-      type === 'connection'
-        ? status === 'ONLINE'
-          ? '온라인'
-          : '오프라인'
-        : status === 'PROCESSING'
-          ? '처리 중'
-          : status === 'IDLE'
-            ? '대기 중'
-            : status;
+  const renderStatusBadge = (status: string, type: 'connection' | 'device') => {
+    if (type === 'connection') {
+      const isOnline = status === 'ONLINE';
+      return (
+        <View
+          style={[
+            styles.badge,
+            {
+              backgroundColor: isOnline ? colors.success : colors.mutedText,
+            },
+          ]}
+        >
+          <Text style={[styles.badgeText, { color: isOnline ? colors.white : colors.text }]}>
+            {isOnline ? '온라인' : '오프라인'}
+          </Text>
+        </View>
+      );
+    }
+
+    // device 상태는 DeviceStatusCard와 동일한 로직 사용
+    const deviceStatus = (
+      typeof status === 'string' ? status.toUpperCase() : 'IDLE'
+    ) as DeviceProcessingStatus;
+    const statusConfig = getStatusBadgeConfig(deviceStatus);
 
     return (
-      <View style={[styles.badge, { backgroundColor }]}>
-        <Text style={styles.badgeText}>{label}</Text>
+      <View
+        style={[
+          styles.badge,
+          {
+            backgroundColor: statusConfig.backgroundColor,
+          },
+        ]}
+      >
+        <Text
+          style={[
+            styles.badgeText,
+            {
+              color: statusConfig.textColor,
+            },
+          ]}
+        >
+          {statusConfig.label}
+        </Text>
       </View>
     );
   };

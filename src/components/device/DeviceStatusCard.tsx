@@ -17,6 +17,7 @@ import {
   getTemperatureStatus,
 } from '@/features/dashboard/utils/healthScore';
 import { useDeviceDetail } from '@/hooks/useDeviceDetail';
+import { useFoodSessions } from '@/hooks/useFoodSessions';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -40,7 +41,7 @@ const getStatusBadgeConfig = (status: DeviceProcessingStatus) => {
     case 'PROCESSING':
       return {
         label: '처리 중',
-        backgroundColor: colors.primary,
+        backgroundColor: '#8B5CF6', // 보라색 계열
         textColor: colors.white,
       };
     case 'ERROR':
@@ -107,13 +108,19 @@ export function DeviceStatusCard({ deviceId }: DeviceStatusCardProps) {
     data: deviceDetail,
     isLoading: isDeviceLoading,
     isError: isDeviceError,
-  } = useDeviceDetail(deviceId);
+  } = useDeviceDetail(deviceId, {
+    refetchInterval: 20000, // 20초마다 자동 갱신 (429 에러 방지)
+  });
 
   const {
     data: sensorData,
     isLoading: isSensorLoading,
     isError: isSensorError,
   } = useSensorLatest(deviceId);
+
+  // 음식 투입 세션 조회 (최근 1개만)
+  const { data: sessions } = useFoodSessions(deviceId);
+  const latestSession = sessions && sessions.length > 0 ? sessions[0] : null;
 
   // 로딩 상태
   if (isDeviceLoading || isSensorLoading) {
@@ -149,8 +156,12 @@ export function DeviceStatusCard({ deviceId }: DeviceStatusCardProps) {
   }
 
   const deviceName = deviceDetail?.name || deviceDetail?.deviceName || deviceId;
-  const processingStatus = sensorData?.processingStatus || deviceDetail?.deviceStatus || 'IDLE';
-  const statusConfig = getStatusBadgeConfig(processingStatus as DeviceProcessingStatus);
+  // 동작 상태는 deviceStatus로 받음
+  const rawDeviceStatus = deviceDetail?.deviceStatus || 'IDLE';
+  const processingStatus = (
+    typeof rawDeviceStatus === 'string' ? rawDeviceStatus.toUpperCase() : 'IDLE'
+  ) as DeviceProcessingStatus;
+  const statusConfig = getStatusBadgeConfig(processingStatus);
   const lastUpdateTime = sensorData?.timestamp || deviceDetail?.updatedAt || null;
 
   // 각 센서별 상태 계산
@@ -168,29 +179,54 @@ export function DeviceStatusCard({ deviceId }: DeviceStatusCardProps) {
 
   return (
     <View style={styles.container}>
-      {/* 상단 행: 디바이스 이름 + 상태 배지 */}
+      {/* 상단 행: 디바이스 이름 + 음식 투입 세션 상태 + 상태 배지 */}
       <View style={styles.header}>
         <Text style={styles.deviceName} numberOfLines={1}>
           {deviceName}
         </Text>
-        <View
-          style={[
-            styles.statusBadge,
-            {
-              backgroundColor: statusConfig.backgroundColor,
-            },
-          ]}
-        >
-          <Text
+        <View style={styles.badgeContainer}>
+          {/* 음식 투입 세션 상태 태그 */}
+          {latestSession && (
+            <View
+              style={[
+                styles.statusBadge,
+                latestSession.status === 'in_progress'
+                  ? styles.sessionBadgeInProgress
+                  : styles.sessionBadgeCompleted,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statusBadgeText,
+                  {
+                    color: latestSession.status === 'in_progress' ? colors.warning : colors.success,
+                  },
+                ]}
+              >
+                {latestSession.status === 'in_progress' ? '투입 중' : '투입 완료'}
+              </Text>
+            </View>
+          )}
+          {/* 기기 동작 상태 배지 */}
+          <View
             style={[
-              styles.statusBadgeText,
+              styles.statusBadge,
               {
-                color: statusConfig.textColor,
+                backgroundColor: statusConfig.backgroundColor,
               },
             ]}
           >
-            {statusConfig.label}
-          </Text>
+            <Text
+              style={[
+                styles.statusBadgeText,
+                {
+                  color: statusConfig.textColor,
+                },
+              ]}
+            >
+              {statusConfig.label}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -293,6 +329,10 @@ export function DeviceStatusCard({ deviceId }: DeviceStatusCardProps) {
 }
 
 const styles = StyleSheet.create({
+  badgeContainer: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
   container: {
     backgroundColor: colors.background,
     borderRadius: 12,
@@ -386,6 +426,12 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: typography.sizes.lg,
     fontWeight: typography.weights.bold,
+  },
+  sessionBadgeCompleted: {
+    backgroundColor: colors.success + '20',
+  },
+  sessionBadgeInProgress: {
+    backgroundColor: colors.warning + '20',
   },
   statusBadge: {
     borderRadius: 12,

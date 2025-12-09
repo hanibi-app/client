@@ -33,6 +33,7 @@ import {
   getHumidityStatus,
   getTemperatureStatus,
 } from '@/features/dashboard/utils/healthScore';
+import { useDevices } from '@/features/devices/hooks';
 import { EcoScorePreviewCard } from '@/features/reports/components/EcoScorePreviewCard';
 import { WeeklySummarySection } from '@/features/reports/components/WeeklySummarySection';
 import { useCameraStatus } from '@/hooks/useCameraStatus';
@@ -424,9 +425,14 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const [isHealthScoreModalVisible, setIsHealthScoreModalVisible] = useState(false);
   const { cameraStatus, isChecking, error: cameraError, refresh } = useCameraStatus();
 
-  // 현재 선택된 기기 ID 가져오기 (deviceStore에서)
-  // 기본값으로 기존 하드코딩된 값 사용 (호환성 유지)
-  const deviceId = useCurrentDeviceId('HANIBI-ESP32-001');
+  // 페어링된 기기 목록 조회
+  const { data: devices } = useDevices();
+
+  // 현재 선택된 기기 ID 가져오기
+  // 우선순위: 1) deviceStore의 currentDeviceId, 2) 페어링된 첫 번째 기기, 3) fallback
+  const currentDeviceIdFromStore = useCurrentDeviceId();
+  const firstDeviceId = devices && devices.length > 0 ? devices[0].deviceId : null;
+  const deviceId = currentDeviceIdFromStore || firstDeviceId || 'HANIBI-ESP32-001';
 
   // 센서 데이터 조회 (화면이 포커스되어 있을 때만 폴링 - 최적화)
   const {

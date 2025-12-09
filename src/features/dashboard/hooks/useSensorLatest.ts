@@ -1,6 +1,6 @@
 /**
  * 최신 센서 데이터 조회 React Query 훅
- * 5초마다 자동으로 최신 센서 데이터를 폴링합니다.
+ * 15초마다 자동으로 최신 센서 데이터를 폴링합니다. (최적화됨)
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -41,9 +41,10 @@ function parseSensorLatest(raw: SensorLatestResponse): ParsedSensorLatest {
 
 /**
  * 최신 센서 데이터를 조회하는 React Query 훅
- * 5초마다 자동으로 데이터를 갱신합니다.
+ * 15초마다 자동으로 데이터를 갱신합니다.
  *
  * @param deviceId 조회할 기기의 ID
+ * @param options 추가 옵션 (enabled, refetchInterval 등)
  * @returns useQuery 객체 - 파싱된 센서 데이터를 반환합니다.
  *
  * @example
@@ -63,15 +64,19 @@ function parseSensorLatest(raw: SensorLatestResponse): ParsedSensorLatest {
  * }
  * ```
  */
-export function useSensorLatest(deviceId: string) {
+export function useSensorLatest(
+  deviceId: string,
+  options?: { enabled?: boolean; refetchInterval?: number | false },
+) {
   return useQuery<ParsedSensorLatest>({
     queryKey: ['sensor-latest', deviceId],
     queryFn: async () => {
       const raw = await fetchSensorLatest(deviceId);
       return parseSensorLatest(raw);
     },
-    refetchInterval: 5000, // 5초마다 자동 폴링
+    refetchInterval: options?.refetchInterval ?? 15000, // 기본 15초마다 자동 폴링 (최적화)
+    staleTime: 10 * 1000, // 10초간 캐시 유지
     retry: 1,
-    enabled: !!deviceId, // deviceId가 있을 때만 조회
+    enabled: options?.enabled !== false && !!deviceId, // deviceId가 있을 때만 조회
   });
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   Animated,
@@ -19,6 +20,7 @@ import ThreeArrowIcon from '@/assets/images/three-arrow.svg';
 import AppButton from '@/components/common/AppButton';
 import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import ModalPopup from '@/components/common/ModalPopup';
 import { CameraStatusModal } from '@/components/dashboard/CameraStatusModal';
 import { useSensorLatest } from '@/features/dashboard/hooks/useSensorLatest';
 import {
@@ -55,10 +57,25 @@ const STATUS_LABELS = {
   CRITICAL: '위험',
 };
 
+/**
+ * 100점 기준 생명점수 레벨 계산 (4등분)
+ * 0~24: CRITICAL (위험)
+ * 25~49: WARNING (경고)
+ * 50~74: CAUTION (주의)
+ * 75~100: SAFE (안전)
+ */
+const getHealthScoreLevel100 = (score: number): 'SAFE' | 'CAUTION' | 'WARNING' | 'CRITICAL' => {
+  if (score >= 75) return 'SAFE';
+  if (score >= 50) return 'CAUTION';
+  if (score >= 25) return 'WARNING';
+  return 'CRITICAL';
+};
+
 export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [isCameraModalVisible, setCameraModalVisible] = useState(false);
+  const [isHealthScoreModalVisible, setIsHealthScoreModalVisible] = useState(false);
   const { cameraStatus, isChecking, error: cameraError, refresh } = useCameraStatus();
 
   // 현재 선택된 기기 ID 가져오기 (deviceStore에서)
@@ -185,12 +202,12 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
 
   /**
    * 상태 바 위치를 계산합니다.
-   * 점수(0~40)를 그대로 퍼센트(0~40%)로 사용합니다.
-   * 0점 → 0% (왼쪽), 40점 → 40% (오른쪽으로 이동)
+   * 100점 기준 점수를 퍼센트로 변환합니다.
+   * 0점 → 0%, 100점 → 100%
    */
-  const getStatusBarPosition = (score: number): number => {
-    // 점수를 그대로 퍼센트로 사용
-    return score;
+  const getStatusBarPosition = (score100: number): number => {
+    // 100점 기준 점수를 그대로 퍼센트로 사용
+    return score100;
   };
 
   // 센서 데이터가 없으면 로딩 또는 에러 처리
@@ -234,7 +251,11 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
     );
   }
 
-  // 건강 점수 계산
+  // 디버그 모드: 더미데이터 사용 (45점 = 경고 상태)
+  const DEBUG_MODE = true;
+  const dummyHealthScore100 = DEBUG_MODE ? 45 : 0;
+
+  // 건강 점수 계산 (0~40점)
   const healthScore = calculateHealthScore({
     temperature: sensorData.temperature,
     humidity: sensorData.humidity,
@@ -242,8 +263,15 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
     gas: sensorData.gas,
   });
 
-  const statusLabel = STATUS_LABELS[healthScore.level];
-  const indicatorPosition = getStatusBarPosition(healthScore.score);
+  // 100점 기준으로 변환 (0~40점 → 0~100점)
+  // 디버그 모드에서는 더미데이터 사용
+  const healthScore100 = DEBUG_MODE ? dummyHealthScore100 : (healthScore.score / 40) * 100;
+
+  // 100점 기준으로 레벨 재계산 (4등분)
+  const healthScoreLevel100 = getHealthScoreLevel100(healthScore100);
+  const statusLabel = STATUS_LABELS[healthScoreLevel100];
+  // 화살표 위치는 100점 기준 점수에 따라 계산
+  const indicatorPosition = getStatusBarPosition(healthScore100);
 
   // 각 센서별 상태
   const tempStatus = getTemperatureStatus(sensorData.temperature);
@@ -287,9 +315,19 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
 
         {/* 생명점수 섹션 */}
         <View style={styles.scoreSection}>
-          <Text style={styles.scoreLabel}>생명점수</Text>
+          <View style={styles.scoreHeader}>
+            <Text style={styles.scoreLabel}>생명점수</Text>
+            <Pressable
+              onPress={() => setIsHealthScoreModalVisible(true)}
+              style={styles.questionMarkButton}
+              accessibilityLabel="생명점수 계산 방식 안내"
+              accessibilityHint="생명점수 계산 방식에 대한 설명을 보려면 탭하세요"
+            >
+              <MaterialIcons name="help-outline" size={20} color={colors.mutedText} />
+            </Pressable>
+          </View>
           <Text style={styles.scoreDescription}>
-            총 {healthScore.score}점으로 {statusLabel} 상태에 속해 있어요
+            총 {Math.round(healthScore100)}점으로 {statusLabel} 상태에 속해 있어요
           </Text>
 
           {/* 건강 상태 바 */}
@@ -321,7 +359,7 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
                     styles.indicatorTrianglePosition,
                     {
                       left: `${indicatorPosition}%`,
-                      borderTopColor: getStatusColor(healthScore.level as SensorStatus),
+                      borderTopColor: getStatusColor(healthScoreLevel100 as SensorStatus),
                     },
                   ]}
                 />
@@ -329,10 +367,10 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
             </View>
             {/* 상태 라벨들 */}
             <View style={styles.statusLabels}>
-              <Text style={styles.statusLabelText}>안전</Text>
-              <Text style={styles.statusLabelText}>주의</Text>
-              <Text style={styles.statusLabelText}>경고</Text>
               <Text style={styles.statusLabelText}>위험</Text>
+              <Text style={styles.statusLabelText}>경고</Text>
+              <Text style={styles.statusLabelText}>주의</Text>
+              <Text style={styles.statusLabelText}>안전</Text>
             </View>
           </View>
         </View>
@@ -425,7 +463,7 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
         {/* 안내 텍스트 */}
         <View style={styles.infoSection}>
           <Text style={styles.infoText}>
-            건강 점수를 올리려면{'\n'}어떤 부분을 바꿔야 하는지 확인해 보세요!
+            환경점수를 올리려면{'\n'}어떤 부분을 바꿔야 하는지 확인해 보세요!
           </Text>
           <Animated.View
             style={[
@@ -474,6 +512,28 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
         onClose={handleCloseCameraModal}
         onPrimaryAction={handleModalViewReport}
         onLinkPress={handleLinkCctvSettings}
+      />
+
+      {/* 생명점수 계산 방식 안내 모달 */}
+      <ModalPopup
+        visible={isHealthScoreModalVisible}
+        title="생명점수 계산 방식"
+        description={`생명점수는 4가지 센서 데이터를 종합하여 계산됩니다.
+
+• 체온 (온도): 적정 온도 범위에 따라 점수 부여
+• 수분컨디션 (습도): 적정 습도 범위에 따라 점수 부여
+• 급식량 (무게): 급식량이 있으면 점수 부여
+• 향기지수 (VOC): 공기 질에 따라 점수 부여
+
+각 센서별 점수를 합산하여 총 0~40점을 계산하고, 이를 100점 만점으로 변환합니다.
+
+점수 구간:
+• 0~24점: 위험 상태
+• 25~49점: 경고 상태
+• 50~74점: 주의 상태
+• 75~100점: 안전 상태`}
+        onConfirm={() => setIsHealthScoreModalVisible(false)}
+        onCancel={() => setIsHealthScoreModalVisible(false)}
       />
     </View>
   );
@@ -630,6 +690,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: spacing.xl,
   },
+  questionMarkButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xs,
+  },
   reportButton: {
     backgroundColor: colors.primary,
     borderRadius: 12,
@@ -661,6 +726,11 @@ const styles = StyleSheet.create({
     color: colors.mutedText,
     fontSize: typography.sizes.md,
     marginTop: spacing.md,
+  },
+  scoreHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
   },
   scoreLabel: {
     color: colors.text,

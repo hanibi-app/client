@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -13,8 +13,8 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View,
   useWindowDimensions,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -56,15 +56,23 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     deviceName: string;
   } | null>(null);
 
+  const isFocused = useIsFocused(); // 화면 포커스 상태 확인
+
   // 첫 번째 기기 정보 조회 (연결 상태, 마지막 신호 등)
   const firstDeviceId = devices && devices.length > 0 ? devices[0].deviceId : null;
-  const { data: deviceDetail } = useDevice(firstDeviceId || '');
 
-  // 페어링된 기기의 실시간 상태 조회 (주기적으로 업데이트)
+  // 페어링된 기기의 실시간 상태 조회 (화면이 포커스되어 있을 때만 폴링 - 최적화)
   const pairedDeviceId = localPairedDevice?.deviceId;
-  const { data: pairedDeviceDetail, refetch: refetchPairedDevice } = useDevice(
-    pairedDeviceId || '',
-  );
+
+  // 중복 조회 방지: pairedDeviceId가 있으면 그것만 조회, 없으면 firstDeviceId 조회
+  const targetDeviceId = pairedDeviceId || firstDeviceId || '';
+  const { data: deviceDetail, refetch: refetchDevice } = useDevice(targetDeviceId, {
+    refetchInterval: isFocused ? 30000 : false, // 포커스되어 있을 때만 30초마다 폴링
+    enabled: !!targetDeviceId, // deviceId가 있을 때만 조회
+  });
+
+  // pairedDeviceDetail은 deviceDetail과 동일 (중복 조회 방지)
+  const pairedDeviceDetail = deviceDetail;
 
   const { startLoading, stopLoading } = useLoadingStore();
   const [isEditing, setIsEditing] = useState(false);
@@ -114,30 +122,13 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   useEffect(() => {
     if (!isPairingModalVisible) {
       loadLocalDevice();
+      // 페어링 모달이 닫힐 때 자동 탐색 플래그 리셋 (새로 페어링했을 수 있음)
+      hasAutoDiscoveredRef.current = false;
     }
   }, [isPairingModalVisible]);
 
-  // 앱 시작 시 페어링된 기기가 있으면 자동으로 탐색
-  useEffect(() => {
-    const autoDiscoverPairedDevice = async () => {
-      if (localPairedDevice?.deviceId) {
-        console.log('[HomeScreen] 페어링된 기기 자동 탐색 시작:', localPairedDevice.deviceId);
-        try {
-          // 기기 목록과 페어링된 기기 상태를 즉시 refetch
-          await Promise.all([refetchDevices(), refetchPairedDevice()]);
-          console.log('[HomeScreen] 페어링된 기기 자동 탐색 완료');
-        } catch (error) {
-          console.error('[HomeScreen] 페어링된 기기 자동 탐색 실패:', error);
-          // 에러가 발생해도 계속 진행 (오프라인 모드 지원)
-        }
-      }
-    };
-
-    // 로컬 페어링 정보가 로드되고, 기기 목록 로딩이 완료된 후에 탐색
-    if (localPairedDevice && !isDevicesLoading) {
-      autoDiscoverPairedDevice();
-    }
-  }, [localPairedDevice, isDevicesLoading, refetchDevices, refetchPairedDevice]);
+  // 앱 시작 시 자동 탐색 제거 (React Query가 자동으로 데이터를 가져오므로 불필요)
+  // 사용자가 명시적으로 새로고침하거나 화면 포커스 시에만 refetch되도록 함
 
   // 서버에서 기기 목록이 로드되면 로컬 페어링 정보와 동기화
   useEffect(() => {
@@ -167,15 +158,13 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     : null;
   const isPairedDeviceOnline = pairedDeviceStatus === 'ONLINE';
 
-  // 화면 포커스 시 기기 상태 즉시 갱신
+  // 화면 포커스 시 기기 상태 갱신 (최적화: staleTime 체크 후 필요시에만 refetch)
   useFocusEffect(
     useCallback(() => {
-      // 기기 목록과 페어링된 기기 상태를 즉시 refetch
-      refetchDevices();
-      if (pairedDeviceId) {
-        refetchPairedDevice();
-      }
-    }, [refetchDevices, refetchPairedDevice, pairedDeviceId]),
+      // React Query가 자동으로 staleTime을 체크하여 필요시에만 refetch하도록 함
+      // 명시적 refetch는 제거하여 불필요한 요청 방지
+      // 데이터가 stale하지 않으면 자동으로 캐시된 데이터를 사용
+    }, []),
   );
 
   // React Query의 isLoading을 전역 로딩과 연동

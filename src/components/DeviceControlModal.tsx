@@ -54,8 +54,10 @@ export default function DeviceControlModal({
   const queryClient = useQueryClient();
   const { setCurrentDeviceId } = useDeviceStore();
 
-  // 최신 기기 정보 조회 (deviceId가 있을 때만)
-  const { data: latestDevice, refetch: refetchDevice } = useDevice(deviceId || '');
+  // 최신 기기 정보 조회 (모달이 열려있을 때만 폴링 - 최적화)
+  const { data: latestDevice, refetch: refetchDevice } = useDevice(deviceId || '', {
+    refetchInterval: visible ? 30000 : false, // 모달이 열려있을 때만 30초마다 폴링
+  });
 
   // 기기 정보가 없으면 에러 메시지 표시
   const hasDevice = !!deviceId;

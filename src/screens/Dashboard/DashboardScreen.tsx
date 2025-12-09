@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useIsFocused } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   Animated,
@@ -417,6 +418,7 @@ function HealthScoreInfoModal({ visible, onClose }: { visible: boolean; onClose:
 export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const isFocused = useIsFocused(); // 화면 포커스 상태 확인
   const [isCameraModalVisible, setCameraModalVisible] = useState(false);
   const [isHealthScoreModalVisible, setIsHealthScoreModalVisible] = useState(false);
   const { cameraStatus, isChecking, error: cameraError, refresh } = useCameraStatus();
@@ -425,13 +427,15 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   // 기본값으로 기존 하드코딩된 값 사용 (호환성 유지)
   const deviceId = useCurrentDeviceId('HANIBI-ESP32-001');
 
-  // 센서 데이터 조회 (5초마다 자동 폴링)
+  // 센서 데이터 조회 (화면이 포커스되어 있을 때만 폴링 - 최적화)
   const {
     data: sensorData,
     isLoading: isSensorLoading,
     isError: isSensorError,
     refetch: refetchSensor,
-  } = useSensorLatest(deviceId);
+  } = useSensorLatest(deviceId, {
+    refetchInterval: isFocused ? 15000 : false, // 포커스되어 있을 때만 15초마다 폴링
+  });
 
   // 상태 바 너비 계산 (패딩 제외)
   const STATUS_BAR_WIDTH = SCREEN_WIDTH - spacing.xl * 2;
@@ -901,6 +905,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
+    flex: 1,
     paddingBottom: spacing.xl,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.sm,
@@ -919,6 +924,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   errorContainer: {
+    alignItems: 'center',
     justifyContent: 'center',
   },
   errorText: {
@@ -977,6 +983,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   loadingContainer: {
+    alignItems: 'center',
     justifyContent: 'center',
   },
   metricCard: {

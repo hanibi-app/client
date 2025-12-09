@@ -55,7 +55,7 @@ export function useDevices() {
     queryKey: DEVICES_QUERY_KEY,
     queryFn: devicesApi.getDevices,
     enabled: !!accessToken, // 토큰이 있을 때만 조회
-    staleTime: 2 * 60 * 1000, // 2분간 캐시 유지
+    staleTime: 5 * 60 * 1000, // 5분간 캐시 유지 (최적화)
     retry: 1,
   });
 }
@@ -85,15 +85,18 @@ export function useDevices() {
  * }
  * ```
  */
-export function useDevice(deviceId: string) {
+export function useDevice(
+  deviceId: string,
+  options?: { enabled?: boolean; refetchInterval?: number | false },
+) {
   const accessToken = useAuthStore((state) => state.accessToken);
 
   return useQuery<DeviceApiType>({
     queryKey: deviceQueryKey(deviceId),
     queryFn: () => devicesApi.getDevice(deviceId),
-    enabled: !!deviceId && !!accessToken, // deviceId와 토큰이 있을 때만 조회
-    staleTime: 30 * 1000, // 30초간 캐시 유지 (더 자주 업데이트)
-    refetchInterval: 10 * 1000, // 10초마다 자동 refetch (실시간 상태 확인)
+    enabled: options?.enabled !== false && !!deviceId && !!accessToken, // deviceId와 토큰이 있을 때만 조회
+    staleTime: 60 * 1000, // 60초간 캐시 유지 (최적화)
+    refetchInterval: options?.refetchInterval ?? 30000, // 기본 30초마다 자동 refetch (최적화)
     retry: 1,
   });
 }

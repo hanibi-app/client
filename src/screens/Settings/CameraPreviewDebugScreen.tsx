@@ -1,13 +1,12 @@
 import React, { useCallback } from 'react';
 
-import { NavigationProp, useNavigation } from '@react-navigation/native';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { NavigationProp, useIsFocused, useNavigation } from '@react-navigation/native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppButton from '@/components/common/AppButton';
 import AppHeader from '@/components/common/AppHeader';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import { ROOT_ROUTES } from '@/constants/routes';
 import { useCameraSnapshot } from '@/features/dashboard/hooks/useCameraSnapshot';
 import { RootStackParamList } from '@/navigation/types';
 import { useCurrentDeviceId } from '@/store/deviceStore';
@@ -22,10 +21,19 @@ import { typography } from '@/theme/typography';
 export default function CameraPreviewDebugScreen() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
+  const isFocused = useIsFocused(); // 화면 포커스 상태 확인
   const deviceId = useCurrentDeviceId();
 
-  // 카메라 스냅샷 조회 (5초마다 자동 폴링)
-  const { data: snapshot, isLoading, isError, error, refetch } = useCameraSnapshot(deviceId);
+  // 카메라 스냅샷 조회 (화면이 포커스되어 있을 때만 폴링 - 최적화)
+  const {
+    data: snapshot,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useCameraSnapshot(deviceId, {
+    refetchInterval: isFocused ? 10000 : false, // 포커스되어 있을 때만 10초마다 폴링
+  });
 
   /**
    * 수동으로 스냅샷을 새로고침합니다.
@@ -111,7 +119,8 @@ export default function CameraPreviewDebugScreen() {
         {/* 안내 텍스트 */}
         <View style={styles.noteSection}>
           <Text style={styles.noteText}>
-            ※ 이 화면은 개발자 모드 전용입니다.{'\n'}※ 카메라 스냅샷은 5초마다 자동으로 갱신됩니다.
+            ※ 이 화면은 개발자 모드 전용입니다.{'\n'}※ 카메라 스냅샷은 10초마다 자동으로 갱신됩니다.
+            (최적화됨)
             {'\n'}※ TODO: 실제 카메라 API 엔드포인트 및 응답 스펙이 확정되면 업데이트 필요
           </Text>
         </View>

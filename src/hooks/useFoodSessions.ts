@@ -63,24 +63,7 @@ export function useFoodSessions(
     return buildSessionsFromEventsAndSnapshots(events, snapshots);
   }, [events, snapshots]);
 
-  // 디버깅: 이벤트 및 세션 데이터 확인
-  if (__DEV__ && events) {
-    console.log('[useFoodSessions] 데이터 확인:', {
-      deviceId,
-      eventsCount: events.length,
-      events: events.map((e) => ({
-        id: e.id,
-        eventType: e.eventType,
-        createdAt: e.createdAt,
-      })),
-      sessionsCount: sessions?.length || 0,
-      sessions: sessions?.map((s) => ({
-        sessionId: s.sessionId,
-        status: s.status,
-        startedAt: s.startedAt,
-      })),
-    });
-  }
+  // 디버깅 로그 제거 (429 에러 방지)
 
   // refetch 함수: 이벤트를 다시 가져오면 세션도 자동으로 재계산됨
   const refetch = async () => {

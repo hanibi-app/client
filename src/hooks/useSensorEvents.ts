@@ -53,18 +53,7 @@ export function useSensorEvents(
         limit,
       });
 
-      // 디버깅: 이벤트 데이터 확인
-      if (__DEV__) {
-        console.log('[useSensorEvents] 이벤트 조회 완료:', {
-          deviceId,
-          eventsCount: events.length,
-          events: events.slice(0, 5).map((e) => ({
-            id: e.id,
-            eventType: e.eventType,
-            createdAt: e.createdAt,
-          })),
-        });
-      }
+      // 디버깅 로그 제거 (429 에러 방지)
 
       return events;
     },

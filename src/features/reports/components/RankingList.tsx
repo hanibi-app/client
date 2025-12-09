@@ -13,7 +13,6 @@ import { Animated, Easing, FlatList, Pressable, StyleSheet, Text, View } from 'r
 import type { RankingItem, RankingPeriod, RankingResponse } from '@/api/types/reports';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useRanking } from '@/features/reports/hooks/useRanking';
-import { DEBUG_DEVICE_ID, useCurrentDeviceId } from '@/store/deviceStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -104,11 +103,7 @@ function generateDummyRankingData(period: RankingPeriod): RankingResponse {
 export function RankingList({ initialPeriod = 'DAILY', onPeriodChange }: RankingListProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<RankingPeriod>(initialPeriod);
 
-  // 디버그 모드 감지
-  const currentDeviceId = useCurrentDeviceId();
-  const isDebugMode = currentDeviceId === DEBUG_DEVICE_ID;
-
-  // 디버그 모드가 아닐 때만 실제 API 호출
+  // API 호출 비활성화 (무조건 더미 데이터 사용)
   const {
     data: apiData,
     isLoading: isApiLoading,
@@ -116,26 +111,23 @@ export function RankingList({ initialPeriod = 'DAILY', onPeriodChange }: Ranking
     error,
     refetch: refetchApi,
   } = useRanking(selectedPeriod, {
-    enabled: !isDebugMode, // 디버그 모드일 때는 API 호출 비활성화
+    enabled: false, // API 호출 비활성화 (무조건 더미 데이터 사용)
   });
 
   // refetch를 위한 강제 리렌더링용 상태
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // 디버그 모드일 때는 더미 데이터 사용
+  // 무조건 더미 데이터 사용
   const dummyData = useMemo(() => {
-    if (isDebugMode) {
-      const data = generateDummyRankingData(selectedPeriod);
-      if (__DEV__) {
-        console.log(
-          `[RankingList] 더미 랭킹 데이터 생성: ${selectedPeriod}, 항목 수: ${data.items.length}`,
-        );
-      }
-      return data;
+    const data = generateDummyRankingData(selectedPeriod);
+    if (__DEV__) {
+      console.log(
+        `[RankingList] 더미 랭킹 데이터 생성: ${selectedPeriod}, 항목 수: ${data.items.length}`,
+      );
     }
-    return null;
+    return data;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDebugMode, selectedPeriod, refreshKey]);
+  }, [selectedPeriod, refreshKey]);
 
   // 콘텐츠 전환 애니메이션
   const contentFadeAnim = useRef(new Animated.Value(1)).current;
@@ -187,19 +179,14 @@ export function RankingList({ initialPeriod = 'DAILY', onPeriodChange }: Ranking
   };
 
   const refetch = () => {
-    if (isDebugMode) {
-      // 디버그 모드: 강제 리렌더링으로 useMemo 재계산 트리거
-      setRefreshKey((prev) => prev + 1);
-    } else {
-      // 실제 API 재호출
-      refetchApi();
-    }
+    // 무조건 더미 데이터 사용: 강제 리렌더링으로 useMemo 재계산 트리거
+    setRefreshKey((prev) => prev + 1);
   };
 
-  // 최종 데이터 결정: 디버그 모드면 더미 데이터, 아니면 API 데이터
-  const data = isDebugMode ? dummyData : apiData;
-  const isLoading = isDebugMode ? false : isApiLoading;
-  const isError = isDebugMode ? false : isApiError;
+  // 최종 데이터 결정: 무조건 더미 데이터 사용
+  const data = dummyData;
+  const isLoading = false;
+  const isError = false;
 
   /**
    * 429 에러인지 확인하고 retry-after 헤더 값을 추출합니다.

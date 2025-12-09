@@ -60,18 +60,19 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
   // 첫 번째 기기 정보 조회 (연결 상태, 마지막 신호 등)
   const firstDeviceId = devices && devices.length > 0 ? devices[0].deviceId : null;
-  const { data: deviceDetail } = useDevice(firstDeviceId || '', {
-    refetchInterval: isFocused ? 30000 : false, // 포커스되어 있을 때만 30초마다 폴링
-  });
 
   // 페어링된 기기의 실시간 상태 조회 (화면이 포커스되어 있을 때만 폴링 - 최적화)
   const pairedDeviceId = localPairedDevice?.deviceId;
-  const { data: pairedDeviceDetail, refetch: refetchPairedDevice } = useDevice(
-    pairedDeviceId || '',
-    {
-      refetchInterval: isFocused ? 30000 : false, // 포커스되어 있을 때만 30초마다 폴링
-    },
-  );
+
+  // 중복 조회 방지: pairedDeviceId가 있으면 그것만 조회, 없으면 firstDeviceId 조회
+  const targetDeviceId = pairedDeviceId || firstDeviceId || '';
+  const { data: deviceDetail, refetch: refetchDevice } = useDevice(targetDeviceId, {
+    refetchInterval: isFocused ? 30000 : false, // 포커스되어 있을 때만 30초마다 폴링
+    enabled: !!targetDeviceId, // deviceId가 있을 때만 조회
+  });
+
+  // pairedDeviceDetail은 deviceDetail과 동일 (중복 조회 방지)
+  const pairedDeviceDetail = deviceDetail;
 
   const { startLoading, stopLoading } = useLoadingStore();
   const [isEditing, setIsEditing] = useState(false);
@@ -126,51 +127,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     }
   }, [isPairingModalVisible]);
 
-  // 자동 탐색 실행 여부 추적 (무한 루프 방지)
-  const hasAutoDiscoveredRef = useRef(false);
-  const lastPairedDeviceIdRef = useRef<string | null>(null);
-
-  // 앱 시작 시 페어링된 기기가 있으면 자동으로 탐색 (한 번만 실행)
-  useEffect(() => {
-    const autoDiscoverPairedDevice = async () => {
-      // 이미 실행했거나, 페어링된 기기가 없으면 스킵
-      if (!localPairedDevice?.deviceId) {
-        hasAutoDiscoveredRef.current = false;
-        lastPairedDeviceIdRef.current = null;
-        return;
-      }
-
-      // 같은 기기에 대해 이미 실행했으면 스킵
-      if (
-        hasAutoDiscoveredRef.current &&
-        lastPairedDeviceIdRef.current === localPairedDevice.deviceId
-      ) {
-        return;
-      }
-
-      // 로딩 중이면 대기
-      if (isDevicesLoading) {
-        return;
-      }
-
-      // 실행 플래그 설정
-      hasAutoDiscoveredRef.current = true;
-      lastPairedDeviceIdRef.current = localPairedDevice.deviceId;
-
-      console.log('[HomeScreen] 페어링된 기기 자동 탐색 시작:', localPairedDevice.deviceId);
-      try {
-        // 기기 목록과 페어링된 기기 상태를 즉시 refetch
-        await Promise.all([refetchDevices(), refetchPairedDevice()]);
-        console.log('[HomeScreen] 페어링된 기기 자동 탐색 완료');
-      } catch (error) {
-        console.error('[HomeScreen] 페어링된 기기 자동 탐색 실패:', error);
-        // 에러가 발생해도 계속 진행 (오프라인 모드 지원)
-      }
-    };
-
-    autoDiscoverPairedDevice();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localPairedDevice?.deviceId, isDevicesLoading]); // refetch 함수들은 의존성에서 제거
+  // 앱 시작 시 자동 탐색 제거 (React Query가 자동으로 데이터를 가져오므로 불필요)
+  // 사용자가 명시적으로 새로고침하거나 화면 포커스 시에만 refetch되도록 함
 
   // 서버에서 기기 목록이 로드되면 로컬 페어링 정보와 동기화
   useEffect(() => {

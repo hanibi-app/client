@@ -19,10 +19,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import EditHanibiIcon from '@/assets/images/edit-hanibi.svg';
-import DeviceControlModal from '@/components/DeviceControlModal';
-import DeviceListModal from '@/components/DeviceListModal';
 import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
 import ModalPopup from '@/components/common/ModalPopup';
+import DeviceControlModal from '@/components/DeviceControlModal';
+import DeviceListModal from '@/components/DeviceListModal';
 import { DecorativeBackground } from '@/components/home/DecorativeBackground';
 import { HomeMessageCard } from '@/components/home/HomeMessageCard';
 import { NameCard } from '@/components/home/NameCard';
@@ -623,6 +623,24 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
   },
+  rankingButton: {
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 28,
+    elevation: 6,
+    height: 56,
+    justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    width: 56,
+  },
+  rankingButtonContainer: {
+    position: 'absolute',
+    right: spacing.lg,
+    zIndex: 10,
+  },
   safeArea: {
     flex: 1,
     zIndex: 1,
@@ -657,23 +675,5 @@ const styles = StyleSheet.create({
   },
   temperatureHighlight: {
     color: colors.danger,
-  },
-  rankingButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 28,
-    elevation: 6,
-    height: 56,
-    justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    width: 56,
-  },
-  rankingButtonContainer: {
-    position: 'absolute',
-    right: spacing.lg,
-    zIndex: 10,
   },
 });

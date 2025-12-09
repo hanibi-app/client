@@ -663,11 +663,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.sm,
   },
-  podiumWrapper: {
-    marginBottom: spacing.xl,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.lg,
-  },
   podiumContent: {
     alignItems: 'center',
     flex: 1,
@@ -742,10 +737,25 @@ const styles = StyleSheet.create({
     width: '100%',
     zIndex: 1,
   },
+  podiumWrapper: {
+    marginBottom: spacing.xl,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.lg,
+  },
   rankContainer: {
     alignItems: 'center',
     flexDirection: 'row',
     minWidth: 50,
+  },
+  rankText: {
+    color: colors.text,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    minWidth: 30,
+    textAlign: 'center',
+  },
+  rankTextMe: {
+    color: colors.primary,
   },
   rankingContainer: {
     flex: 1,
@@ -772,16 +782,6 @@ const styles = StyleSheet.create({
   },
   rankingList: {
     paddingBottom: spacing.md,
-  },
-  rankText: {
-    color: colors.text,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    minWidth: 30,
-    textAlign: 'center',
-  },
-  rankTextMe: {
-    color: colors.primary,
   },
   retryButton: {
     alignItems: 'center',

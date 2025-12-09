@@ -19,10 +19,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import EditHanibiIcon from '@/assets/images/edit-hanibi.svg';
-import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
-import ModalPopup from '@/components/common/ModalPopup';
 import DeviceControlModal from '@/components/DeviceControlModal';
 import DeviceListModal from '@/components/DeviceListModal';
+import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
+import ModalPopup from '@/components/common/ModalPopup';
 import { DecorativeBackground } from '@/components/home/DecorativeBackground';
 import { HomeMessageCard } from '@/components/home/HomeMessageCard';
 import { NameCard } from '@/components/home/NameCard';
@@ -555,7 +555,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       )}
 
       {/* 랭킹 버튼 (우측 하단) */}
-      <View style={[styles.rankingButtonContainer, { bottom: insets.bottom + spacing.lg }]}>
+      <View style={[styles.rankingButtonContainer, { bottom: insets.bottom }]}>
         <Pressable onPress={handleViewRanking} style={styles.rankingButton}>
           <FontAwesome name="trophy" size={24} color={colors.white} />
         </Pressable>

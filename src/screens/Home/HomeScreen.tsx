@@ -19,10 +19,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import EditHanibiIcon from '@/assets/images/edit-hanibi.svg';
-import DeviceControlModal from '@/components/DeviceControlModal';
-import DeviceListModal from '@/components/DeviceListModal';
 import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
 import ModalPopup from '@/components/common/ModalPopup';
+import DeviceControlModal from '@/components/DeviceControlModal';
+import DeviceListModal from '@/components/DeviceListModal';
 import { DecorativeBackground } from '@/components/home/DecorativeBackground';
 import { HomeMessageCard } from '@/components/home/HomeMessageCard';
 import { NameCard } from '@/components/home/NameCard';
@@ -51,6 +51,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const updateProfile = useUpdateProfile();
   const pairDevice = usePairDevice();
 
+  const [localPairedDevice, setLocalPairedDevice] = useState<{
+    deviceId: string;
+    deviceName: string;
+  } | null>(null);
+
   // 첫 번째 기기 정보 조회 (연결 상태, 마지막 신호 등)
   const firstDeviceId = devices && devices.length > 0 ? devices[0].deviceId : null;
   const { data: deviceDetail } = useDevice(firstDeviceId || '');
@@ -72,10 +77,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     deviceName: string;
     connectionStatus?: string;
     lastHeartbeat?: string | null;
-  } | null>(null);
-  const [localPairedDevice, setLocalPairedDevice] = useState<{
-    deviceId: string;
-    deviceName: string;
   } | null>(null);
   const textInputRef = useRef<TextInput>(null);
 
@@ -322,7 +323,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   };
 
   // 로컬 페어링 정보로 기기 제어 모달 열기 (기기 목록 없이도 가능)
-  const handleOpenDeviceControlFromLocal = () => {
+  const _handleOpenDeviceControlFromLocal = () => {
     if (localPairedDevice) {
       setSelectedDeviceForModal({
         deviceId: localPairedDevice.deviceId,

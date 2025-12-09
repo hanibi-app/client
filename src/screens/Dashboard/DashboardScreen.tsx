@@ -24,6 +24,7 @@ import AppButton from '@/components/common/AppButton';
 import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { CameraStatusModal } from '@/components/dashboard/CameraStatusModal';
+import { DeviceStatusCard } from '@/components/device/DeviceStatusCard';
 import { useSensorLatest } from '@/features/dashboard/hooks/useSensorLatest';
 import {
   SensorStatus,
@@ -603,11 +604,12 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const dummyHealthScore100 = DEBUG_MODE ? 45 : 0;
 
   // 건강 점수 계산 (0~40점)
+  // null 값은 0으로 처리 (기존 로직 호환성 유지)
   const healthScore = calculateHealthScore({
-    temperature: sensorData.temperature,
-    humidity: sensorData.humidity,
-    weight: sensorData.weight,
-    gas: sensorData.gas,
+    temperature: sensorData.temperature ?? 0,
+    humidity: sensorData.humidity ?? 0,
+    weight: sensorData.weight ?? 0,
+    gas: sensorData.gas ?? 0,
   });
 
   // 100점 기준으로 변환 (0~40점 → 0~100점)
@@ -621,10 +623,14 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const indicatorPosition = getStatusBarPosition(healthScore100);
 
   // 각 센서별 상태
-  const tempStatus = getTemperatureStatus(sensorData.temperature);
-  const humidityStatus = getHumidityStatus(sensorData.humidity);
-  const gasStatus = getGasStatus(sensorData.gas);
-  const weightStatus: SensorStatus = sensorData.weight > 0 ? 'SAFE' : 'WARNING';
+  // null인 경우 기본값 0을 사용 (WARNING 상태로 처리됨)
+  const tempStatus = getTemperatureStatus(sensorData.temperature ?? 0);
+  const humidityStatus = getHumidityStatus(sensorData.humidity ?? 0);
+  const gasStatus = getGasStatus(sensorData.gas ?? 0);
+  const weightStatus: SensorStatus =
+    sensorData.weight !== null && sensorData.weight !== undefined && sensorData.weight > 0
+      ? 'SAFE'
+      : 'WARNING';
 
   return (
     <View style={styles.container}>
@@ -659,6 +665,11 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
         </View>
         {/* 구분선 */}
         <View style={styles.divider} />
+
+        {/* 디바이스 상태 카드 */}
+        <View style={styles.deviceStatusCardContainer}>
+          <DeviceStatusCard deviceId={deviceId} />
+        </View>
 
         {/* 생명점수 섹션 */}
         <View style={styles.scoreSection}>
@@ -748,7 +759,11 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
               <Text style={styles.metricLabel}>체온 (온도)</Text>
             </View>
             <Text style={styles.metricValue}>
-              {isSensorLoading ? '—' : `${Math.round(sensorData.temperature)} °C`}
+              {isSensorLoading
+                ? '—'
+                : sensorData.temperature !== null
+                  ? `${Math.round(sensorData.temperature)} °C`
+                  : '--'}
             </Text>
           </View>
 
@@ -766,7 +781,11 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
               <Text style={styles.metricLabel}>수분컨디션 (습도)</Text>
             </View>
             <Text style={styles.metricValue}>
-              {isSensorLoading ? '—' : `${Math.round(sensorData.humidity)} %`}
+              {isSensorLoading
+                ? '—'
+                : sensorData.humidity !== null
+                  ? `${Math.round(sensorData.humidity)} %`
+                  : '--'}
             </Text>
           </View>
 
@@ -784,7 +803,11 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
               <Text style={styles.metricLabel}>급식량 (무게)</Text>
             </View>
             <Text style={styles.metricValue}>
-              {isSensorLoading ? '—' : `${sensorData.weight.toFixed(1)} kg`}
+              {isSensorLoading
+                ? '—'
+                : sensorData.weight !== null
+                  ? `${sensorData.weight.toFixed(1)} kg`
+                  : '--'}
             </Text>
           </View>
 
@@ -802,7 +825,11 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
               <Text style={styles.metricLabel}>향기지수 (VOC)</Text>
             </View>
             <Text style={styles.metricValue}>
-              {isSensorLoading ? '—' : `${Math.round(sensorData.gas)} ppb`}
+              {isSensorLoading
+                ? '—'
+                : sensorData.gas !== null
+                  ? `${Math.round(sensorData.gas)} ppb`
+                  : '--'}
             </Text>
           </View>
         </View>
@@ -909,6 +936,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.sm,
+  },
+  deviceStatusCardContainer: {
+    marginTop: spacing.lg,
   },
   divider: {
     backgroundColor: colors.border,

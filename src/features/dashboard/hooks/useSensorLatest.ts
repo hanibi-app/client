@@ -1,51 +1,28 @@
 /**
  * 최신 센서 데이터 조회 React Query 훅
- * 15초마다 자동으로 최신 센서 데이터를 폴링합니다. (최적화됨)
+ * 5초마다 자동으로 최신 센서 데이터를 폴링합니다.
+ * -999 값은 null로 변환되어 반환됩니다.
  */
 
 import { useQuery } from '@tanstack/react-query';
 
-import { fetchSensorLatest, SensorLatestResponse } from '@/api/sensors';
+import { fetchSensorLatest } from '@/api/sensors';
+import type { SensorLatestData } from '@/api/types/devices';
 
 /**
- * 파싱된 센서 데이터 타입
- * 문자열 필드를 숫자로 변환한 형태입니다.
+ * 센서 데이터 폴링 간격 (밀리초)
+ * 기본값: 5초
  */
-export type ParsedSensorLatest = {
-  temperature: number;
-  humidity: number;
-  weight: number; // kg 단위
-  gas: number;
-};
-
-/**
- * 센서 응답 데이터를 파싱하여 숫자 타입으로 변환합니다.
- *
- * @param raw 원본 센서 응답 데이터
- * @returns 파싱된 센서 데이터
- */
-function parseSensorLatest(raw: SensorLatestResponse): ParsedSensorLatest {
-  const temperature = parseFloat(raw.temperature);
-  const weightGram = parseFloat(raw.weight);
-  const gas = parseFloat(raw.gas);
-
-  return {
-    temperature: Number.isFinite(temperature) ? temperature : 0,
-    humidity: raw.humidity ?? 0,
-    // TODO: 실제 단위가 다르면 주석으로 TODO를 남겨줘
-    // 현재는 g 단위로 가정하고 kg로 변환 (실제 API 응답 단위 확인 필요)
-    weight: Number.isFinite(weightGram) ? weightGram / 1000 : 0, // g -> kg 가정
-    gas: Number.isFinite(gas) ? gas : 0,
-  };
-}
+export const SENSOR_POLLING_INTERVAL = 5000;
 
 /**
  * 최신 센서 데이터를 조회하는 React Query 훅
- * 15초마다 자동으로 데이터를 갱신합니다.
+ * 5초마다 자동으로 데이터를 갱신합니다.
+ * 인증이 필요하지 않습니다.
  *
  * @param deviceId 조회할 기기의 ID
  * @param options 추가 옵션 (enabled, refetchInterval 등)
- * @returns useQuery 객체 - 파싱된 센서 데이터를 반환합니다.
+ * @returns useQuery 객체 - 센서 데이터를 반환합니다 (processingStatus 포함)
  *
  * @example
  * ```tsx
@@ -57,26 +34,30 @@ function parseSensorLatest(raw: SensorLatestResponse): ParsedSensorLatest {
  *
  *   return (
  *     <View>
- *       <Text>온도: {data?.temperature}°C</Text>
- *       <Text>습도: {data?.humidity}%</Text>
+ *       <Text>온도: {data?.temperature ?? '--'}°C</Text>
+ *       <Text>습도: {data?.humidity ?? '--'}%</Text>
+ *       <Text>처리 상태: {data?.processingStatus}</Text>
  *     </View>
  *   );
  * }
  * ```
  */
 export function useSensorLatest(
-  deviceId: string,
+  deviceId?: string,
   options?: { enabled?: boolean; refetchInterval?: number | false },
 ) {
-  return useQuery<ParsedSensorLatest>({
+  return useQuery<SensorLatestData>({
     queryKey: ['sensor-latest', deviceId],
+    enabled: options?.enabled !== false && !!deviceId,
     queryFn: async () => {
-      const raw = await fetchSensorLatest(deviceId);
-      return parseSensorLatest(raw);
+      if (!deviceId) {
+        throw new Error('deviceId is required');
+      }
+      return fetchSensorLatest(deviceId);
     },
-    refetchInterval: options?.refetchInterval ?? 15000, // 기본 15초마다 자동 폴링 (최적화)
+    refetchInterval: options?.refetchInterval ?? SENSOR_POLLING_INTERVAL, // 기본 5초마다 자동 폴링
+    refetchOnWindowFocus: false,
     staleTime: 10 * 1000, // 10초간 캐시 유지
     retry: 1,
-    enabled: options?.enabled !== false && !!deviceId, // deviceId가 있을 때만 조회
   });
 }

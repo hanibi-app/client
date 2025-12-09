@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppHeader from '@/components/common/AppHeader';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import PrimaryButton from '@/components/common/PrimaryButton';
+import { FoodSessionTimeline } from '@/components/food/FoodSessionTimeline';
 import { ROOT_ROUTES } from '@/constants/routes';
 import {
   useDeviceDetailQuery,
@@ -396,6 +397,12 @@ export default function DeviceDetailScreen() {
               ))}
             </View>
           )}
+        </View>
+
+        {/* Food input sessions timeline */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>음식 투입 기록</Text>
+          <FoodSessionTimeline deviceId={deviceId} />
         </View>
 
         {/* Delete button */}

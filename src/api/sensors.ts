@@ -3,6 +3,8 @@
  * Hanibi 백엔드의 Sensors 엔드포인트를 호출하는 함수들을 제공합니다.
  */
 
+import type { SensorEvent } from '../types/foodSession';
+
 import { ApiResponse } from './authTypes';
 import { apiClient } from './httpClient';
 import type { DeviceProcessingStatus, SensorLatestData } from './types/devices';
@@ -96,4 +98,80 @@ export async function fetchSensorLatest(deviceId: string): Promise<SensorLatestD
     processingStatus: rawData.processingStatus || 'IDLE',
     timestamp: rawData.timestamp || new Date().toISOString(),
   };
+}
+
+/**
+ * 센서 요청 로그 조회 파라미터
+ */
+export interface SensorRequestLogsParams {
+  deviceId?: string;
+  status?: 'SUCCESS' | 'VALIDATION_FAILED' | 'ERROR';
+  limit?: number;
+}
+
+/**
+ * 센서 요청 로그 응답 타입 (백엔드 원본)
+ * TODO: 실제 백엔드 응답 구조에 맞게 수정 필요
+ */
+export interface SensorRequestLogResponse {
+  id: string;
+  deviceId: string;
+  eventType?: string;
+  status: string;
+  createdAt: string;
+  payload?: Record<string, unknown>;
+  // 기타 필드들...
+}
+
+/**
+ * 센서 요청 로그 조회
+ * 센서 요청 로그를 조회하여 센서 이벤트로 변환합니다.
+ *
+ * @param params 조회 파라미터 (deviceId, status, limit)
+ * @returns Promise<SensorEvent[]> 센서 이벤트 배열
+ *
+ * @example
+ * ```tsx
+ * const events = await fetchSensorRequestLogs({
+ *   deviceId: 'HANIBI-001',
+ *   status: 'SUCCESS',
+ *   limit: 100,
+ * });
+ * ```
+ */
+export async function fetchSensorRequestLogs(
+  params: SensorRequestLogsParams = {},
+): Promise<SensorEvent[]> {
+  const { deviceId, status = 'SUCCESS', limit = 100 } = params;
+
+  const response = await apiClient.get<ApiResponse<SensorRequestLogResponse[]>>(
+    '/api/v1/sensors/request-logs',
+    {
+      params: {
+        ...(deviceId && { deviceId }),
+        ...(status && { status }),
+        limit,
+      },
+    },
+  );
+
+  // 백엔드 응답을 SensorEvent 형태로 변환
+  return response.data.data
+    .filter((log) => {
+      // eventType이 있는 로그만 필터링 (FOOD_INPUT_BEFORE, FOOD_INPUT_AFTER 등)
+      return (
+        log.eventType &&
+        ['FOOD_INPUT_BEFORE', 'FOOD_INPUT_AFTER', 'PROCESSING_COMPLETED', 'DOOR_OPENED'].includes(
+          log.eventType,
+        )
+      );
+    })
+    .map((log) => ({
+      id: log.id,
+      deviceId: log.deviceId,
+      eventType: log.eventType as SensorEvent['eventType'],
+      createdAt: log.createdAt,
+      payload: log.payload,
+      requestLogId: log.id,
+    }));
 }

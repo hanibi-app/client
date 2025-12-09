@@ -6,6 +6,8 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   Animated,
   Easing,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,7 +22,6 @@ import ThreeArrowIcon from '@/assets/images/three-arrow.svg';
 import AppButton from '@/components/common/AppButton';
 import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import ModalPopup from '@/components/common/ModalPopup';
 import { CameraStatusModal } from '@/components/dashboard/CameraStatusModal';
 import { useSensorLatest } from '@/features/dashboard/hooks/useSensorLatest';
 import {
@@ -70,6 +71,348 @@ const getHealthScoreLevel100 = (score: number): 'SAFE' | 'CAUTION' | 'WARNING' |
   if (score >= 25) return 'WARNING';
   return 'CRITICAL';
 };
+
+// 생명점수 안내 모달 스타일
+const healthScoreModalStyles = StyleSheet.create({
+  backdrop: {
+    alignItems: 'center',
+    backgroundColor: colors.text + '59', // 35% opacity
+    flex: 1,
+    justifyContent: 'center',
+  },
+  backdropPressable: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  calculationCard: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    marginTop: spacing.md,
+    padding: spacing.lg,
+  },
+  calculationText: {
+    color: colors.text,
+    fontSize: typography.sizes.md,
+    lineHeight: typography.sizes.md * 1.5,
+    marginBottom: spacing.xs,
+  },
+  card: {
+    backgroundColor: colors.background,
+    borderRadius: 16,
+    maxHeight: '85%',
+    padding: spacing.xl,
+    width: '90%',
+  },
+  closeButton: {
+    alignItems: 'center',
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
+  confirmButton: {
+    width: '100%',
+  },
+  footer: {
+    borderTopColor: colors.border,
+    borderTopWidth: 1,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+  },
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.lg,
+  },
+  highlight: {
+    color: colors.primary,
+    fontWeight: typography.weights.bold,
+  },
+  introSection: {
+    marginBottom: spacing.xl,
+  },
+  introText: {
+    color: colors.text,
+    fontSize: typography.sizes.md,
+    lineHeight: typography.sizes.md * 1.6,
+  },
+  scrollContent: {
+    paddingBottom: spacing.sm,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  section: {
+    marginBottom: spacing.xl,
+  },
+  sectionHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  sectionSubtitle: {
+    color: colors.mutedText,
+    fontSize: typography.sizes.sm,
+    marginBottom: spacing.md,
+    marginLeft: spacing.xl,
+  },
+  sectionTitle: {
+    color: colors.text,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+  },
+  sensorContent: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  sensorDescription: {
+    color: colors.mutedText,
+    fontSize: typography.sizes.sm,
+    lineHeight: typography.sizes.sm * 1.4,
+    marginTop: spacing.xs,
+  },
+  sensorIconContainer: {
+    alignItems: 'center',
+    borderRadius: 8,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  sensorItem: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    marginBottom: spacing.md,
+  },
+  sensorLabel: {
+    color: colors.text,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.bold,
+  },
+  sensorList: {
+    marginTop: spacing.md,
+  },
+  statusContent: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  statusDot: {
+    borderRadius: 6,
+    height: 12,
+    width: 12,
+  },
+  statusItem: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: spacing.md,
+  },
+  statusLabel: {
+    color: colors.mutedText,
+    fontSize: typography.sizes.sm,
+    marginTop: spacing.xs,
+  },
+  statusList: {
+    marginTop: spacing.md,
+  },
+  statusRange: {
+    color: colors.text,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.bold,
+  },
+  title: {
+    color: colors.text,
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.bold,
+  },
+});
+
+/**
+ * 생명점수 계산 방식 안내 모달 컴포넌트
+ */
+function HealthScoreInfoModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const cardRef = useRef<View>(null);
+
+  // 웹 환경에서 aria-hidden 경고 방지
+  useEffect(() => {
+    if (Platform.OS === 'web' && !visible && cardRef.current) {
+      const element = cardRef.current as unknown as HTMLElement;
+      if (element && document.activeElement && element.contains(document.activeElement)) {
+        (document.activeElement as HTMLElement)?.blur();
+      }
+    }
+  }, [visible]);
+
+  const sensorItems = [
+    {
+      icon: 'thermostat' as const,
+      label: '체온',
+      description: '적정 온도 범위(20~30℃) 유지 시 점수 부여',
+      color: '#FF6B35',
+    },
+    {
+      icon: 'water-drop' as const,
+      label: '수분컨디션',
+      description: '적정 습도 범위(40~60%) 유지 시 점수 부여',
+      color: '#4A90E2',
+    },
+    {
+      icon: 'scale' as const,
+      label: '급식량',
+      description: '급식량이 충분할 때 점수 부여',
+      color: '#7B68EE',
+    },
+    {
+      icon: 'air' as const,
+      label: '향기지수',
+      description: '공기 질이 양호할 때 점수 부여',
+      color: '#50C878',
+    },
+  ];
+
+  const statusRanges = [
+    { range: '75~100점', label: '안전 상태', color: STATUS_COLORS.SAFE },
+    { range: '50~74점', label: '주의 상태', color: STATUS_COLORS.CAUTION },
+    { range: '25~49점', label: '경고 상태', color: STATUS_COLORS.WARNING },
+    { range: '0~24점', label: '위험 상태', color: STATUS_COLORS.CRITICAL },
+  ];
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+      accessibilityViewIsModal={true}
+      statusBarTranslucent={true}
+    >
+      <View
+        style={healthScoreModalStyles.backdrop}
+        accessibilityViewIsModal={true}
+        importantForAccessibility="no-hide-descendants"
+        {...(Platform.OS === 'web' && { 'aria-hidden': false })}
+      >
+        <Pressable
+          style={healthScoreModalStyles.backdropPressable}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="모달 닫기"
+        />
+        <View
+          ref={cardRef}
+          style={healthScoreModalStyles.card}
+          accessibilityRole="none"
+          accessibilityLabel="생명점수 계산 방식"
+          {...(Platform.OS === 'web' && { 'aria-hidden': false })}
+        >
+          {/* 헤더 */}
+          <View style={healthScoreModalStyles.header}>
+            <Text style={healthScoreModalStyles.title}>생명점수 계산 방식</Text>
+            <Pressable
+              onPress={onClose}
+              style={healthScoreModalStyles.closeButton}
+              accessibilityRole="button"
+              accessibilityLabel="닫기"
+            >
+              <MaterialIcons name="close" size={24} color={colors.text} />
+            </Pressable>
+          </View>
+
+          <ScrollView
+            style={healthScoreModalStyles.scrollView}
+            contentContainerStyle={healthScoreModalStyles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* 소개 */}
+            <View style={healthScoreModalStyles.introSection}>
+              <Text style={healthScoreModalStyles.introText}>
+                생명점수는 한니비의 건강 상태를 종합적으로 평가한 점수입니다.
+              </Text>
+            </View>
+
+            {/* 측정 항목 섹션 */}
+            <View style={healthScoreModalStyles.section}>
+              <View style={healthScoreModalStyles.sectionHeader}>
+                <MaterialIcons name="sensors" size={20} color={colors.primary} />
+                <Text style={healthScoreModalStyles.sectionTitle}>측정 항목</Text>
+              </View>
+              <Text style={healthScoreModalStyles.sectionSubtitle}>
+                각 센서별로 최대 10점씩 부여됩니다
+              </Text>
+              <View style={healthScoreModalStyles.sensorList}>
+                {sensorItems.map((item, index) => (
+                  <View key={index} style={healthScoreModalStyles.sensorItem}>
+                    <View
+                      style={[
+                        healthScoreModalStyles.sensorIconContainer,
+                        { backgroundColor: item.color + '20' },
+                      ]}
+                    >
+                      <MaterialIcons name={item.icon} size={20} color={item.color} />
+                    </View>
+                    <View style={healthScoreModalStyles.sensorContent}>
+                      <Text style={healthScoreModalStyles.sensorLabel}>{item.label}</Text>
+                      <Text style={healthScoreModalStyles.sensorDescription}>
+                        {item.description}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            {/* 점수 계산 섹션 */}
+            <View style={healthScoreModalStyles.section}>
+              <View style={healthScoreModalStyles.sectionHeader}>
+                <MaterialIcons name="calculate" size={20} color={colors.primary} />
+                <Text style={healthScoreModalStyles.sectionTitle}>점수 계산</Text>
+              </View>
+              <View style={healthScoreModalStyles.calculationCard}>
+                <Text style={healthScoreModalStyles.calculationText}>
+                  4개 센서 점수를 합산하여 총{' '}
+                  <Text style={healthScoreModalStyles.highlight}>0~40점</Text>을 계산하고,
+                </Text>
+                <Text style={healthScoreModalStyles.calculationText}>
+                  이를 <Text style={healthScoreModalStyles.highlight}>100점 만점</Text>으로
+                  변환합니다.
+                </Text>
+              </View>
+            </View>
+
+            {/* 상태 구간 섹션 */}
+            <View style={healthScoreModalStyles.section}>
+              <View style={healthScoreModalStyles.sectionHeader}>
+                <MaterialIcons name="bar-chart" size={20} color={colors.primary} />
+                <Text style={healthScoreModalStyles.sectionTitle}>상태 구간</Text>
+              </View>
+              <View style={healthScoreModalStyles.statusList}>
+                {statusRanges.map((status, index) => (
+                  <View key={index} style={healthScoreModalStyles.statusItem}>
+                    <View
+                      style={[healthScoreModalStyles.statusDot, { backgroundColor: status.color }]}
+                    />
+                    <View style={healthScoreModalStyles.statusContent}>
+                      <Text style={healthScoreModalStyles.statusRange}>{status.range}</Text>
+                      <Text style={healthScoreModalStyles.statusLabel}>{status.label}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </ScrollView>
+
+          {/* 하단 버튼 */}
+          <View style={healthScoreModalStyles.footer}>
+            <AppButton
+              label="확인"
+              variant="primary"
+              onPress={onClose}
+              style={healthScoreModalStyles.confirmButton}
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
 
 export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
@@ -337,10 +680,10 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
               <Svg height={STATUS_BAR_HEIGHT} width={STATUS_BAR_WIDTH} style={styles.statusBarSvg}>
                 <Defs>
                   <SvgLinearGradient id="healthGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <Stop offset="0%" stopColor={STATUS_COLORS.SAFE} stopOpacity="1" />
-                    <Stop offset="33.33%" stopColor={STATUS_COLORS.CAUTION} stopOpacity="1" />
-                    <Stop offset="66.66%" stopColor={STATUS_COLORS.WARNING} stopOpacity="1" />
-                    <Stop offset="100%" stopColor={STATUS_COLORS.CRITICAL} stopOpacity="1" />
+                    <Stop offset="0%" stopColor={STATUS_COLORS.CRITICAL} stopOpacity="1" />
+                    <Stop offset="33.33%" stopColor={STATUS_COLORS.WARNING} stopOpacity="1" />
+                    <Stop offset="66.66%" stopColor={STATUS_COLORS.CAUTION} stopOpacity="1" />
+                    <Stop offset="100%" stopColor={STATUS_COLORS.SAFE} stopOpacity="1" />
                   </SvgLinearGradient>
                 </Defs>
                 {/* 양 끝이 둥근 캡 형태 */}
@@ -515,25 +858,9 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
       />
 
       {/* 생명점수 계산 방식 안내 모달 */}
-      <ModalPopup
+      <HealthScoreInfoModal
         visible={isHealthScoreModalVisible}
-        title="생명점수 계산 방식"
-        description={`생명점수는 4가지 센서 데이터를 종합하여 계산됩니다.
-
-• 체온 (온도): 적정 온도 범위에 따라 점수 부여
-• 수분컨디션 (습도): 적정 습도 범위에 따라 점수 부여
-• 급식량 (무게): 급식량이 있으면 점수 부여
-• 향기지수 (VOC): 공기 질에 따라 점수 부여
-
-각 센서별 점수를 합산하여 총 0~40점을 계산하고, 이를 100점 만점으로 변환합니다.
-
-점수 구간:
-• 0~24점: 위험 상태
-• 25~49점: 경고 상태
-• 50~74점: 주의 상태
-• 75~100점: 안전 상태`}
-        onConfirm={() => setIsHealthScoreModalVisible(false)}
-        onCancel={() => setIsHealthScoreModalVisible(false)}
+        onClose={() => setIsHealthScoreModalVisible(false)}
       />
     </View>
   );

@@ -338,10 +338,17 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
     if (dataPoint.timestamp) {
       date = new Date(dataPoint.timestamp);
     } else {
-      // time 문자열에서 시간 추출 (HH:mm 형식)
-      const hour = parseInt(dataPoint.time.split(':')[0], 10);
-      date = new Date();
-      date.setHours(hour, 0, 0, 0);
+      // time 문자열이 ISO String 형식인지 확인
+      const isoDate = new Date(dataPoint.time);
+      if (!isNaN(isoDate.getTime())) {
+        // ISO String 형식이면 그대로 사용
+        date = isoDate;
+      } else {
+        // HH:mm 형식이면 시간만 추출
+        const hour = parseInt(dataPoint.time.split(':')[0], 10);
+        date = new Date();
+        date.setHours(hour, 0, 0, 0);
+      }
     }
 
     const hour = date.getHours();
@@ -398,7 +405,13 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
             const date = new Date(pointWithTimestamp.timestamp);
             hour = date.getHours();
           } else {
-            hour = parseInt(point.time.split(':')[0], 10);
+            // ISO String 형식인지 확인
+            const isoDate = new Date(point.time);
+            if (!isNaN(isoDate.getTime())) {
+              hour = isoDate.getHours();
+            } else {
+              hour = parseInt(point.time.split(':')[0], 10);
+            }
           }
 
           // 정확히 일치하고 아직 추가되지 않은 경우
@@ -426,12 +439,20 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
       for (let i = 0; i < totalPoints; i++) {
         const point = reportData.dataPoints[i];
         const pointWithTimestamp = point as ReportDataPoint | { time: string; timestamp?: number };
-        const date = pointWithTimestamp.timestamp
-          ? new Date(pointWithTimestamp.timestamp)
-          : new Date();
-        if (!pointWithTimestamp.timestamp) {
-          const hour = parseInt(point.time.split(':')[0], 10);
-          date.setHours(hour, 0, 0, 0);
+        let date: Date;
+        if (pointWithTimestamp.timestamp) {
+          date = new Date(pointWithTimestamp.timestamp);
+        } else {
+          // ISO String 형식인지 확인
+          const isoDate = new Date(point.time);
+          if (!isNaN(isoDate.getTime())) {
+            date = isoDate;
+          } else {
+            // HH:mm 형식이면 시간만 추출
+            const hour = parseInt(point.time.split(':')[0], 10);
+            date = new Date();
+            date.setHours(hour, 0, 0, 0);
+          }
         }
 
         const dayOfWeek = date.getDay();
@@ -452,12 +473,20 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
       for (let i = 0; i < totalPoints; i++) {
         const point = reportData.dataPoints[i];
         const pointWithTimestamp = point as ReportDataPoint | { time: string; timestamp?: number };
-        const date = pointWithTimestamp.timestamp
-          ? new Date(pointWithTimestamp.timestamp)
-          : new Date();
-        if (!pointWithTimestamp.timestamp) {
-          const hour = parseInt(point.time.split(':')[0], 10);
-          date.setHours(hour, 0, 0, 0);
+        let date: Date;
+        if (pointWithTimestamp.timestamp) {
+          date = new Date(pointWithTimestamp.timestamp);
+        } else {
+          // ISO String 형식인지 확인
+          const isoDate = new Date(point.time);
+          if (!isNaN(isoDate.getTime())) {
+            date = isoDate;
+          } else {
+            // HH:mm 형식이면 시간만 추출
+            const hour = parseInt(point.time.split(':')[0], 10);
+            date = new Date();
+            date.setHours(hour, 0, 0, 0);
+          }
         }
 
         const day = date.getDate();
@@ -489,12 +518,20 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
               const lastPointWithTimestamp = lastPoint as
                 | ReportDataPoint
                 | { time: string; timestamp?: number };
-              const lastDate = lastPointWithTimestamp.timestamp
-                ? new Date(lastPointWithTimestamp.timestamp)
-                : new Date();
-              if (!lastPointWithTimestamp.timestamp) {
-                const hour = parseInt(lastPoint.time.split(':')[0], 10);
-                lastDate.setHours(hour, 0, 0, 0);
+              let lastDate: Date;
+              if (lastPointWithTimestamp.timestamp) {
+                lastDate = new Date(lastPointWithTimestamp.timestamp);
+              } else {
+                // ISO String 형식인지 확인
+                const isoDate = new Date(lastPoint.time);
+                if (!isNaN(isoDate.getTime())) {
+                  lastDate = isoDate;
+                } else {
+                  // HH:mm 형식이면 시간만 추출
+                  const hour = parseInt(lastPoint.time.split(':')[0], 10);
+                  lastDate = new Date();
+                  lastDate.setHours(hour, 0, 0, 0);
+                }
               }
               const lastDay = lastDate.getDate();
 
@@ -520,12 +557,20 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
       for (let i = 0; i < totalPoints; i++) {
         const point = reportData.dataPoints[i];
         const pointWithTimestamp = point as ReportDataPoint | { time: string; timestamp?: number };
-        const date = pointWithTimestamp.timestamp
-          ? new Date(pointWithTimestamp.timestamp)
-          : new Date();
-        if (!pointWithTimestamp.timestamp) {
-          const hour = parseInt(point.time.split(':')[0], 10);
-          date.setHours(hour, 0, 0, 0);
+        let date: Date;
+        if (pointWithTimestamp.timestamp) {
+          date = new Date(pointWithTimestamp.timestamp);
+        } else {
+          // ISO String 형식인지 확인
+          const isoDate = new Date(point.time);
+          if (!isNaN(isoDate.getTime())) {
+            date = isoDate;
+          } else {
+            // HH:mm 형식이면 시간만 추출
+            const hour = parseInt(point.time.split(':')[0], 10);
+            date = new Date();
+            date.setHours(hour, 0, 0, 0);
+          }
         }
 
         const month = date.getMonth() + 1; // getMonth()는 0부터 시작하므로 +1

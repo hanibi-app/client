@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -13,8 +13,8 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View,
   useWindowDimensions,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -56,14 +56,21 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     deviceName: string;
   } | null>(null);
 
+  const isFocused = useIsFocused(); // 화면 포커스 상태 확인
+
   // 첫 번째 기기 정보 조회 (연결 상태, 마지막 신호 등)
   const firstDeviceId = devices && devices.length > 0 ? devices[0].deviceId : null;
-  const { data: deviceDetail } = useDevice(firstDeviceId || '');
+  const { data: deviceDetail } = useDevice(firstDeviceId || '', {
+    refetchInterval: isFocused ? 30000 : false, // 포커스되어 있을 때만 30초마다 폴링
+  });
 
-  // 페어링된 기기의 실시간 상태 조회 (주기적으로 업데이트)
+  // 페어링된 기기의 실시간 상태 조회 (화면이 포커스되어 있을 때만 폴링 - 최적화)
   const pairedDeviceId = localPairedDevice?.deviceId;
   const { data: pairedDeviceDetail, refetch: refetchPairedDevice } = useDevice(
     pairedDeviceId || '',
+    {
+      refetchInterval: isFocused ? 30000 : false, // 포커스되어 있을 때만 30초마다 폴링
+    },
   );
 
   const { startLoading, stopLoading } = useLoadingStore();
@@ -167,15 +174,13 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     : null;
   const isPairedDeviceOnline = pairedDeviceStatus === 'ONLINE';
 
-  // 화면 포커스 시 기기 상태 즉시 갱신
+  // 화면 포커스 시 기기 상태 갱신 (최적화: staleTime 체크 후 필요시에만 refetch)
   useFocusEffect(
     useCallback(() => {
-      // 기기 목록과 페어링된 기기 상태를 즉시 refetch
-      refetchDevices();
-      if (pairedDeviceId) {
-        refetchPairedDevice();
-      }
-    }, [refetchDevices, refetchPairedDevice, pairedDeviceId]),
+      // React Query가 자동으로 staleTime을 체크하여 필요시에만 refetch하도록 함
+      // 명시적 refetch는 제거하여 불필요한 요청 방지
+      // 데이터가 stale하지 않으면 자동으로 캐시된 데이터를 사용
+    }, []),
   );
 
   // React Query의 isLoading을 전역 로딩과 연동

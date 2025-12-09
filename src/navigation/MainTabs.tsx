@@ -22,6 +22,7 @@ export default function MainTabs() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: colors.white,
+          borderTopColor: colors.white,
         },
       }}
     >

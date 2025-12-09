@@ -31,6 +31,9 @@ export const colors = {
   lightGrayOverlay: 'rgba(156, 163, 175, 0.15)', // 하이라이트 오버레이
   lightGreen: '#B8E092', // 연한 초록 (화살표 그라데이션)
   lightestGreen: '#E5F5E5', // 가장 연한 초록 (화살표 그라데이션)
+  gold: '#FFD700', // 금색 (시상대 1위)
+  silver: '#C0C0C0', // 은색 (시상대 2위)
+  bronze: '#CD7F32', // 동색 (시상대 3위)
   hanibi: {
     temp: {
       low: '#60a5fa',

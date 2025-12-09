@@ -1,3 +1,5 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
+
 import {
   DASHBOARD_STACK_ROUTES,
   HOME_STACK_ROUTES,
@@ -34,7 +36,7 @@ export type RootStackParamList = {
 // Main Tabs ParamList (하단 탭 네비게이터)
 export type TabParamList = {
   [MAIN_TAB_ROUTES.HOME_TAB]: undefined;
-  [MAIN_TAB_ROUTES.DASHBOARD_TAB]: undefined;
+  [MAIN_TAB_ROUTES.DASHBOARD_TAB]: NavigatorScreenParams<DashboardStackParamList> | undefined;
   [MAIN_TAB_ROUTES.SETTINGS_TAB]: undefined;
 };
 
@@ -44,6 +46,7 @@ export type HomeStackParamList = {
   [HOME_STACK_ROUTES.CHARACTER_CUSTOMIZE]: undefined;
   [HOME_STACK_ROUTES.CHARACTER_NAME_EDIT]: undefined;
   [HOME_STACK_ROUTES.PAIR_DEVICE]: undefined;
+  [HOME_STACK_ROUTES.RANKING]: undefined;
 };
 
 // Dashboard Stack ParamList (대시보드 스택 네비게이터)

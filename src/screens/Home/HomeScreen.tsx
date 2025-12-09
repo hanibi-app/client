@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -50,6 +51,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const updateProfile = useUpdateProfile();
   const pairDevice = usePairDevice();
 
+  const [localPairedDevice, setLocalPairedDevice] = useState<{
+    deviceId: string;
+    deviceName: string;
+  } | null>(null);
+
   // 첫 번째 기기 정보 조회 (연결 상태, 마지막 신호 등)
   const firstDeviceId = devices && devices.length > 0 ? devices[0].deviceId : null;
   const { data: deviceDetail } = useDevice(firstDeviceId || '');
@@ -71,10 +77,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     deviceName: string;
     connectionStatus?: string;
     lastHeartbeat?: string | null;
-  } | null>(null);
-  const [localPairedDevice, setLocalPairedDevice] = useState<{
-    deviceId: string;
-    deviceName: string;
   } | null>(null);
   const textInputRef = useRef<TextInput>(null);
 
@@ -321,7 +323,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   };
 
   // 로컬 페어링 정보로 기기 제어 모달 열기 (기기 목록 없이도 가능)
-  const handleOpenDeviceControlFromLocal = () => {
+  const _handleOpenDeviceControlFromLocal = () => {
     if (localPairedDevice) {
       setSelectedDeviceForModal({
         deviceId: localPairedDevice.deviceId,
@@ -339,6 +341,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const handleCloseDeviceControlModal = () => {
     setIsDeviceControlModalVisible(false);
     setSelectedDeviceForModal(null);
+  };
+
+  // 랭킹 화면으로 이동
+  const handleViewRanking = () => {
+    navigation.navigate('Ranking');
   };
 
   // 페어링 확인
@@ -547,6 +554,13 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           onClose={handleCloseDeviceControlModal}
         />
       )}
+
+      {/* 랭킹 버튼 (우측 하단) */}
+      <View style={[styles.rankingButtonContainer, { bottom: insets.bottom }]}>
+        <Pressable onPress={handleViewRanking} style={styles.rankingButton}>
+          <FontAwesome name="trophy" size={24} color={colors.white} />
+        </Pressable>
+      </View>
     </LinearGradient>
   );
 }
@@ -609,6 +623,24 @@ const styles = StyleSheet.create({
   nameCardWrapper: {
     alignSelf: 'center',
     width: '100%',
+  },
+  rankingButton: {
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 28,
+    elevation: 6,
+    height: 56,
+    justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    width: 56,
+  },
+  rankingButtonContainer: {
+    position: 'absolute',
+    right: spacing.lg,
+    zIndex: 10,
   },
   safeArea: {
     flex: 1,

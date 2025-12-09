@@ -239,8 +239,39 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     }
   }, [isPaired, speechBubbleScaleAnim, speechBubbleTranslateYAnim]);
 
-  // 진행률 계산 (30% 남음 = 70% 진행)
-  const progress = 70;
+  // 생명점수 계산 (더미 데이터 - 디버그 모드)
+  // TODO: 실제 센서 데이터로 교체 필요
+  const DEBUG_MODE = true; // 디버그 모드 플래그
+  const dummyHealthScore = DEBUG_MODE ? 25 : 0; // 25점 (CAUTION 상태)
+  const healthScore = dummyHealthScore;
+  const healthScoreMax = 40;
+
+  // 생명점수에 따른 레벨 계산
+  const getHealthScoreLevel = (score: number): 'SAFE' | 'CAUTION' | 'WARNING' | 'CRITICAL' => {
+    if (score >= 30) return 'SAFE';
+    if (score >= 20) return 'CAUTION';
+    if (score >= 10) return 'WARNING';
+    return 'CRITICAL';
+  };
+
+  const healthScoreLevel = getHealthScoreLevel(healthScore);
+  const healthScoreLabels = {
+    SAFE: '안전',
+    CAUTION: '주의',
+    WARNING: '경고',
+    CRITICAL: '위험',
+  };
+
+  // 진행률 계산 (생명점수를 퍼센트로 변환: 0~40점 → 0~100%)
+  const progress = (healthScore / healthScoreMax) * 100;
+
+  // 생명점수에 따른 문구 생성
+  const getHealthScoreDescription = (score: number, level: string): string => {
+    const levelLabel = healthScoreLabels[level as keyof typeof healthScoreLabels];
+    return `생명점수 ${score}점으로 ${levelLabel} 상태입니다`;
+  };
+
+  const progressDescription = getHealthScoreDescription(healthScore, healthScoreLevel);
 
   const handleEditPress = () => {
     setEditValue(characterName);
@@ -504,7 +535,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
           <ProgressBar
             progress={progress}
-            description="다 먹기까지 30% 남음"
+            description={progressDescription}
             textColor={PROGRESS_TEXT_COLOR}
           />
         </View>

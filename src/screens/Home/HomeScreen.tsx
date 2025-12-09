@@ -247,9 +247,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
   // 진행률 계산 및 실시간 업데이트
   useEffect(() => {
-    if (isProcessing && latestSession) {
+    if (isProcessing) {
       const calculateProgress = () => {
-        const progressData = calculateProcessingProgress(latestSession);
+        // 세션이 있으면 세션 사용, 없으면 deviceDetail의 updatedAt을 fallback으로 사용
+        const fallbackStartTime = pairedDeviceDetail?.updatedAt;
+        const progressData = calculateProcessingProgress(latestSession, fallbackStartTime);
         if (progressData) {
           setCurrentProgress(progressData.progress);
           setCurrentRemainingPercent(progressData.remainingPercent);
@@ -270,7 +272,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       setCurrentProgress(0);
       setCurrentRemainingPercent(0);
     }
-  }, [isProcessing, latestSession]);
+  }, [isProcessing, latestSession, pairedDeviceDetail?.updatedAt]);
 
   const progress = currentProgress;
   const remainingPercent = currentRemainingPercent;

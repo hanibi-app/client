@@ -29,37 +29,37 @@ export function weightToMotorTime(weightDiff: number): number {
 /**
  * 처리 진행률을 계산합니다
  *
- * @param session 음식 투입 세션
+ * @param session 음식 투입 세션 (optional)
+ * @param fallbackStartTime 세션이 없을 때 사용할 시작 시점 (optional)
  * @returns 진행률 (0~100) 및 남은 퍼센트, null이면 계산 불가
  */
-export function calculateProcessingProgress(session: FoodInputSession | null): {
+export function calculateProcessingProgress(
+  session: FoodInputSession | null,
+  fallbackStartTime?: string,
+): {
   progress: number; // 진행률 (0~100)
   remainingPercent: number; // 남은 퍼센트 (0~100)
 } | null {
-  // 세션이 없거나 무게 정보가 없으면 계산 불가
-  if (!session || !session.weightChange?.diff || session.weightChange.diff <= 0) {
-    return null;
-  }
-
   // 처리 시작 시점 확인
-  // FOOD_INPUT_AFTER 이벤트가 있으면 그 시점부터 처리 시작
-  // (하드웨어에서 STATE_MIXING으로 변경되는 시점 = FOOD_INPUT_AFTER 직후)
-  const processingStartTime = session.afterEvent?.createdAt;
+  // 우선순위: 1) afterEvent.createdAt, 2) session.startedAt, 3) fallbackStartTime
+  let processingStartTime: string | undefined;
+
+  if (session) {
+    // FOOD_INPUT_AFTER 이벤트가 있으면 그 시점부터 처리 시작
+    // (하드웨어에서 STATE_MIXING으로 변경되는 시점 = FOOD_INPUT_AFTER 직후)
+    processingStartTime = session.afterEvent?.createdAt || session.startedAt;
+  } else {
+    // 세션이 없으면 fallbackStartTime 사용
+    processingStartTime = fallbackStartTime;
+  }
 
   if (!processingStartTime) {
-    // FOOD_INPUT_AFTER 이벤트가 없으면 처리 시작 전이므로 계산 불가
+    // 시작 시점을 알 수 없으면 계산 불가
     return null;
   }
 
-  // PROCESSING_COMPLETED 이벤트가 있으면 이미 완료된 것
-  // 하지만 deviceStatus가 PROCESSING이면 아직 진행 중일 수 있으므로 계산 진행
-
-  // 총 처리 시간 계산 (무게 차이를 시간으로 변환)
-  const totalTimeMs = weightToMotorTime(session.weightChange.diff);
-
-  if (totalTimeMs <= 0) {
-    return null;
-  }
+  // 총 처리 시간 계산 - 무조건 7분(420초) 사용
+  const totalTimeMs = 7 * 60 * 1000; // 7분 = 420초 = 420000ms
 
   // 현재 시간
   const now = new Date().getTime();

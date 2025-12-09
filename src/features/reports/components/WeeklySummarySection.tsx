@@ -53,6 +53,10 @@ function formatChangeRate(changeRate: number): string {
 export function WeeklySummarySection({ style }: WeeklySummarySectionProps) {
   const { data, isLoading, isError } = useWeeklySummary();
 
+  const weekRange = data
+    ? `${formatWeekDate(data.weekStart)} ~ ${formatWeekDate(data.weekEnd)}`
+    : '';
+
   // 로딩 상태
   if (isLoading) {
     return (
@@ -80,8 +84,6 @@ export function WeeklySummarySection({ style }: WeeklySummarySectionProps) {
       </View>
     );
   }
-
-  const weekRange = `${formatWeekDate(data.weekStart)} ~ ${formatWeekDate(data.weekEnd)}`;
 
   // 메트릭 데이터
   const metrics = [
@@ -113,10 +115,6 @@ export function WeeklySummarySection({ style }: WeeklySummarySectionProps) {
       {/* 헤더 */}
       <View style={styles.header}>
         <Text style={styles.title}>이번 주 성과 요약</Text>
-      </View>
-
-      {/* 주간 기간 표시 */}
-      <View style={styles.weekRangeContainer}>
         <Text style={styles.weekRangeText}>{weekRange}</Text>
       </View>
 
@@ -206,6 +204,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: spacing.md,
   },
   loadingContainer: {
@@ -260,10 +261,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: typography.sizes.lg,
     fontWeight: typography.weights.bold,
-  },
-  weekRangeContainer: {
-    alignItems: 'center',
-    marginBottom: spacing.md,
   },
   weekRangeText: {
     color: colors.mutedText,

@@ -10,6 +10,12 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import type { DeviceProcessingStatus } from '@/api/types/devices';
 import { useSensorLatest } from '@/features/dashboard/hooks/useSensorLatest';
+import {
+  SensorStatus,
+  getGasStatus,
+  getHumidityStatus,
+  getTemperatureStatus,
+} from '@/features/dashboard/utils/healthScore';
 import { useDeviceDetail } from '@/hooks/useDeviceDetail';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
@@ -60,6 +66,32 @@ const formatSensorValue = (value: number | null, unit: string): string => {
     return '--';
   }
   return `${Math.round(value)}${unit}`;
+};
+
+/**
+ * 센서 상태별 색상
+ */
+const STATUS_COLORS = {
+  SAFE: '#40EA87', // 초록
+  CAUTION: '#FFD700', // 노랑
+  WARNING: '#FF7017', // 주황
+  CRITICAL: '#ED5B5B', // 빨강
+};
+
+/**
+ * 센서 상태에 따른 색상을 반환합니다.
+ */
+const getStatusColor = (status: SensorStatus): string => {
+  switch (status) {
+    case 'SAFE':
+      return STATUS_COLORS.SAFE;
+    case 'CAUTION':
+      return STATUS_COLORS.CAUTION;
+    case 'WARNING':
+      return STATUS_COLORS.WARNING;
+    default:
+      return STATUS_COLORS.CRITICAL;
+  }
 };
 
 /**
@@ -121,6 +153,19 @@ export function DeviceStatusCard({ deviceId }: DeviceStatusCardProps) {
   const statusConfig = getStatusBadgeConfig(processingStatus as DeviceProcessingStatus);
   const lastUpdateTime = sensorData?.timestamp || deviceDetail?.updatedAt || null;
 
+  // 각 센서별 상태 계산
+  const tempStatus = getTemperatureStatus(sensorData?.temperature ?? 0);
+  const humidityStatus = getHumidityStatus(sensorData?.humidity ?? 0);
+  const gasStatus = getGasStatus(sensorData?.gas ?? 0);
+  // 무게는 가벼울수록 초록색 (그램 단위로 들어옴, 0에 가까울수록 좋음)
+  const getWeightStatus = (weight: number | null | undefined): SensorStatus => {
+    if (weight === null || weight === undefined) return 'WARNING';
+    if (weight <= 1000) return 'SAFE'; // 1000g(1kg) 이하면 초록색
+    if (weight <= 2000) return 'CAUTION'; // 1000~2000g(1~2kg)이면 노란색
+    return 'WARNING'; // 2000g(2kg) 이상이면 주황색
+  };
+  const weightStatus = getWeightStatus(sensorData?.weight);
+
   return (
     <View style={styles.container}>
       {/* 상단 행: 디바이스 이름 + 상태 배지 */}
@@ -154,8 +199,18 @@ export function DeviceStatusCard({ deviceId }: DeviceStatusCardProps) {
         {/* 온도 */}
         <View style={styles.sensorItem}>
           <View style={styles.sensorHeader}>
-            <MaterialIcons name="thermostat" size={20} color={colors.hanibi.temp.medium} />
-            <Text style={styles.sensorLabel}>온도</Text>
+            <View style={styles.sensorLabelContainer}>
+              <MaterialIcons name="thermostat" size={20} color={colors.hanibi.temp.medium} />
+              <Text style={styles.sensorLabel}>온도</Text>
+            </View>
+            <View
+              style={[
+                styles.statusDot,
+                {
+                  backgroundColor: getStatusColor(tempStatus),
+                },
+              ]}
+            />
           </View>
           <Text style={styles.sensorValue}>
             {formatSensorValue(sensorData?.temperature ?? null, '℃')}
@@ -165,8 +220,18 @@ export function DeviceStatusCard({ deviceId }: DeviceStatusCardProps) {
         {/* 습도 */}
         <View style={styles.sensorItem}>
           <View style={styles.sensorHeader}>
-            <MaterialIcons name="water-drop" size={20} color={colors.hanibi.hum.medium} />
-            <Text style={styles.sensorLabel}>습도</Text>
+            <View style={styles.sensorLabelContainer}>
+              <MaterialIcons name="water-drop" size={20} color={colors.hanibi.hum.medium} />
+              <Text style={styles.sensorLabel}>습도</Text>
+            </View>
+            <View
+              style={[
+                styles.statusDot,
+                {
+                  backgroundColor: getStatusColor(humidityStatus),
+                },
+              ]}
+            />
           </View>
           <Text style={styles.sensorValue}>
             {formatSensorValue(sensorData?.humidity ?? null, '%')}
@@ -176,12 +241,22 @@ export function DeviceStatusCard({ deviceId }: DeviceStatusCardProps) {
         {/* 무게 */}
         <View style={styles.sensorItem}>
           <View style={styles.sensorHeader}>
-            <MaterialIcons name="scale" size={20} color={colors.mutedText} />
-            <Text style={styles.sensorLabel}>무게</Text>
+            <View style={styles.sensorLabelContainer}>
+              <MaterialIcons name="scale" size={20} color={colors.mutedText} />
+              <Text style={styles.sensorLabel}>무게</Text>
+            </View>
+            <View
+              style={[
+                styles.statusDot,
+                {
+                  backgroundColor: getStatusColor(weightStatus),
+                },
+              ]}
+            />
           </View>
           <Text style={styles.sensorValue}>
             {sensorData?.weight !== null && sensorData?.weight !== undefined
-              ? `${sensorData.weight.toFixed(1)}kg`
+              ? `${(sensorData.weight / 1000).toFixed(1)}kg`
               : '--'}
           </Text>
         </View>
@@ -189,8 +264,18 @@ export function DeviceStatusCard({ deviceId }: DeviceStatusCardProps) {
         {/* 가스 */}
         <View style={styles.sensorItem}>
           <View style={styles.sensorHeader}>
-            <MaterialIcons name="air" size={20} color={colors.hanibi.index.medium} />
-            <Text style={styles.sensorLabel}>가스</Text>
+            <View style={styles.sensorLabelContainer}>
+              <MaterialIcons name="air" size={20} color={colors.hanibi.index.medium} />
+              <Text style={styles.sensorLabel}>가스</Text>
+            </View>
+            <View
+              style={[
+                styles.statusDot,
+                {
+                  backgroundColor: getStatusColor(gasStatus),
+                },
+              ]}
+            />
           </View>
           <Text style={styles.sensorValue}>
             {formatSensorValue(sensorData?.gas ?? null, 'ppb')}
@@ -277,8 +362,9 @@ const styles = StyleSheet.create({
   sensorHeader: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: spacing.xs,
+    justifyContent: 'space-between',
     marginBottom: spacing.xs,
+    width: '100%',
   },
   sensorItem: {
     backgroundColor: colors.gray50,
@@ -290,6 +376,11 @@ const styles = StyleSheet.create({
     color: colors.mutedText,
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.medium,
+  },
+  sensorLabelContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
   },
   sensorValue: {
     color: colors.text,
@@ -304,5 +395,10 @@ const styles = StyleSheet.create({
   statusBadgeText: {
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.bold,
+  },
+  statusDot: {
+    borderRadius: 4,
+    height: 8,
+    width: 8,
   },
 });

@@ -622,15 +622,15 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   // 화살표 위치는 100점 기준 점수에 따라 계산
   const indicatorPosition = getStatusBarPosition(healthScore100);
 
-  // 각 센서별 상태
+  // 각 센서별 상태 (메트릭 카드 주석 처리로 인해 현재 사용하지 않음)
   // null인 경우 기본값 0을 사용 (WARNING 상태로 처리됨)
-  const tempStatus = getTemperatureStatus(sensorData.temperature ?? 0);
-  const humidityStatus = getHumidityStatus(sensorData.humidity ?? 0);
-  const gasStatus = getGasStatus(sensorData.gas ?? 0);
-  const weightStatus: SensorStatus =
-    sensorData.weight !== null && sensorData.weight !== undefined && sensorData.weight > 0
-      ? 'SAFE'
-      : 'WARNING';
+  // const tempStatus = getTemperatureStatus(sensorData.temperature ?? 0);
+  // const humidityStatus = getHumidityStatus(sensorData.humidity ?? 0);
+  // const gasStatus = getGasStatus(sensorData.gas ?? 0);
+  // const weightStatus: SensorStatus =
+  //   sensorData.weight !== null && sensorData.weight !== undefined && sensorData.weight > 0
+  //     ? 'SAFE'
+  //     : 'WARNING';
 
   return (
     <View style={styles.container}>
@@ -744,8 +744,8 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
         </View>
 
         {/* 메트릭 카드들 */}
+        {/*
         <View style={styles.metricsGrid}>
-          {/* 체온 */}
           <View style={styles.metricCard}>
             <View style={styles.metricHeader}>
               <View
@@ -767,7 +767,6 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
             </Text>
           </View>
 
-          {/* 수분컨디션 */}
           <View style={styles.metricCard}>
             <View style={styles.metricHeader}>
               <View
@@ -789,7 +788,6 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
             </Text>
           </View>
 
-          {/* 급식량 */}
           <View style={styles.metricCard}>
             <View style={styles.metricHeader}>
               <View
@@ -811,7 +809,6 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
             </Text>
           </View>
 
-          {/* 향기지수 */}
           <View style={styles.metricCard}>
             <View style={styles.metricHeader}>
               <View
@@ -833,6 +830,7 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
             </Text>
           </View>
         </View>
+        */}
 
         {/* 안내 텍스트 */}
         <View style={styles.infoSection}>
@@ -1015,44 +1013,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  metricCard: {
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    elevation: 2,
-    padding: spacing.xl,
-    shadowColor: colors.black,
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    width: '48%',
-  },
-  metricHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  metricLabel: {
-    color: colors.text,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
-    marginLeft: spacing.xs,
-  },
-  metricValue: {
-    color: colors.text,
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    textAlign: 'center',
-    width: '100%',
-  },
-  metricsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-    justifyContent: 'space-between',
-    marginTop: spacing.xl,
-  },
+  // 메트릭 카드 스타일 (주석 처리로 인해 현재 사용하지 않음)
+  // metricCard: {
+  //   alignItems: 'center',
+  //   backgroundColor: colors.white,
+  //   borderRadius: 12,
+  //   elevation: 2,
+  //   padding: spacing.xl,
+  //   shadowColor: colors.black,
+  //   shadowOffset: { height: 2, width: 0 },
+  //   shadowOpacity: 0.1,
+  //   shadowRadius: 4,
+  //   width: '48%',
+  // },
+  // metricHeader: {
+  //   alignItems: 'center',
+  //   flexDirection: 'row',
+  //   justifyContent: 'center',
+  //   marginBottom: spacing.md,
+  // },
+  // metricLabel: {
+  //   color: colors.text,
+  //   fontSize: typography.sizes.sm,
+  //   fontWeight: typography.weights.medium,
+  //   marginLeft: spacing.xs,
+  // },
+  // metricValue: {
+  //   color: colors.text,
+  //   fontSize: typography.sizes.xl,
+  //   fontWeight: typography.weights.bold,
+  //   textAlign: 'center',
+  //   width: '100%',
+  // },
+  // metricsGrid: {
+  //   flexDirection: 'row',
+  //   flexWrap: 'wrap',
+  //   gap: spacing.md,
+  //   justifyContent: 'space-between',
+  //   marginTop: spacing.xl,
+  // },
   questionMarkButton: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -1120,11 +1119,12 @@ const styles = StyleSheet.create({
     overflow: 'visible',
     width: '100%',
   },
-  statusDot: {
-    borderRadius: 4,
-    height: 8,
-    width: 8,
-  },
+  // statusDot: 메트릭 카드 주석 처리로 인해 현재 사용하지 않음
+  // statusDot: {
+  //   borderRadius: 4,
+  //   height: 8,
+  //   width: 8,
+  // },
   statusLabelText: {
     color: colors.mutedText,
     flex: 1,

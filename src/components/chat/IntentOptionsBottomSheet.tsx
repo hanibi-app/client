@@ -35,7 +35,10 @@ export default function IntentOptionsBottomSheet({
 }: IntentOptionsBottomSheetProps) {
   const insets = useSafeAreaInsets();
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodOption>('WEEKLY');
-  const [selectedSensors, setSelectedSensors] = useState<SensorOption[]>(['temperature', 'humidity']);
+  const [selectedSensors, setSelectedSensors] = useState<SensorOption[]>([
+    'temperature',
+    'humidity',
+  ]);
 
   if (!preset) {
     return null;
@@ -71,11 +74,7 @@ export default function IntentOptionsBottomSheet({
 
       const sensorText = selectedSensors.map((s) => sensorLabels[s]).join(', ');
       const periodText =
-        selectedPeriod === 'TODAY'
-          ? '오늘'
-          : selectedPeriod === 'WEEKLY'
-            ? '지난 주'
-            : '이번 달';
+        selectedPeriod === 'TODAY' ? '오늘' : selectedPeriod === 'WEEKLY' ? '지난 주' : '이번 달';
 
       content = `${periodText} ${sensorText} 데이터 보여줘`;
     } else if (isReportQuery) {
@@ -85,11 +84,7 @@ export default function IntentOptionsBottomSheet({
       };
 
       const periodText =
-        selectedPeriod === 'TODAY'
-          ? '오늘'
-          : selectedPeriod === 'WEEKLY'
-            ? '이번 주'
-            : '이번 달';
+        selectedPeriod === 'TODAY' ? '오늘' : selectedPeriod === 'WEEKLY' ? '이번 주' : '이번 달';
 
       content = `${periodText} 리포트 보여줘`;
     }
@@ -151,12 +146,7 @@ export default function IntentOptionsBottomSheet({
                         onPress={() => setSelectedPeriod(period)}
                         style={[styles.optionButton, isSelected && styles.optionButtonSelected]}
                       >
-                        <Text
-                          style={[
-                            styles.optionText,
-                            isSelected && styles.optionTextSelected,
-                          ]}
-                        >
+                        <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
                           {periodLabel}
                         </Text>
                       </Pressable>
@@ -184,22 +174,14 @@ export default function IntentOptionsBottomSheet({
                       <Pressable
                         key={sensor.key}
                         onPress={() => toggleSensor(sensor.key)}
-                        style={[
-                          styles.sensorButton,
-                          isSelected && styles.sensorButtonSelected,
-                        ]}
+                        style={[styles.sensorButton, isSelected && styles.sensorButtonSelected]}
                       >
                         <MaterialIcons
                           name={sensor.icon as React.ComponentProps<typeof MaterialIcons>['name']}
                           size={20}
                           color={isSelected ? colors.white : colors.primary}
                         />
-                        <Text
-                          style={[
-                            styles.sensorText,
-                            isSelected && styles.sensorTextSelected,
-                          ]}
-                        >
+                        <Text style={[styles.sensorText, isSelected && styles.sensorTextSelected]}>
                           {sensor.label}
                         </Text>
                       </Pressable>
@@ -224,7 +206,7 @@ export default function IntentOptionsBottomSheet({
 
 const styles = StyleSheet.create({
   backdrop: {
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.backdrop,
     flex: 1,
     justifyContent: 'flex-end',
   },

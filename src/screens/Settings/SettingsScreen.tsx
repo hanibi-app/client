@@ -153,7 +153,7 @@ export default function SettingsScreen() {
   const [isUnpairModalVisible, setIsUnpairModalVisible] = useState(false);
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
   const [versionTapCount, setVersionTapCount] = useState(0);
-  const versionTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const versionTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const unpairMutation = useMutation({
     mutationFn: unpairDevice,
@@ -403,7 +403,7 @@ export default function SettingsScreen() {
     // 2초 후 카운트 리셋
     versionTapTimeoutRef.current = setTimeout(() => {
       setVersionTapCount(0);
-    }, 2000) as unknown as ReturnType<typeof setTimeout>;
+    }, 2000);
   }, [versionTapCount, navigation]);
 
   const onLogoutPress = useCallback(() => {

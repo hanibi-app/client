@@ -6,20 +6,10 @@
 import React, { useMemo } from 'react';
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import {
-    ActivityIndicator,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { type ChatMessage, type DeviceStatus } from '@/api/chat';
-import {
-    type QuickCommand,
-    type QuickCommandAction,
-} from '@/api/chatQuickCommands';
+import { type QuickCommand, type QuickCommandAction } from '@/api/chatQuickCommands';
 import { useExecuteQuickCommand, useQuickCommands } from '@/hooks/useQuickCommands';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
@@ -132,11 +122,7 @@ function QuickCommandChip({
     <Pressable
       onPress={onPress}
       disabled={disabled || isLoading}
-      style={[
-        styles.chip,
-        disabled && styles.chipDisabled,
-        isLoading && styles.chipLoading,
-      ]}
+      style={[styles.chip, disabled && styles.chipDisabled, isLoading && styles.chipLoading]}
       accessibilityRole="button"
       accessibilityLabel={command.label}
       accessibilityState={{ disabled: disabled || isLoading }}
@@ -167,7 +153,7 @@ export default function QuickCommandBar({
   deviceStatus,
   onAppendMessage,
 }: QuickCommandBarProps) {
-  const { data: commands, isLoading: isLoadingCommands, isError } = useQuickCommands();
+  const { data: commands, isLoading: _isLoadingCommands, isError } = useQuickCommands();
 
   const { mutateAsync: executeCommand } = useExecuteQuickCommand(
     {
@@ -207,25 +193,22 @@ export default function QuickCommandBar({
     if (!commands) return map;
 
     commands.forEach((cmd) => {
-      map.set(
-        cmd.id,
-        isCommandDisabled(cmd, deviceStatus, executingCommandId === cmd.id),
-      );
+      map.set(cmd.id, isCommandDisabled(cmd, deviceStatus, executingCommandId === cmd.id));
     });
     return map;
   }, [commands, deviceStatus, executingCommandId]);
 
   // 로딩 상태
-  if (isLoadingCommands) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color={colors.mutedText} />
-          <Text style={styles.loadingText}>빠른 명령을 불러오는 중...</Text>
-        </View>
-      </View>
-    );
-  }
+  // if (isLoadingCommands) {
+  //   return (
+  //     <View style={styles.container}>
+  //       <View style={styles.loadingContainer}>
+  //         <ActivityIndicator size="small" color={colors.mutedText} />
+  //         <Text style={styles.loadingText}>빠른 명령을 불러오는 중...</Text>
+  //       </View>
+  //     </View>
+  //   );
+  // }
 
   // 에러 상태
   if (isError || !commands || commands.length === 0) {
@@ -264,17 +247,6 @@ export default function QuickCommandBar({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.white,
-    borderTopColor: colors.border,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingVertical: spacing.sm,
-  },
-  scrollContent: {
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-  },
   chip: {
     alignItems: 'center',
     backgroundColor: colors.gray50,
@@ -299,16 +271,11 @@ const styles = StyleSheet.create({
   chipTextDisabled: {
     color: colors.mutedTextLight,
   },
-  loadingContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.sm,
-    justifyContent: 'center',
+  container: {
+    backgroundColor: colors.white,
+    borderTopColor: colors.border,
+    borderTopWidth: StyleSheet.hairlineWidth,
     paddingVertical: spacing.sm,
-  },
-  loadingText: {
-    color: colors.mutedText,
-    fontSize: typography.sizes.sm,
   },
   errorText: {
     color: colors.mutedTextLight,
@@ -316,5 +283,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     textAlign: 'center',
   },
+  scrollContent: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
 });
-

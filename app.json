@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.client"
+      "bundleIdentifier": "com.anonymous.client",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -37,8 +40,15 @@
     },
     "extra": {
       "eas": {
-        "projectId": "41d6b359-8052-4939-9aef-3394a06187e5"
+        "projectId": "4286111e-bb4e-4ac6-b0df-6927ae50fbf7"
       }
+    },
+    "owner": "hywznn",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/4286111e-bb4e-4ac6-b0df-6927ae50fbf7"
     }
   }
 }

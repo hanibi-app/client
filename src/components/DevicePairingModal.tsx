@@ -237,7 +237,7 @@ export default function DevicePairingModal({ visible, onClose }: DevicePairingMo
       <View style={styles.modalOverlay}>
         <Pressable style={styles.backdrop} onPress={handleClose} />
         <View style={[styles.modalContent, { paddingBottom: insets.bottom }]}>
-          <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
+          <View style={styles.headerContainer}>
             <AppHeader title="기기 페어링" onBack={handleClose} />
           </View>
 

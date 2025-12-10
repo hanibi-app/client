@@ -402,7 +402,7 @@ export default function SettingsScreen() {
     // 2초 후 카운트 리셋
     versionTapTimeoutRef.current = setTimeout(() => {
       setVersionTapCount(0);
-    }, 2000);
+    }, 2000) as unknown as ReturnType<typeof setTimeout>;
   }, [versionTapCount, navigation]);
 
   const onLogoutPress = useCallback(() => {

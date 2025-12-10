@@ -5,16 +5,16 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useIsFocused } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
-  Animated,
-  Easing,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
+    Animated,
+    Easing,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+    useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, Rect, Stop, LinearGradient as SvgLinearGradient } from 'react-native-svg';
@@ -32,7 +32,7 @@ import { EcoScorePreviewCard } from '@/features/reports/components/EcoScorePrevi
 import { WeeklySummarySection } from '@/features/reports/components/WeeklySummarySection';
 import { useCameraStatus } from '@/hooks/useCameraStatus';
 import { DashboardStackParamList } from '@/navigation/types';
-import { useCurrentDeviceId } from '@/store/deviceStore';
+import { useDeviceStore } from '@/store/deviceStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -423,19 +423,22 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const { data: devices } = useDevices();
 
   // 현재 선택된 기기 ID 가져오기
-  // 우선순위: 1) deviceStore의 currentDeviceId, 2) 페어링된 첫 번째 기기, 3) fallback
-  const currentDeviceIdFromStore = useCurrentDeviceId();
+  // 우선순위: 1) deviceStore의 currentDeviceId, 2) 페어링된 첫 번째 기기
+  // 계정에 등록된 기기가 없으면 요청하지 않음
+  const currentDeviceIdFromStore = useDeviceStore((state) => state.currentDeviceId);
   const firstDeviceId = devices && devices.length > 0 ? devices[0].deviceId : null;
-  const deviceId = currentDeviceIdFromStore || firstDeviceId || 'HANIBI-ESP32-001';
+  const deviceId = currentDeviceIdFromStore || firstDeviceId;
 
   // 센서 데이터 조회 (화면이 포커스되어 있을 때만 폴링 - 최적화)
+  // deviceId가 있을 때만 조회
   const {
     data: sensorData,
     isLoading: isSensorLoading,
     isError: isSensorError,
     refetch: refetchSensor,
-  } = useSensorLatest(deviceId, {
-    refetchInterval: isFocused ? 15000 : false, // 포커스되어 있을 때만 15초마다 폴링
+  } = useSensorLatest(deviceId || undefined, {
+    refetchInterval: isFocused && deviceId ? 15000 : false, // 포커스되어 있고 deviceId가 있을 때만 15초마다 폴링
+    enabled: !!deviceId, // deviceId가 있을 때만 조회
   });
 
   // 상태 바 너비 계산 (패딩 제외)

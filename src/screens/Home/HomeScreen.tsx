@@ -6,15 +6,15 @@ import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  Animated,
-  Easing,
-  Pressable,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  useWindowDimensions,
+    Animated,
+    Easing,
+    Pressable,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TextInput,
+    useWindowDimensions,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -65,14 +65,22 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   // 첫 번째 기기 정보 조회 (연결 상태, 마지막 신호 등)
   const firstDeviceId = devices && devices.length > 0 ? devices[0].deviceId : null;
 
-  // 페어링된 기기의 실시간 상태 조회 (화면이 포커스되어 있을 때만 폴링 - 최적화)
+  // 페어링된 기기의 실시간 상태 조회
+  // 로컬에 페어링 정보가 있고, 서버에도 등록되어 있는 기기만 조회
   const pairedDeviceId = localPairedDevice?.deviceId;
+  const isPairedDeviceRegistered = pairedDeviceId
+    ? devices?.some((d) => d.deviceId === pairedDeviceId)
+    : false;
 
-  // 중복 조회 방지: pairedDeviceId가 있으면 그것만 조회, 없으면 firstDeviceId 조회
-  const targetDeviceId = pairedDeviceId || firstDeviceId || '';
+  // 서버에 등록된 기기만 조회
+  // 우선순위: 1) 로컬 페어링 기기 (서버에 등록된 경우만), 2) 서버의 첫 번째 기기
+  const targetDeviceId =
+    (pairedDeviceId && isPairedDeviceRegistered ? pairedDeviceId : null) || firstDeviceId || '';
+  
   // 기기 상태 조회 - 진행률 바를 위해 빠르게 갱신
+  // 서버에 등록된 기기가 있을 때만 조회
   const { data: deviceDetail } = useDevice(targetDeviceId, {
-    refetchInterval: isFocused ? 15000 : false, // 포커스되어 있을 때만 15초마다 폴링 (진행률 바 빠른 업데이트)
+    refetchInterval: isFocused && targetDeviceId ? 15000 : false, // 포커스되어 있고 기기가 있을 때만 15초마다 폴링
     enabled: !!targetDeviceId, // deviceId가 있을 때만 조회
   });
 
@@ -480,19 +488,25 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           }
           title={
             isPaired
-              ? isPairedDeviceOnline
-                ? '너무 더워서 힘들어요 😩'
-                : '네트워크 문제가 발생했어요'
-              : '네트워크 문제가 발생했어요'
+              ? isPairedDeviceRegistered
+                ? isPairedDeviceOnline
+                  ? '너무 더워서 힘들어요 😩'
+                  : '네트워크 문제가 발생했어요'
+                : '기기를 서버에 등록해주세요'
+              : '기기를 페어링해주세요'
           }
           description={
             isPaired ? (
-              isPairedDeviceOnline ? (
-                <Text>
-                  <Text style={styles.temperatureHighlight}>온도</Text> 한 번만 확인해 주세요!
-                </Text>
+              isPairedDeviceRegistered ? (
+                isPairedDeviceOnline ? (
+                  <Text>
+                    <Text style={styles.temperatureHighlight}>온도</Text> 한 번만 확인해 주세요!
+                  </Text>
+                ) : (
+                  <Text>전원과 네트워크를 확인한 뒤{'\n'}다시 시도해 주세요</Text>
+                )
               ) : (
-                <Text>전원과 네트워크를 확인한 뒤{'\n'}다시 시도해 주세요</Text>
+                <Text>설정에서 서버 동기화를{'\n'}진행해주세요</Text>
               )
             ) : (
               <Text>기기를 페어링하려면{'\n'}네트워크 연결이 필요해요</Text>

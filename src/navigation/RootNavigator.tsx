@@ -17,7 +17,7 @@ import CameraPreviewDebugScreen from '@/screens/Settings/CameraPreviewDebugScree
 import DeveloperModeScreen from '@/screens/Settings/DeveloperModeScreen';
 import { markOnboardingComplete, readOnboardingStatus } from '@/services/storage/onboarding';
 import { useAppState } from '@/state/useAppState';
-import { restoreTokensFromStorage } from '@/store/authStore';
+import { initializeApp } from '@/utils/appInitialization';
 
 import MainTabs from './MainTabs';
 import { RootStackParamList } from './types';
@@ -36,8 +36,8 @@ export default function RootNavigator({ navigationRef }: RootNavigatorProps) {
 
   const checkOnboardingStatus = useCallback(async () => {
     try {
-      // 앱 시작 시 토큰 복원
-      await restoreTokensFromStorage();
+      // 앱 시작 시 토큰 갱신 및 페어링 갱신
+      await initializeApp();
 
       // 온보딩 상태 확인
       const isComplete = await readOnboardingStatus();

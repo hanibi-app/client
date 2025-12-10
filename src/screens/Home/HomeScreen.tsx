@@ -462,8 +462,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             isPaired
               ? isPairedDeviceOnline
                 ? '너무 더워서 힘들어요 😩'
-                : '기기가 오프라인이에요'
-              : '기기가 연결되지 않았어요'
+                : '네트워크 문제가 발생했어요'
+              : '네트워크 문제가 발생했어요'
           }
           description={
             isPaired ? (
@@ -475,7 +475,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 <Text>전원과 네트워크를 확인한 뒤{'\n'}다시 시도해 주세요</Text>
               )
             ) : (
-              <Text>한니비 기기를 페어링하면{'\n'}실시간으로 건강 상태를 확인할 수 있어요</Text>
+              <Text>기기를 페어링하려면{'\n'}네트워크 연결이 필요해요</Text>
             )
           }
         />

@@ -748,9 +748,7 @@ export default function SettingsScreen() {
             key: 'authStatus',
             type: 'link',
             label: '인증 상태 확인',
-            description: accessToken
-              ? `✅ 로그인됨 (토큰: ${accessToken.substring(0, 20)}...)`
-              : '❌ 로그인 안됨',
+            description: accessToken ? '✅ 로그인됨' : '❌ 로그인 안됨',
             onPress: () => {
               logAuthState();
               Alert.alert(

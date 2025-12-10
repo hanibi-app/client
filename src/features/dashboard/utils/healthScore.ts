@@ -20,19 +20,21 @@ export type HealthScoreResult = {
 
 /**
  * 온도 상태를 계산합니다.
+ * 온도가 낮을수록 초록색(SAFE), 높을수록 빨간색(WARNING)입니다.
  *
  * @param temp 온도 (°C)
  * @returns 센서 상태
  */
 export function getTemperatureStatus(temp: number): SensorStatus {
   // TODO: 임계값/점수 로직은 도메인 담당과 논의 후 조정 필요
+  // 낮은 온도: 초록색, 높은 온도: 빨간색
+  if (temp < 20) {
+    return 'SAFE'; // 20도 미만: 초록색 (낮은 온도)
+  }
   if (temp >= 20 && temp <= 30) {
-    return 'SAFE';
+    return 'CAUTION'; // 20~30도: 노란색 (적정 범위)
   }
-  if (temp > 30 && temp <= 35) {
-    return 'CAUTION';
-  }
-  return 'WARNING';
+  return 'WARNING'; // 30도 초과: 빨간색 (높은 온도)
 }
 
 /**

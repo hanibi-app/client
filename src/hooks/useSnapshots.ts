@@ -8,8 +8,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import { ApiResponse } from '@/api/authTypes';
-import { apiClient } from '@/api/httpClient';
 import type { SnapshotMeta } from '@/types/foodSession';
 
 /**
@@ -63,41 +61,18 @@ export function useSnapshots(
   to?: string,
   options?: { refetchInterval?: number | false; enabled?: boolean },
 ) {
+  // TODO: 카메라 API가 정상 작동하면 주석 해제
+  // 현재는 429 에러 방지를 위해 완전히 비활성화
   return useQuery<SnapshotMeta[], Error>({
     queryKey: SNAPSHOTS_QUERY_KEY(deviceId, limit),
     queryFn: async () => {
-      try {
-        const response = await apiClient.get<ApiResponse<SnapshotResponse[]>>(
-          `/api/v1/cameras/${deviceId}/snapshots`,
-          {
-            params: {
-              limit: Math.min(limit, 100), // 최대 100으로 제한
-              ...(from && { from }),
-              ...(to && { to }),
-            },
-          },
-        );
-
-        // 백엔드 응답을 SnapshotMeta 형태로 변환
-        // 이미지 URL은 RTSP가 안되어서 에러가 날 수 있지만 메타데이터는 받을 수 있음
-        return response.data.data.map((snapshot) => ({
-          id: snapshot.id,
-          deviceId: snapshot.deviceId,
-          triggerType: snapshot.triggerType,
-          createdAt: snapshot.createdAt,
-          imageUrl: `/api/v1/cameras/${deviceId}/snapshots/${snapshot.id}/image`,
-        }));
-      } catch (error) {
-        // 카메라 이미지 API 에러는 무시하고 빈 배열 반환
-        // 스냅샷 메타데이터만 받을 수 있도록 함
-        console.warn('[useSnapshots] 스냅샷 조회 실패 (이미지 에러는 무시):', error);
-        return [];
-      }
+      // API 호출하지 않고 빈 배열 반환
+      return [];
     },
-    enabled: options?.enabled !== false && !!deviceId,
-    staleTime: 1000 * 30, // 30초
+    enabled: false, // 완전히 비활성화
+    staleTime: Infinity, // 캐시 무한대
     refetchOnWindowFocus: false,
-    refetchInterval: options?.refetchInterval ?? false, // 기본값은 자동 갱신 안 함, 옵션으로 전달 가능
-    retry: false, // 에러 발생 시 재시도하지 않음 (이미지 에러 무시)
+    refetchInterval: false, // 자동 갱신 안 함
+    retry: false,
   });
 }

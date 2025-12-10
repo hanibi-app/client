@@ -30,6 +30,7 @@ import { HomeMessageCard } from '@/components/home/HomeMessageCard';
 import { NameCard } from '@/components/home/NameCard';
 import { ProgressBar } from '@/components/home/ProgressBar';
 import { HOME_STACK_ROUTES } from '@/constants/routes';
+import { useSensorLatest } from '@/features/dashboard/hooks/useSensorLatest';
 import { useDevice, useDevices, usePairDevice } from '@/features/devices/hooks';
 import { useMe, useUpdateProfile } from '@/features/user/hooks';
 import { useFoodSessions } from '@/hooks/useFoodSessions';
@@ -41,6 +42,7 @@ import { useLoadingStore } from '@/store/loadingStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
+import { generateHomeMessage } from '@/utils/homeMessageTemplates';
 import { calculateProcessingProgress } from '@/utils/processingProgress';
 
 const DEFAULT_EDIT_ACTION_WIDTH = 64;
@@ -196,6 +198,22 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     enabled: !!targetDeviceIdForSession,
   });
   const latestSession = sessions && sessions.length > 0 ? sessions[0] : null;
+
+  // 센서 데이터 조회 (온라인이고 페어링된 기기가 있을 때만)
+  const { data: sensorData } = useSensorLatest(targetDeviceId, {
+    enabled: isPairedDeviceOnline && !!targetDeviceId,
+    refetchInterval: isFocused && isPairedDeviceOnline ? 10000 : false, // 10초마다 갱신
+  });
+
+  // 센서 기반 메시지 생성
+  const sensorMessage = sensorData
+    ? generateHomeMessage({
+        temperature: sensorData.temperature,
+        humidity: sensorData.humidity,
+        weight: sensorData.weight,
+        gas: sensorData.gas,
+      })
+    : null;
 
   // 화면 포커스 시 기기 상태 갱신 및 로컬 페어링 정보 다시 로드
   useFocusEffect(
@@ -534,43 +552,118 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
         <HomeMessageCard
           paddingTop={messageTopPadding}
-          icon={
-            isPaired ? (
-              isPairedDeviceOnline ? (
-                <MaterialIcons name="local-fire-department" size={24} color="#FF6B35" />
-              ) : (
-                <MaterialIcons name="bluetooth-disabled" size={24} color="#ED5B5B" />
-              )
-            ) : (
-              <MaterialIcons name="bluetooth-disabled" size={24} color="#ED5B5B" />
-            )
-          }
-          title={
-            isPaired
-              ? isPairedDeviceRegistered
-                ? isPairedDeviceOnline
-                  ? '너무 더워서 힘들어요 😩'
-                  : '네트워크 문제가 발생했어요'
-                : '기기를 서버에 등록해주세요'
-              : '기기를 페어링해주세요'
-          }
-          description={
-            isPaired ? (
-              isPairedDeviceRegistered ? (
-                isPairedDeviceOnline ? (
-                  <Text>
-                    <Text style={styles.temperatureHighlight}>온도</Text> 한 번만 확인해 주세요!
-                  </Text>
-                ) : (
-                  <Text>전원과 네트워크를 확인한 뒤{'\n'}다시 시도해 주세요</Text>
-                )
-              ) : (
-                <Text>설정에서 서버 동기화를{'\n'}진행해주세요</Text>
-              )
-            ) : (
-              <Text>기기를 페어링하려면{'\n'}네트워크 연결이 필요해요</Text>
-            )
-          }
+          icon={(() => {
+            // 센서 메시지가 있으면 우선 사용
+            if (sensorMessage && isPairedDeviceOnline) {
+              return (
+                <MaterialIcons
+                  name={sensorMessage.icon}
+                  size={24}
+                  color={sensorMessage.iconColor}
+                />
+              );
+            }
+
+            // 페어링 안됨
+            if (!isPaired) {
+              return <MaterialIcons name="bluetooth-disabled" size={24} color="#ED5B5B" />;
+            }
+
+            // 페어링됨 + 서버 등록 안됨
+            if (!isPairedDeviceRegistered) {
+              return <MaterialIcons name="sync-problem" size={24} color="#FFA726" />;
+            }
+
+            // 페어링됨 + 서버 등록됨 + 오프라인
+            if (!isPairedDeviceOnline) {
+              return <MaterialIcons name="bluetooth-disabled" size={24} color="#ED5B5B" />;
+            }
+
+            // 페어링됨 + 서버 등록됨 + 온라인
+            // 상태에 따라 아이콘 변경
+            if (isInputInProgress) {
+              return <MaterialIcons name="restaurant" size={24} color="#4CAF50" />;
+            }
+            if (isProcessing) {
+              return <MaterialIcons name="autorenew" size={24} color="#2196F3" />;
+            }
+            // 대기 중 또는 기타
+            return <MaterialIcons name="local-fire-department" size={24} color="#FF6B35" />;
+          })()}
+          title={(() => {
+            // 센서 메시지가 있으면 우선 사용
+            if (sensorMessage && isPairedDeviceOnline) {
+              return sensorMessage.title;
+            }
+
+            // 페어링 안됨
+            if (!isPaired) {
+              return '기기를 페어링해주세요';
+            }
+
+            // 페어링됨 + 서버 등록 안됨
+            if (!isPairedDeviceRegistered) {
+              return '기기를 서버에 등록해주세요';
+            }
+
+            // 페어링됨 + 서버 등록됨 + 오프라인
+            if (!isPairedDeviceOnline) {
+              return '네트워크 문제가 발생했어요';
+            }
+
+            // 페어링됨 + 서버 등록됨 + 온라인
+            // 상태에 따라 제목 변경
+            if (isInputInProgress) {
+              return '음식을 투입하고 있어요 🍽️';
+            }
+            if (isProcessing) {
+              return '지금 열심히 처리 중이에요 ⚙️';
+            }
+            // 대기 중
+            return '너무 더워서 힘들어요 😩';
+          })()}
+          description={(() => {
+            // 센서 메시지가 있으면 우선 사용
+            if (sensorMessage && isPairedDeviceOnline) {
+              return <Text>{sensorMessage.description}</Text>;
+            }
+
+            // 페어링 안됨
+            if (!isPaired) {
+              return <Text>기기를 페어링하려면{'\n'}네트워크 연결이 필요해요</Text>;
+            }
+
+            // 페어링됨 + 서버 등록 안됨
+            if (!isPairedDeviceRegistered) {
+              return <Text>설정에서 서버 동기화를{'\n'}진행해주세요</Text>;
+            }
+
+            // 페어링됨 + 서버 등록됨 + 오프라인
+            if (!isPairedDeviceOnline) {
+              return <Text>전원과 네트워크를 확인한 뒤{'\n'}다시 시도해 주세요</Text>;
+            }
+
+            // 페어링됨 + 서버 등록됨 + 온라인
+            // 상태에 따라 설명 변경
+            if (isInputInProgress) {
+              return <Text>음식물을 투입하고 있어요{'\n'}잠시만 기다려주세요</Text>;
+            }
+            if (isProcessing) {
+              return (
+                <Text>
+                  처리 완료까지{' '}
+                  <Text style={styles.temperatureHighlight}>{Math.round(remainingPercent)}%</Text>{' '}
+                  남았어요
+                </Text>
+              );
+            }
+            // 대기 중
+            return (
+              <Text>
+                <Text style={styles.temperatureHighlight}>온도</Text> 한 번만 확인해 주세요!
+              </Text>
+            );
+          })()}
         />
 
         {/* 중앙 캐릭터 */}

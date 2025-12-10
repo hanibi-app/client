@@ -49,9 +49,9 @@ export interface FoodInputSession {
   beforeEvent?: SensorEvent;
   afterEvent?: SensorEvent;
   processingCompletedEvent?: SensorEvent;
-  // 카메라 이미지는 RTSP가 안되어서 에러가 날 수 있지만 스냅샷 메타데이터는 받을 수 있음
-  beforeSnapshot?: SnapshotMeta;
-  afterSnapshot?: SnapshotMeta;
+  // TODO: 카메라 API가 정상 작동하면 주석 해제
+  // beforeSnapshot?: SnapshotMeta;
+  // afterSnapshot?: SnapshotMeta;
   weightChange?: {
     before?: number;
     after?: number;

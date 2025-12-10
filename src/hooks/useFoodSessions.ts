@@ -9,7 +9,8 @@ import type { FoodInputSession } from '@/types/foodSession';
 import { buildSessionsFromEventsAndSnapshots } from '@/utils/foodSession';
 
 import { useSensorEvents } from './useSensorEvents';
-import { useSnapshots } from './useSnapshots';
+// TODO: 카메라 API가 정상 작동하면 주석 해제
+// import { useSnapshots } from './useSnapshots';
 
 /**
  * 음식 투입 세션을 조회하는 훅
@@ -48,13 +49,19 @@ export function useFoodSessions(
     refetch: refetchEvents,
   } = useSensorEvents(deviceId, 100, options);
 
+  // TODO: 카메라 API가 정상 작동하면 주석 해제
   // 카메라 스냅샷 조회 (이미지 URL은 에러가 나도 괜찮지만 메타데이터는 받을 수 있음)
-  const {
-    data: snapshots,
-    isLoading: snapshotsLoading,
-    isError: snapshotsError,
-    refetch: refetchSnapshots,
-  } = useSnapshots(deviceId, 20, undefined, undefined, options);
+  // const {
+  //   data: snapshots,
+  //   isLoading: snapshotsLoading,
+  //   isError: snapshotsError,
+  //   refetch: refetchSnapshots,
+  // } = useSnapshots(deviceId, 20, undefined, undefined, options);
+
+  // 임시: 카메라 API가 정상 작동할 때까지 undefined 전달
+  const snapshots = undefined;
+  const snapshotsLoading = false;
+  const snapshotsError = false;
 
   const sessions = useMemo<FoodInputSession[] | undefined>(() => {
     if (!events) return undefined;

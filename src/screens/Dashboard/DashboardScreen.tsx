@@ -26,13 +26,7 @@ import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { CameraStatusModal } from '@/components/dashboard/CameraStatusModal';
 import { DeviceStatusCard } from '@/components/device/DeviceStatusCard';
 import { useSensorLatest } from '@/features/dashboard/hooks/useSensorLatest';
-import {
-  SensorStatus,
-  calculateHealthScore,
-  getGasStatus,
-  getHumidityStatus,
-  getTemperatureStatus,
-} from '@/features/dashboard/utils/healthScore';
+import { SensorStatus, calculateHealthScore } from '@/features/dashboard/utils/healthScore';
 import { useDevices } from '@/features/devices/hooks';
 import { EcoScorePreviewCard } from '@/features/reports/components/EcoScorePreviewCard';
 import { WeeklySummarySection } from '@/features/reports/components/WeeklySummarySection';
@@ -659,8 +653,8 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
           <View style={styles.titleContainer}>
             <Text style={styles.titleText}>한니비의</Text>
             <View style={styles.titleRow}>
-              <Text style={[styles.titleText, styles.titleHighlight]}>건강 분석 결과예</Text>
-              <Text style={styles.titleText}>요</Text>
+              <Text style={[styles.titleText, styles.titleHighlight]}>건강 분석 결과</Text>
+              <Text style={styles.titleText}>예요</Text>
             </View>
           </View>
           <Pressable onPress={handleCamera} style={styles.cameraButton}>

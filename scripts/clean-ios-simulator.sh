@@ -24,3 +24,4 @@ npx expo start --clear
 echo "✅ 정리 완료!"
 
 
+

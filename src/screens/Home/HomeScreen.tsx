@@ -4,17 +4,19 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { AxiosError } from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-    Animated,
-    Easing,
-    Pressable,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    useWindowDimensions,
-    View,
+  Alert,
+  Animated,
+  Easing,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -76,7 +78,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   // 우선순위: 1) 로컬 페어링 기기 (서버에 등록된 경우만), 2) 서버의 첫 번째 기기
   const targetDeviceId =
     (pairedDeviceId && isPairedDeviceRegistered ? pairedDeviceId : null) || firstDeviceId || '';
-  
+
   // 기기 상태 조회 - 진행률 바를 위해 빠르게 갱신
   // 서버에 등록된 기기가 있을 때만 조회
   const { data: deviceDetail } = useDevice(targetDeviceId, {
@@ -195,9 +197,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   });
   const latestSession = sessions && sessions.length > 0 ? sessions[0] : null;
 
-  // 화면 포커스 시 기기 상태 갱신 (최적화: staleTime 체크 후 필요시에만 refetch)
+  // 화면 포커스 시 기기 상태 갱신 및 로컬 페어링 정보 다시 로드
   useFocusEffect(
     useCallback(() => {
+      // 화면 포커스 시 로컬 페어링 정보 다시 로드 (동기화 상태 확인)
+      loadLocalDevice();
       // React Query가 자동으로 staleTime을 체크하여 필요시에만 refetch하도록 함
       // 명시적 refetch는 제거하여 불필요한 요청 방지
       // 데이터가 stale하지 않으면 자동으로 캐시된 데이터를 사용
@@ -424,11 +428,46 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   // 페어링 확인
   const handleConfirmPairing = async () => {
     try {
-      // TODO: 실제 기기 ID와 이름을 가져오는 로직 필요
-      // 임시로 테스트용 데이터 사용
+      // 로컬 페어링 정보 확인
+      const currentLocalDevice = localPairedDevice || (await getPairedDevice());
+
+      if (!currentLocalDevice) {
+        console.error('[HomeScreen] 로컬 페어링 정보가 없습니다.');
+        Alert.alert('오류', '페어링할 기기 정보를 찾을 수 없습니다.');
+        setIsPairingModalVisible(false);
+        return;
+      }
+
+      // 서버 기기 목록을 먼저 최신화하여 확인
+      const { data: latestDevices } = await refetchDevices();
+
+      // 서버에 이미 등록되어 있는지 확인
+      const existingDevice = latestDevices?.find((d) => d.deviceId === currentLocalDevice.deviceId);
+
+      if (existingDevice) {
+        // 이미 서버에 등록되어 있으면 페어링을 건너뛰고 동기화만 수행
+        console.log('[HomeScreen] 기기가 이미 서버에 등록되어 있습니다. 동기화만 수행합니다.');
+        await setPairedDevice({
+          deviceId: existingDevice.deviceId,
+          deviceName: existingDevice.deviceName,
+          apiSynced: true,
+          syncedAt: new Date().toISOString(),
+        });
+
+        // 로컬 상태 업데이트
+        setLocalPairedDevice({
+          deviceId: existingDevice.deviceId,
+          deviceName: existingDevice.deviceName,
+        });
+
+        setIsPairingModalVisible(false);
+        return;
+      }
+
+      // 서버에 등록되어 있지 않으면 페어링 시도
       const device = await pairDevice.mutateAsync({
-        deviceId: 'DEVICE_001',
-        deviceName: '한니비 기기',
+        deviceId: currentLocalDevice.deviceId,
+        deviceName: currentLocalDevice.deviceName,
       });
 
       // 페어링 성공 시 로컬 저장소에 저장
@@ -449,7 +488,27 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       // 성공 시 기기 목록이 자동으로 갱신됨
     } catch (error) {
       console.error('[HomeScreen] 페어링 실패:', error);
-      // 에러 처리 (나중에 토스트 메시지 등 추가 가능)
+      setIsPairingModalVisible(false);
+
+      // 409 에러 처리: 이미 페어링된 기기
+      if (error instanceof AxiosError && error.response?.status === 409) {
+        // 기기 목록 갱신
+        await refetchDevices();
+        // 로컬 페어링 정보 다시 로드
+        await loadLocalDevice();
+
+        Alert.alert(
+          '이미 페어링된 기기',
+          '이 기기는 이미 서버에 등록되어 있습니다.\n기기 정보를 동기화했습니다.',
+        );
+      } else {
+        // 기타 에러
+        const errorMessage =
+          error instanceof AxiosError
+            ? error.response?.data?.message || error.message || '페어링에 실패했습니다.'
+            : '페어링에 실패했습니다.';
+        Alert.alert('페어링 실패', errorMessage);
+      }
     }
   };
 

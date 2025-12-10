@@ -6,7 +6,13 @@ import { AxiosError } from 'axios';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { pairDevice, unpairDevice } from '@/api/devices';
+import {
+  Device,
+  PairDevicePayload,
+  UnpairDevicePayload,
+  pairDevice,
+  unpairDevice,
+} from '@/api/devices';
 import AppHeader from '@/components/common/AppHeader';
 import ModalPopup from '@/components/common/ModalPopup';
 import DeviceListModal from '@/components/DeviceListModal';
@@ -155,7 +161,7 @@ export default function SettingsScreen() {
   const [versionTapCount, setVersionTapCount] = useState(0);
   const versionTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const unpairMutation = useMutation({
+  const unpairMutation = useMutation<Device, Error, UnpairDevicePayload>({
     mutationFn: unpairDevice,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['devices'] });
@@ -172,7 +178,7 @@ export default function SettingsScreen() {
     },
   });
 
-  const syncToServerMutation = useMutation({
+  const syncToServerMutation = useMutation<Device, Error, PairDevicePayload>({
     mutationFn: pairDevice,
     onSuccess: async (device) => {
       await setPairedDevice({

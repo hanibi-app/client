@@ -59,12 +59,14 @@ export type ChatMessage = {
   metadata?: Record<string, unknown> | null;
 };
 
+import { ChatIntentMetadata } from '@/types/chat';
+
 /**
  * 채팅 메시지 전송 요청 페이로드 타입
  */
 export type SendChatMessageRequest = {
   content: string;
-  metadata?: Record<string, unknown>;
+  metadata?: ChatIntentMetadata;
 };
 
 /**

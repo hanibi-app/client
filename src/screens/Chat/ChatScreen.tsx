@@ -6,7 +6,7 @@
  * WebSocket을 통해 실시간으로 새 메시지를 수신합니다.
  */
 
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -22,16 +22,21 @@ import {
 } from 'react-native';
 
 import { ChatMessage, DeviceStatus } from '@/api/chat';
+import IntentOptionsBottomSheet from '@/components/chat/IntentOptionsBottomSheet';
+import IntentPalette from '@/components/chat/IntentPalette';
 import QuickCommandBar from '@/components/chat/QuickCommandBar';
 import { HOME_STACK_ROUTES } from '@/constants/routes';
 import { useChatMessages } from '@/hooks/useChatMessages';
+import { useSendChatMessage } from '@/hooks/useChatSendMessage';
 import { useChatSocket } from '@/hooks/useChatSocket';
 import { useDeviceDetail } from '@/hooks/useDeviceDetail';
+import { useSendIntentMessage } from '@/hooks/useSendIntentMessage';
 import { HomeStackParamList } from '@/navigation/types';
 import { useChatBadgeStore } from '@/store/chatBadgeStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
+import type { ChatIntent, ChatIntentMetadata, IntentPreset } from '@/types/chat';
 
 type ChatScreenProps = NativeStackScreenProps<HomeStackParamList, typeof HOME_STACK_ROUTES.CHAT>;
 
@@ -102,6 +107,21 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   // WebSocket 구독 (실시간 메시지 수신)
   useChatSocket({ deviceId });
 
+  // Intent 기반 메시지 전송 훅
+  const sendIntentMessage = useSendIntentMessage({ deviceId });
+
+  // 자유 텍스트 메시지 전송 훅 (향후 확장을 위해 유지)
+  const { mutate: sendFreeText } = useSendChatMessage({ deviceId });
+
+  // BottomSheet 상태
+  const [bottomSheetState, setBottomSheetState] = useState<{
+    visible: boolean;
+    preset: IntentPreset | null;
+  }>({
+    visible: false,
+    preset: null,
+  });
+
   // 채팅 뱃지 스토어
   const { clearBadge, setHasNewChat } = useChatBadgeStore();
 
@@ -136,6 +156,62 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
       }, 100);
     },
     [deviceId, setHasNewChat],
+  );
+
+  // Intent 선택 핸들러
+  const handleIntentSelect = useCallback(
+    (intent: ChatIntent, preset: IntentPreset) => {
+      // HISTORY_QUERY 또는 REPORT_QUERY는 BottomSheet 열기
+      if (intent === 'HISTORY_QUERY' || intent === 'REPORT_QUERY') {
+        setBottomSheetState({
+          visible: true,
+          preset,
+        });
+        return;
+      }
+
+      // 단순 Intent는 바로 전송
+      sendIntentMessage({
+        intent,
+        defaultContent: preset.defaultContent,
+        metadata: preset.buildMetadata?.(),
+      });
+    },
+    [sendIntentMessage],
+  );
+
+  // BottomSheet 확인 핸들러
+  const handleBottomSheetConfirm = useCallback(
+    (metadata: ChatIntentMetadata, content: string) => {
+      sendIntentMessage({
+        intent: metadata.intent!,
+        defaultContent: content,
+        metadata,
+      });
+    },
+    [sendIntentMessage],
+  );
+
+  // BottomSheet 닫기 핸들러
+  const handleBottomSheetClose = useCallback(() => {
+    setBottomSheetState({
+      visible: false,
+      preset: null,
+    });
+  }, []);
+
+  // 자유 텍스트 전송 핸들러 (향후 확장을 위해 유지)
+  const _handleFreeTextSend = useCallback(
+    (content: string) => {
+      sendFreeText({
+        content,
+        metadata: {
+          intent: 'COMMAND_REQUEST',
+          source: 'mobile_app',
+        },
+      });
+    },
+    [sendFreeText],
   );
 
   return (
@@ -206,11 +282,22 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
         />
       )}
 
+      {/* Intent Palette */}
+      <IntentPalette onSelectIntent={handleIntentSelect} />
+
       {/* 빠른 명령 바 */}
       <QuickCommandBar
         deviceId={deviceId}
         deviceStatus={deviceStatus}
         onAppendMessage={handleAppendMessage}
+      />
+
+      {/* Intent Options BottomSheet */}
+      <IntentOptionsBottomSheet
+        visible={bottomSheetState.visible}
+        preset={bottomSheetState.preset}
+        onConfirm={handleBottomSheetConfirm}
+        onClose={handleBottomSheetClose}
       />
     </SafeAreaView>
   );
@@ -262,6 +349,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerRight: {
+    alignItems: 'center',
+    justifyContent: 'center',
     width: 44,
   },
   loadingContainer: {

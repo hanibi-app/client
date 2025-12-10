@@ -33,6 +33,7 @@ export const ECO_SCORE_LABELS: Record<EcoScoreLevel, string> = {
 /**
  * 환경 점수 구간 정의
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ECO_SCORE_RANGES: Record<EcoScoreLevel, { min: number; max: number }> = {
   EXCELLENT: { min: 80, max: 100 },
   GOOD: { min: 60, max: 79 },

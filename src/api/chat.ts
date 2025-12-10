@@ -3,6 +3,8 @@
  * Hanibi 백엔드의 Chat 엔드포인트를 호출하는 함수들을 제공합니다.
  */
 
+import { ChatIntentMetadata } from '@/types/chat';
+
 import { ApiResponse } from './authTypes';
 import { apiClient } from './httpClient';
 
@@ -59,8 +61,6 @@ export type ChatMessage = {
   metadata?: Record<string, unknown> | null;
 };
 
-import { ChatIntentMetadata } from '@/types/chat';
-
 /**
  * 채팅 메시지 전송 요청 페이로드 타입
  */
@@ -80,10 +80,7 @@ export type SendChatMessageRequest = {
  * const messages = await fetchChatMessages('ETCOM-001', 50);
  * ```
  */
-export async function fetchChatMessages(
-  deviceId: string,
-  limit = 50,
-): Promise<ChatMessage[]> {
+export async function fetchChatMessages(deviceId: string, limit = 50): Promise<ChatMessage[]> {
   const response = await apiClient.get<ApiResponse<ChatMessage[]>>(
     `/api/v1/chat/${deviceId}/messages`,
     {

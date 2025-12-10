@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppButton from '@/components/common/AppButton';
 import AppHeader from '@/components/common/AppHeader';
-import { ROOT_ROUTES, MAIN_TAB_ROUTES, DASHBOARD_STACK_ROUTES } from '@/constants/routes';
+import { ROOT_ROUTES } from '@/constants/routes';
 import { RootStackParamList } from '@/navigation/types';
 import { DEBUG_DEVICE_ID, useDeviceStore } from '@/store/deviceStore';
 import { colors } from '@/theme/Colors';
@@ -16,8 +16,7 @@ import { typography } from '@/theme/typography';
 export default function DeveloperModeScreen() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
-  const { currentDeviceId, setCurrentDeviceId, setDebugDevice, clearCurrentDevice } =
-    useDeviceStore();
+  const { currentDeviceId, setDebugDevice, clearCurrentDevice } = useDeviceStore();
 
   /**
    * 디버그 기기를 현재 기기로 설정합니다.
@@ -93,7 +92,7 @@ export default function DeveloperModeScreen() {
       console.error('[DeveloperModeScreen] 디버그 기기 생성 실패:', error);
       Alert.alert('오류', '디버그 기기 생성에 실패했어요.');
     }
-  }, [setDebugDevice, setCurrentDeviceId]);
+  }, [setDebugDevice]);
 
   return (
     <View style={styles.container}>

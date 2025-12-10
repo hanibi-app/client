@@ -93,7 +93,7 @@ export function useSendChatMessage({ deviceId }: UseSendChatMessageOptions) {
  */
 export function useChatSendMessage(
   deviceId: string,
-  options?: Omit<UseMutationOptions<ChatMessage, Error, SendChatMessageRequest>, 'mutationFn'>,
+  _options?: Omit<UseMutationOptions<ChatMessage, Error, SendChatMessageRequest>, 'mutationFn'>,
 ) {
   const { mutate, ...rest } = useSendChatMessage({ deviceId });
   return {

@@ -96,12 +96,6 @@ export default function IntentPalette({ onSelectIntent }: IntentPaletteProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.white,
-    borderTopColor: colors.border,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingVertical: spacing.sm,
-  },
   categoryContainer: {
     gap: spacing.xs,
     paddingHorizontal: spacing.md,
@@ -124,10 +118,11 @@ const styles = StyleSheet.create({
   categoryTextSelected: {
     color: colors.white,
   },
-  intentContainer: {
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.xs,
+  container: {
+    backgroundColor: colors.white,
+    borderTopColor: colors.border,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingVertical: spacing.sm,
   },
   intentButton: {
     alignItems: 'center',
@@ -144,20 +139,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 4,
   },
-  intentIcon: {
-    marginRight: spacing.xs,
+  intentContainer: {
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
   },
   intentContent: {
     flex: 1,
+  },
+  intentDescription: {
+    color: colors.mutedText,
+    fontSize: 11,
+  },
+  intentIcon: {
+    marginRight: spacing.xs,
   },
   intentLabel: {
     color: colors.text,
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.semibold,
     marginBottom: 2,
-  },
-  intentDescription: {
-    color: colors.mutedText,
-    fontSize: 11,
   },
 });

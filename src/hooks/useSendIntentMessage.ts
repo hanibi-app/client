@@ -6,6 +6,7 @@
 import { useCallback } from 'react';
 
 import { ChatIntent, ChatIntentMetadata } from '@/types/chat';
+
 import { useSendChatMessage } from './useChatSendMessage';
 
 export interface UseSendIntentMessageOptions {

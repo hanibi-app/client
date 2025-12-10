@@ -104,13 +104,7 @@ export function RankingList({ initialPeriod = 'DAILY', onPeriodChange }: Ranking
   const [selectedPeriod, setSelectedPeriod] = useState<RankingPeriod>(initialPeriod);
 
   // API 호출 비활성화 (무조건 더미 데이터 사용)
-  const {
-    data: apiData,
-    isLoading: isApiLoading,
-    isError: isApiError,
-    error,
-    refetch: refetchApi,
-  } = useRanking(selectedPeriod, {
+  const { error } = useRanking(selectedPeriod, {
     enabled: false, // API 호출 비활성화 (무조건 더미 데이터 사용)
   });
 

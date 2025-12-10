@@ -42,13 +42,13 @@ export default function DeviceControlModal({
   deviceId,
   deviceName,
   connectionStatus,
-  lastHeartbeat,
+  lastHeartbeat: _lastHeartbeat,
   onClose,
 }: DeviceControlModalProps) {
   const navigation = useNavigation<DeviceControlModalNavProp>();
 
   // 최신 기기 정보 조회 (모달이 열려있을 때만 폴링 - 최적화)
-  const { data: latestDevice, refetch: refetchDevice } = useDevice(deviceId || '', {
+  const { data: latestDevice } = useDevice(deviceId || '', {
     refetchInterval: visible ? 30000 : false, // 모달이 열려있을 때만 30초마다 폴링 (429 에러 방지)
   });
 

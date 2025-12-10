@@ -15,7 +15,6 @@ import {
   getEcoScoreBarPosition,
   getEcoScoreColor,
   getEcoScoreLabel,
-  getEcoScoreLevel,
 } from '@/features/reports/utils/ecoScore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
@@ -40,8 +39,8 @@ type EcoScoreCardProps = {
  * <EcoScoreCard />
  * ```
  */
-export function EcoScoreCard({ style, className }: EcoScoreCardProps) {
-  const { data, isLoading, isError, refetch } = useEcoScore();
+export function EcoScoreCard({ style }: EcoScoreCardProps) {
+  const { data, isLoading, isError } = useEcoScore();
   const { width: SCREEN_WIDTH } = useWindowDimensions();
 
   // 상태 바 너비 (패딩 제외)
@@ -77,7 +76,6 @@ export function EcoScoreCard({ style, className }: EcoScoreCardProps) {
   }
 
   const score = data.score;
-  const level = getEcoScoreLevel(score);
   const scoreColor = getEcoScoreColor(score);
   const scoreLabel = getEcoScoreLabel(score);
   const barPosition = getEcoScoreBarPosition(score);

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Alert, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppHeader from '@/components/common/AppHeader';

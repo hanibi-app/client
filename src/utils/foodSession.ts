@@ -42,6 +42,7 @@ function sortSnapshotsByTime(snapshots: SnapshotMeta[] | undefined): SnapshotMet
  * @param triggerType 찾을 스냅샷의 triggerType (optional)
  * @returns 매칭된 스냅샷 또는 undefined
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function findNearestSnapshot(
   targetTime: string,
   snapshots: SnapshotMeta[],
@@ -100,6 +101,7 @@ export function buildSessionsFromEventsAndSnapshots(
   // 이벤트를 시간순으로 정렬
   const sortedEvents = sortEventsByTime(events);
   // 스냅샷을 시간순으로 정렬 (현재는 사용하지 않지만 나중을 위해 준비)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const sortedSnapshots = sortSnapshotsByTime(snapshots);
 
   const sessions: FoodInputSession[] = [];

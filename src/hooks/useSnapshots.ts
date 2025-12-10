@@ -57,9 +57,9 @@ export interface SnapshotResponse {
 export function useSnapshots(
   deviceId: string,
   limit = 20,
-  from?: string,
-  to?: string,
-  options?: { refetchInterval?: number | false; enabled?: boolean },
+  _from?: string,
+  _to?: string,
+  _options?: { refetchInterval?: number | false; enabled?: boolean },
 ) {
   // TODO: 카메라 API가 정상 작동하면 주석 해제
   // 현재는 429 에러 방지를 위해 완전히 비활성화

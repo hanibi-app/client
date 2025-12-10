@@ -6,12 +6,10 @@
 import type {
   AuthResponse,
   AuthResponseData,
+  KakaoLoginPayload,
   LoginPayload,
   LogoutResponse,
   RegisterPayload,
-  RefreshPayload,
-  KakaoLoginPayload,
-  Tokens,
 } from './authTypes';
 import { apiClient } from './httpClient';
 

@@ -7,6 +7,7 @@
       "@/*": ["./src/*"]
     },
     "jsx": "react-native",
+    "module": "esnext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true

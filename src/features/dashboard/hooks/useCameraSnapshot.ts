@@ -49,8 +49,8 @@ export function useCameraSnapshot(
   return useQuery<CameraSnapshotResponse>({
     queryKey: cameraSnapshotQueryKey(deviceId),
     queryFn: () => fetchCameraSnapshot(deviceId),
-    refetchInterval: options?.refetchInterval ?? 10000, // 기본 10초마다 자동 폴링 (최적화)
-    staleTime: 5 * 1000, // 5초간 캐시 유지
+    refetchInterval: options?.refetchInterval ?? 30000, // 기본 30초마다 자동 폴링 (429 에러 방지)
+    staleTime: 20 * 1000, // 20초간 캐시 유지 (429 에러 방지)
     retry: 1,
     enabled: options?.enabled !== false && !!deviceId, // deviceId가 있을 때만 조회
   });

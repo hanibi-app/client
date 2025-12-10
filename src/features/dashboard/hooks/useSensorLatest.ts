@@ -11,9 +11,9 @@ import type { SensorLatestData } from '@/api/types/devices';
 
 /**
  * 센서 데이터 폴링 간격 (밀리초)
- * 기본값: 5초
+ * 기본값: 20초 (429 에러 방지를 위해 증가)
  */
-export const SENSOR_POLLING_INTERVAL = 5000;
+export const SENSOR_POLLING_INTERVAL = 20000;
 
 /**
  * 최신 센서 데이터를 조회하는 React Query 훅
@@ -55,9 +55,9 @@ export function useSensorLatest(
       }
       return fetchSensorLatest(deviceId);
     },
-    refetchInterval: options?.refetchInterval ?? SENSOR_POLLING_INTERVAL, // 기본 5초마다 자동 폴링
+    refetchInterval: options?.refetchInterval ?? SENSOR_POLLING_INTERVAL, // 기본 20초마다 자동 폴링 (429 에러 방지)
     refetchOnWindowFocus: false,
-    staleTime: 10 * 1000, // 10초간 캐시 유지
+    staleTime: 30 * 1000, // 30초간 캐시 유지 (429 에러 방지)
     retry: 1,
   });
 }

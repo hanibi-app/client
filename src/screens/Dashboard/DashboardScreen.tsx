@@ -440,7 +440,7 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
     isError: isSensorError,
     refetch: refetchSensor,
   } = useSensorLatest(deviceId || undefined, {
-    refetchInterval: isFocused && deviceId ? 15000 : false, // 포커스되어 있고 deviceId가 있을 때만 15초마다 폴링
+    refetchInterval: isFocused && deviceId ? 30000 : false, // 포커스되어 있고 deviceId가 있을 때만 30초마다 폴링 (429 에러 방지)
     enabled: !!deviceId, // deviceId가 있을 때만 조회
   });
 

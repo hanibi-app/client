@@ -84,7 +84,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   // 기기 상태 조회 - 진행률 바를 위해 빠르게 갱신
   // 서버에 등록된 기기가 있을 때만 조회
   const { data: deviceDetail } = useDevice(targetDeviceId, {
-    refetchInterval: isFocused && targetDeviceId ? 15000 : false, // 포커스되어 있고 기기가 있을 때만 15초마다 폴링
+    refetchInterval: isFocused && targetDeviceId ? 30000 : false, // 포커스되어 있고 기기가 있을 때만 30초마다 폴링 (429 에러 방지)
     enabled: !!targetDeviceId, // deviceId가 있을 때만 조회
   });
 
@@ -194,7 +194,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   // 음식 투입 세션 조회 (최근 1개만) - 진행률 바를 위해 빠르게 갱신
   const targetDeviceIdForSession = localPairedDevice?.deviceId || firstDeviceId || '';
   const { data: sessions } = useFoodSessions(targetDeviceIdForSession, {
-    refetchInterval: isFocused ? 10000 : false, // 포커스되어 있을 때만 10초마다 폴링 (진행률 바 빠른 업데이트)
+    refetchInterval: isFocused ? 20000 : false, // 포커스되어 있을 때만 20초마다 폴링 (429 에러 방지)
     enabled: !!targetDeviceIdForSession,
   });
   const latestSession = sessions && sessions.length > 0 ? sessions[0] : null;
@@ -202,7 +202,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   // 센서 데이터 조회 (온라인이고 페어링된 기기가 있을 때만)
   const { data: sensorData } = useSensorLatest(targetDeviceId, {
     enabled: isPairedDeviceOnline && !!targetDeviceId,
-    refetchInterval: isFocused && isPairedDeviceOnline ? 10000 : false, // 10초마다 갱신
+    refetchInterval: isFocused && isPairedDeviceOnline ? 20000 : false, // 20초마다 갱신 (429 에러 방지)
   });
 
   // 센서 기반 메시지 생성

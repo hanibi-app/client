@@ -32,7 +32,7 @@ export default function CameraPreviewDebugScreen() {
     error,
     refetch,
   } = useCameraSnapshot(deviceId, {
-    refetchInterval: isFocused ? 10000 : false, // 포커스되어 있을 때만 10초마다 폴링
+    refetchInterval: isFocused ? 30000 : false, // 포커스되어 있을 때만 30초마다 폴링 (429 에러 방지)
   });
 
   /**

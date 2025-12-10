@@ -71,8 +71,8 @@ export function useDeviceDetail(
         cameraPassword: device.cameraPassword,
       };
     },
-    staleTime: 20 * 1000, // 20초간 캐시 유지 (429 에러 방지)
-    refetchInterval: options?.refetchInterval ?? 20000, // 기본 20초마다 자동 갱신 (429 에러 방지)
+    staleTime: 30 * 1000, // 30초간 캐시 유지 (429 에러 방지)
+    refetchInterval: options?.refetchInterval ?? 30000, // 기본 30초마다 자동 갱신 (429 에러 방지)
     retry: 1,
   });
 }

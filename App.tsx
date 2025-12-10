@@ -25,10 +25,10 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      refetchOnWindowFocus: false, // 포커스 시 자동 refetch 방지
-      staleTime: 30 * 1000, // 기본 30초간 캐시 유지 (최적화)
-      refetchOnMount: true, // 마운트 시 staleTime 체크 후 필요시에만 refetch
-      refetchOnReconnect: true, // 재연결 시에만 refetch
+      refetchOnWindowFocus: false, // 포커스 시 자동 refetch 방지 (429 에러 방지)
+      staleTime: 60 * 1000, // 기본 60초간 캐시 유지 (429 에러 방지)
+      refetchOnMount: false, // 마운트 시 자동 refetch 방지 (429 에러 방지)
+      refetchOnReconnect: false, // 재연결 시 자동 refetch 방지 (429 에러 방지)
     },
   },
 });

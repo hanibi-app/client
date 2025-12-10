@@ -4,17 +4,19 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { AxiosError } from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-    Animated,
-    Easing,
-    Pressable,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    useWindowDimensions,
-    View,
+  Alert,
+  Animated,
+  Easing,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -28,6 +30,7 @@ import { HomeMessageCard } from '@/components/home/HomeMessageCard';
 import { NameCard } from '@/components/home/NameCard';
 import { ProgressBar } from '@/components/home/ProgressBar';
 import { HOME_STACK_ROUTES } from '@/constants/routes';
+import { useSensorLatest } from '@/features/dashboard/hooks/useSensorLatest';
 import { useDevice, useDevices, usePairDevice } from '@/features/devices/hooks';
 import { useMe, useUpdateProfile } from '@/features/user/hooks';
 import { useFoodSessions } from '@/hooks/useFoodSessions';
@@ -39,6 +42,7 @@ import { useLoadingStore } from '@/store/loadingStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
+import { generateHomeMessage } from '@/utils/homeMessageTemplates';
 import { calculateProcessingProgress } from '@/utils/processingProgress';
 
 const DEFAULT_EDIT_ACTION_WIDTH = 64;
@@ -76,11 +80,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   // 우선순위: 1) 로컬 페어링 기기 (서버에 등록된 경우만), 2) 서버의 첫 번째 기기
   const targetDeviceId =
     (pairedDeviceId && isPairedDeviceRegistered ? pairedDeviceId : null) || firstDeviceId || '';
-  
+
   // 기기 상태 조회 - 진행률 바를 위해 빠르게 갱신
   // 서버에 등록된 기기가 있을 때만 조회
   const { data: deviceDetail } = useDevice(targetDeviceId, {
-    refetchInterval: isFocused && targetDeviceId ? 15000 : false, // 포커스되어 있고 기기가 있을 때만 15초마다 폴링
+    refetchInterval: isFocused && targetDeviceId ? 30000 : false, // 포커스되어 있고 기기가 있을 때만 30초마다 폴링 (429 에러 방지)
     enabled: !!targetDeviceId, // deviceId가 있을 때만 조회
   });
 
@@ -190,14 +194,32 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   // 음식 투입 세션 조회 (최근 1개만) - 진행률 바를 위해 빠르게 갱신
   const targetDeviceIdForSession = localPairedDevice?.deviceId || firstDeviceId || '';
   const { data: sessions } = useFoodSessions(targetDeviceIdForSession, {
-    refetchInterval: isFocused ? 10000 : false, // 포커스되어 있을 때만 10초마다 폴링 (진행률 바 빠른 업데이트)
+    refetchInterval: isFocused ? 20000 : false, // 포커스되어 있을 때만 20초마다 폴링 (429 에러 방지)
     enabled: !!targetDeviceIdForSession,
   });
   const latestSession = sessions && sessions.length > 0 ? sessions[0] : null;
 
-  // 화면 포커스 시 기기 상태 갱신 (최적화: staleTime 체크 후 필요시에만 refetch)
+  // 센서 데이터 조회 (온라인이고 페어링된 기기가 있을 때만)
+  const { data: sensorData } = useSensorLatest(targetDeviceId, {
+    enabled: isPairedDeviceOnline && !!targetDeviceId,
+    refetchInterval: isFocused && isPairedDeviceOnline ? 20000 : false, // 20초마다 갱신 (429 에러 방지)
+  });
+
+  // 센서 기반 메시지 생성
+  const sensorMessage = sensorData
+    ? generateHomeMessage({
+        temperature: sensorData.temperature,
+        humidity: sensorData.humidity,
+        weight: sensorData.weight,
+        gas: sensorData.gas,
+      })
+    : null;
+
+  // 화면 포커스 시 기기 상태 갱신 및 로컬 페어링 정보 다시 로드
   useFocusEffect(
     useCallback(() => {
+      // 화면 포커스 시 로컬 페어링 정보 다시 로드 (동기화 상태 확인)
+      loadLocalDevice();
       // React Query가 자동으로 staleTime을 체크하여 필요시에만 refetch하도록 함
       // 명시적 refetch는 제거하여 불필요한 요청 방지
       // 데이터가 stale하지 않으면 자동으로 캐시된 데이터를 사용
@@ -424,11 +446,46 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   // 페어링 확인
   const handleConfirmPairing = async () => {
     try {
-      // TODO: 실제 기기 ID와 이름을 가져오는 로직 필요
-      // 임시로 테스트용 데이터 사용
+      // 로컬 페어링 정보 확인
+      const currentLocalDevice = localPairedDevice || (await getPairedDevice());
+
+      if (!currentLocalDevice) {
+        console.error('[HomeScreen] 로컬 페어링 정보가 없습니다.');
+        Alert.alert('오류', '페어링할 기기 정보를 찾을 수 없습니다.');
+        setIsPairingModalVisible(false);
+        return;
+      }
+
+      // 서버 기기 목록을 먼저 최신화하여 확인
+      const { data: latestDevices } = await refetchDevices();
+
+      // 서버에 이미 등록되어 있는지 확인
+      const existingDevice = latestDevices?.find((d) => d.deviceId === currentLocalDevice.deviceId);
+
+      if (existingDevice) {
+        // 이미 서버에 등록되어 있으면 페어링을 건너뛰고 동기화만 수행
+        console.log('[HomeScreen] 기기가 이미 서버에 등록되어 있습니다. 동기화만 수행합니다.');
+        await setPairedDevice({
+          deviceId: existingDevice.deviceId,
+          deviceName: existingDevice.deviceName,
+          apiSynced: true,
+          syncedAt: new Date().toISOString(),
+        });
+
+        // 로컬 상태 업데이트
+        setLocalPairedDevice({
+          deviceId: existingDevice.deviceId,
+          deviceName: existingDevice.deviceName,
+        });
+
+        setIsPairingModalVisible(false);
+        return;
+      }
+
+      // 서버에 등록되어 있지 않으면 페어링 시도
       const device = await pairDevice.mutateAsync({
-        deviceId: 'DEVICE_001',
-        deviceName: '한니비 기기',
+        deviceId: currentLocalDevice.deviceId,
+        deviceName: currentLocalDevice.deviceName,
       });
 
       // 페어링 성공 시 로컬 저장소에 저장
@@ -449,7 +506,27 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       // 성공 시 기기 목록이 자동으로 갱신됨
     } catch (error) {
       console.error('[HomeScreen] 페어링 실패:', error);
-      // 에러 처리 (나중에 토스트 메시지 등 추가 가능)
+      setIsPairingModalVisible(false);
+
+      // 409 에러 처리: 이미 페어링된 기기
+      if (error instanceof AxiosError && error.response?.status === 409) {
+        // 기기 목록 갱신
+        await refetchDevices();
+        // 로컬 페어링 정보 다시 로드
+        await loadLocalDevice();
+
+        Alert.alert(
+          '이미 페어링된 기기',
+          '이 기기는 이미 서버에 등록되어 있습니다.\n기기 정보를 동기화했습니다.',
+        );
+      } else {
+        // 기타 에러
+        const errorMessage =
+          error instanceof AxiosError
+            ? error.response?.data?.message || error.message || '페어링에 실패했습니다.'
+            : '페어링에 실패했습니다.';
+        Alert.alert('페어링 실패', errorMessage);
+      }
     }
   };
 
@@ -475,43 +552,118 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
         <HomeMessageCard
           paddingTop={messageTopPadding}
-          icon={
-            isPaired ? (
-              isPairedDeviceOnline ? (
-                <MaterialIcons name="local-fire-department" size={24} color="#FF6B35" />
-              ) : (
-                <MaterialIcons name="bluetooth-disabled" size={24} color="#ED5B5B" />
-              )
-            ) : (
-              <MaterialIcons name="bluetooth-disabled" size={24} color="#ED5B5B" />
-            )
-          }
-          title={
-            isPaired
-              ? isPairedDeviceRegistered
-                ? isPairedDeviceOnline
-                  ? '너무 더워서 힘들어요 😩'
-                  : '네트워크 문제가 발생했어요'
-                : '기기를 서버에 등록해주세요'
-              : '기기를 페어링해주세요'
-          }
-          description={
-            isPaired ? (
-              isPairedDeviceRegistered ? (
-                isPairedDeviceOnline ? (
-                  <Text>
-                    <Text style={styles.temperatureHighlight}>온도</Text> 한 번만 확인해 주세요!
-                  </Text>
-                ) : (
-                  <Text>전원과 네트워크를 확인한 뒤{'\n'}다시 시도해 주세요</Text>
-                )
-              ) : (
-                <Text>설정에서 서버 동기화를{'\n'}진행해주세요</Text>
-              )
-            ) : (
-              <Text>기기를 페어링하려면{'\n'}네트워크 연결이 필요해요</Text>
-            )
-          }
+          icon={(() => {
+            // 센서 메시지가 있으면 우선 사용
+            if (sensorMessage && isPairedDeviceOnline) {
+              return (
+                <MaterialIcons
+                  name={sensorMessage.icon}
+                  size={24}
+                  color={sensorMessage.iconColor}
+                />
+              );
+            }
+
+            // 페어링 안됨
+            if (!isPaired) {
+              return <MaterialIcons name="bluetooth-disabled" size={24} color="#ED5B5B" />;
+            }
+
+            // 페어링됨 + 서버 등록 안됨
+            if (!isPairedDeviceRegistered) {
+              return <MaterialIcons name="sync-problem" size={24} color="#FFA726" />;
+            }
+
+            // 페어링됨 + 서버 등록됨 + 오프라인
+            if (!isPairedDeviceOnline) {
+              return <MaterialIcons name="bluetooth-disabled" size={24} color="#ED5B5B" />;
+            }
+
+            // 페어링됨 + 서버 등록됨 + 온라인
+            // 상태에 따라 아이콘 변경
+            if (isInputInProgress) {
+              return <MaterialIcons name="restaurant" size={24} color="#4CAF50" />;
+            }
+            if (isProcessing) {
+              return <MaterialIcons name="autorenew" size={24} color="#2196F3" />;
+            }
+            // 대기 중 또는 기타
+            return <MaterialIcons name="local-fire-department" size={24} color="#FF6B35" />;
+          })()}
+          title={(() => {
+            // 센서 메시지가 있으면 우선 사용
+            if (sensorMessage && isPairedDeviceOnline) {
+              return sensorMessage.title;
+            }
+
+            // 페어링 안됨
+            if (!isPaired) {
+              return '기기를 페어링해주세요';
+            }
+
+            // 페어링됨 + 서버 등록 안됨
+            if (!isPairedDeviceRegistered) {
+              return '기기를 서버에 등록해주세요';
+            }
+
+            // 페어링됨 + 서버 등록됨 + 오프라인
+            if (!isPairedDeviceOnline) {
+              return '네트워크 문제가 발생했어요';
+            }
+
+            // 페어링됨 + 서버 등록됨 + 온라인
+            // 상태에 따라 제목 변경
+            if (isInputInProgress) {
+              return '음식을 투입하고 있어요 🍽️';
+            }
+            if (isProcessing) {
+              return '지금 열심히 처리 중이에요 ⚙️';
+            }
+            // 대기 중
+            return '너무 더워서 힘들어요 😩';
+          })()}
+          description={(() => {
+            // 센서 메시지가 있으면 우선 사용
+            if (sensorMessage && isPairedDeviceOnline) {
+              return <Text>{sensorMessage.description}</Text>;
+            }
+
+            // 페어링 안됨
+            if (!isPaired) {
+              return <Text>기기를 페어링하려면{'\n'}네트워크 연결이 필요해요</Text>;
+            }
+
+            // 페어링됨 + 서버 등록 안됨
+            if (!isPairedDeviceRegistered) {
+              return <Text>설정에서 서버 동기화를{'\n'}진행해주세요</Text>;
+            }
+
+            // 페어링됨 + 서버 등록됨 + 오프라인
+            if (!isPairedDeviceOnline) {
+              return <Text>전원과 네트워크를 확인한 뒤{'\n'}다시 시도해 주세요</Text>;
+            }
+
+            // 페어링됨 + 서버 등록됨 + 온라인
+            // 상태에 따라 설명 변경
+            if (isInputInProgress) {
+              return <Text>음식물을 투입하고 있어요{'\n'}잠시만 기다려주세요</Text>;
+            }
+            if (isProcessing) {
+              return (
+                <Text>
+                  처리 완료까지{' '}
+                  <Text style={styles.temperatureHighlight}>{Math.round(remainingPercent)}%</Text>{' '}
+                  남았어요
+                </Text>
+              );
+            }
+            // 대기 중
+            return (
+              <Text>
+                <Text style={styles.temperatureHighlight}>온도</Text> 한 번만 확인해 주세요!
+              </Text>
+            );
+          })()}
         />
 
         {/* 중앙 캐릭터 */}

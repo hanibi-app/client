@@ -5,20 +5,23 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useIsFocused } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
-    Animated,
-    Easing,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
-    useWindowDimensions,
+  Animated,
+  Easing,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, Rect, Stop, LinearGradient as SvgLinearGradient } from 'react-native-svg';
 
+import sample1Image from '@/assets/camera-sample/sample1.jpeg';
+import sample2Image from '@/assets/camera-sample/sample2.jpeg';
+import sample3Image from '@/assets/camera-sample/sample3.jpeg';
 import ThreeArrowIcon from '@/assets/images/three-arrow.svg';
 import AppButton from '@/components/common/AppButton';
 import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
@@ -437,7 +440,7 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
     isError: isSensorError,
     refetch: refetchSensor,
   } = useSensorLatest(deviceId || undefined, {
-    refetchInterval: isFocused && deviceId ? 15000 : false, // 포커스되어 있고 deviceId가 있을 때만 15초마다 폴링
+    refetchInterval: isFocused && deviceId ? 30000 : false, // 포커스되어 있고 deviceId가 있을 때만 30초마다 폴링 (429 에러 방지)
     enabled: !!deviceId, // deviceId가 있을 때만 조회
   });
 
@@ -501,7 +504,20 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
     navigation.goBack();
   };
 
+  // 샘플 이미지 배열
+  const sampleImages = [sample1Image, sample2Image, sample3Image];
+
+  // 랜덤으로 샘플 이미지 선택
+  const getRandomSampleImage = () => {
+    const randomIndex = Math.floor(Math.random() * sampleImages.length);
+    return sampleImages[randomIndex];
+  };
+
+  const [selectedCameraImage, setSelectedCameraImage] = useState<number | undefined>(undefined);
+
   const handleCamera = () => {
+    // 모달이 열릴 때마다 랜덤으로 이미지 선택
+    setSelectedCameraImage(getRandomSampleImage());
     setCameraModalVisible(true);
   };
 
@@ -884,6 +900,7 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
         status={cameraStatus}
         isChecking={isChecking}
         errorMessage={cameraError}
+        cameraImage={selectedCameraImage}
         onClose={handleCloseCameraModal}
         onPrimaryAction={handleModalViewReport}
         onLinkPress={handleLinkCctvSettings}

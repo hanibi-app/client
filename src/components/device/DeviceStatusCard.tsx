@@ -109,14 +109,16 @@ export function DeviceStatusCard({ deviceId }: DeviceStatusCardProps) {
     isLoading: isDeviceLoading,
     isError: isDeviceError,
   } = useDeviceDetail(deviceId, {
-    refetchInterval: 20000, // 20초마다 자동 갱신 (429 에러 방지)
+    refetchInterval: 30000, // 30초마다 자동 갱신 (429 에러 방지)
   });
 
   const {
     data: sensorData,
     isLoading: isSensorLoading,
     isError: isSensorError,
-  } = useSensorLatest(deviceId);
+  } = useSensorLatest(deviceId, {
+    refetchInterval: 30000, // 30초마다 자동 갱신 (429 에러 방지)
+  });
 
   // 음식 투입 세션 조회 (최근 1개만)
   const { data: sessions } = useFoodSessions(deviceId);

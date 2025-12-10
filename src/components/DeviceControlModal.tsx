@@ -71,7 +71,7 @@ export default function DeviceControlModal({
     isLoading: isSessionsLoading,
     refetch: refetchSessions,
   } = useFoodSessions(deviceId || '', {
-    refetchInterval: visible ? 20000 : false, // 모달이 열려있을 때만 20초마다 폴링 (429 에러 방지)
+    refetchInterval: visible ? 30000 : false, // 모달이 열려있을 때만 30초마다 폴링 (429 에러 방지)
     enabled: visible && !!deviceId, // 모달이 열려있고 deviceId가 있을 때만 조회
   });
   const latestSession = sessions && sessions.length > 0 ? sessions[0] : null;

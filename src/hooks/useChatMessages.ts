@@ -52,6 +52,6 @@ export function useChatMessages({ deviceId, limit = 50 }: UseChatMessagesOptions
       );
     },
     refetchOnWindowFocus: false,
-    staleTime: 10 * 1000, // 10초간 캐시 유지
+    staleTime: 30 * 1000, // 30초간 캐시 유지 (429 에러 방지)
   });
 }

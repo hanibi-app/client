@@ -1,30 +1,32 @@
 /**
  * 채팅 화면
  * 기기와의 채팅 인터페이스를 제공합니다.
- * 상단에 기기 상태 바, 중간에 메시지 리스트, 하단에 입력창이 있습니다.
+ * 상단에 기기 상태 바, 중간에 메시지 리스트, 하단에 빠른 명령 바가 있습니다.
+ * 빠른 명령으로만 기기를 제어하고, 기기로부터 받은 알림 메시지를 확인할 수 있습니다.
+ * WebSocket을 통해 실시간으로 새 메시지를 수신합니다.
  */
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef } from 'react';
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
+  ActivityIndicator,
   FlatList,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   SafeAreaView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ChatMessage, DeviceSummary } from '@/api/chat';
+import { ChatMessage, DeviceStatus } from '@/api/chat';
+import QuickCommandBar from '@/components/chat/QuickCommandBar';
 import { HOME_STACK_ROUTES } from '@/constants/routes';
-import { useChatSendMessage } from '@/hooks/useChatSendMessage';
+import { useChatMessages } from '@/hooks/useChatMessages';
+import { useChatSocket } from '@/hooks/useChatSocket';
+import { useDeviceDetail } from '@/hooks/useDeviceDetail';
 import { HomeStackParamList } from '@/navigation/types';
 import { useChatBadgeStore } from '@/store/chatBadgeStore';
 import { colors } from '@/theme/Colors';
@@ -56,6 +58,10 @@ function getDeviceStatusLabel(status: string): string {
       return '대기 중';
     case 'PROCESSING':
       return '처리 중';
+    case 'PAUSED':
+      return '일시정지';
+    case 'ERROR':
+      return '오류';
     default:
       return status;
   }
@@ -80,40 +86,24 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 
 export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   const { deviceId, deviceName: initialDeviceName } = route.params;
-  const insets = useSafeAreaInsets();
-
-  // 메시지 리스트 상태
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
 
-  // 현재 기기 정보 (마지막 메시지의 device 필드에서 가져옴)
-  const [currentDevice, setCurrentDevice] = useState<DeviceSummary | null>(null);
+  // 디바이스 상세 정보 조회
+  const { data: deviceDetail } = useDeviceDetail(deviceId, {
+    refetchInterval: 30000, // 30초마다 자동 갱신
+  });
+
+  // 채팅 메시지 조회
+  const { data: messages = [], isLoading: isLoadingMessages } = useChatMessages({
+    deviceId,
+    limit: 50,
+  });
+
+  // WebSocket 구독 (실시간 메시지 수신)
+  useChatSocket({ deviceId });
 
   // 채팅 뱃지 스토어
   const { clearBadge, setHasNewChat } = useChatBadgeStore();
-
-  // 채팅 메시지 전송 훅
-  const { mutate: sendMessage, isPending } = useChatSendMessage(deviceId, {
-    onSuccess: (data) => {
-      // 성공 시 메시지 리스트에 추가
-      setMessages((prev) => [...prev, data]);
-      // 기기 정보 업데이트
-      setCurrentDevice(data.device);
-      // 입력창 초기화
-      setInputText('');
-      // 메시지 전송 성공 시 뱃지 설정 (다른 기기에서 확인할 수 있도록)
-      setHasNewChat(deviceId, true);
-      // 스크롤을 맨 아래로
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    },
-    onError: (error) => {
-      console.error('[ChatScreen] 메시지 전송 실패:', error);
-      // TODO: UI에서 Snackbar/Toast로 에러 표시
-    },
-  });
 
   // 화면 포커스 시 뱃지 초기화
   useFocusEffect(
@@ -122,80 +112,77 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
     }, [deviceId, clearBadge]),
   );
 
-  // 메시지 전송 핸들러
-  const handleSend = () => {
-    const trimmedText = inputText.trim();
-    if (!trimmedText || isPending) {
-      return;
-    }
-
-    sendMessage({
-      content: trimmedText,
-      metadata: {
-        intent: 'FREE_CHAT', // 기본값, 향후 퀵커맨드 버튼에서는 'STATUS_QUERY' 등으로 변경 가능
-      },
-    });
-  };
-
   // 뒤로가기 핸들러
   const handleBack = () => {
     navigation.goBack();
   };
 
-  // 기기 이름 결정 (초기값 또는 마지막 메시지의 device.deviceName)
-  const displayDeviceName = currentDevice?.deviceName || initialDeviceName || deviceId;
+  // 기기 이름 결정 (우선순위: deviceDetail > initialDeviceName > deviceId)
+  const displayDeviceName =
+    deviceDetail?.deviceName || deviceDetail?.name || initialDeviceName || deviceId;
 
   // 기기 상태 정보
-  const connectionStatus = currentDevice?.connectionStatus || null;
-  const deviceStatus = currentDevice?.deviceStatus || null;
+  const connectionStatus = deviceDetail?.connectionStatus || null;
+  const deviceStatus = (deviceDetail?.deviceStatus as DeviceStatus | undefined) || undefined;
 
-  // TODO: device.rtspUrl를 활용한 라이브 스트리밍/스냅샷 UI는 추후 Camera 모듈과 함께 구현
-  // const rtspUrl = currentDevice?.rtspUrl;
+  // 메시지 추가 핸들러 (퀵 커맨드 실행 후 메시지 추가용)
+  const handleAppendMessage = useCallback(
+    (_message: ChatMessage) => {
+      // 메시지 전송 성공 시 뱃지 설정
+      setHasNewChat(deviceId, true);
+      // 스크롤을 맨 아래로
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    },
+    [deviceId, setHasNewChat],
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
-        {/* 상단 헤더 (기기 상태 바) */}
-        <View style={styles.header}>
-          <Pressable onPress={handleBack} style={styles.backButton}>
-            <MaterialIcons name="arrow-back" size={24} color={colors.text} />
-          </Pressable>
+      {/* 상단 헤더 (기기 상태 바) */}
+      <View style={styles.header}>
+        <Pressable onPress={handleBack} style={styles.backButton}>
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
+        </Pressable>
 
-          <View style={styles.headerCenter}>
-            <Text style={styles.deviceName}>{displayDeviceName}</Text>
-            <View style={styles.statusRow}>
-              {connectionStatus && (
-                <View style={styles.statusBadge}>
-                  <View
-                    style={[
-                      styles.statusDot,
-                      connectionStatus === 'ONLINE'
-                        ? styles.statusDotOnline
-                        : styles.statusDotOffline,
-                    ]}
-                  />
-                  <Text style={styles.statusText}>
-                    {getConnectionStatusLabel(connectionStatus)}
-                  </Text>
-                </View>
-              )}
-              {deviceStatus && (
-                <Text style={styles.deviceStatusText}>{getDeviceStatusLabel(deviceStatus)}</Text>
-              )}
-              {!connectionStatus && !deviceStatus && (
-                <Text style={styles.loadingText}>로딩 중...</Text>
-              )}
-            </View>
+        <View style={styles.headerCenter}>
+          <Text style={styles.deviceName}>{displayDeviceName}</Text>
+          <View style={styles.statusRow}>
+            {connectionStatus && (
+              <View style={styles.statusBadge}>
+                <View
+                  style={[
+                    styles.statusDot,
+                    connectionStatus === 'ONLINE'
+                      ? styles.statusDotOnline
+                      : styles.statusDotOffline,
+                  ]}
+                />
+                <Text style={styles.statusText}>
+                  {getConnectionStatusLabel(connectionStatus)}
+                </Text>
+              </View>
+            )}
+            {deviceStatus && (
+              <Text style={styles.deviceStatusText}>{getDeviceStatusLabel(deviceStatus)}</Text>
+            )}
+            {!connectionStatus && !deviceStatus && (
+              <Text style={styles.loadingText}>로딩 중...</Text>
+            )}
           </View>
-
-          <View style={styles.headerRight} />
         </View>
 
-        {/* 메시지 리스트 */}
+        <View style={styles.headerRight} />
+      </View>
+
+      {/* 메시지 리스트 */}
+      {isLoadingMessages ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>메시지를 불러오는 중...</Text>
+        </View>
+      ) : (
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -208,7 +195,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>
-                기기와 대화를 시작해보세요!{'\n'}메시지를 입력하고 전송 버튼을 눌러주세요.
+                빠른 명령을 사용하여 기기를 제어하세요.{'\n'}기기로부터 받은 알림이 여기에 표시됩니다.
               </Text>
             </View>
           }
@@ -217,37 +204,14 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
             flatListRef.current?.scrollToEnd({ animated: true });
           }}
         />
+      )}
 
-        {/* 하단 입력 영역 */}
-        <View style={[styles.inputContainer, { paddingBottom: insets.bottom + spacing.sm }]}>
-          <TextInput
-            style={styles.input}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="메시지를 입력하세요..."
-            placeholderTextColor={colors.mutedTextLight}
-            multiline
-            maxLength={500}
-            editable={!isPending}
-            onSubmitEditing={handleSend}
-            returnKeyType="send"
-          />
-          <Pressable
-            onPress={handleSend}
-            disabled={!inputText.trim() || isPending}
-            style={[
-              styles.sendButton,
-              (!inputText.trim() || isPending) && styles.sendButtonDisabled,
-            ]}
-          >
-            <MaterialIcons
-              name="send"
-              size={24}
-              color={!inputText.trim() || isPending ? colors.mutedTextLight : colors.white}
-            />
-          </Pressable>
-        </View>
-      </KeyboardAvoidingView>
+      {/* 빠른 명령 바 */}
+      <QuickCommandBar
+        deviceId={deviceId}
+        deviceStatus={deviceStatus}
+        onAppendMessage={handleAppendMessage}
+      />
     </SafeAreaView>
   );
 }
@@ -300,31 +264,15 @@ const styles = StyleSheet.create({
   headerRight: {
     width: 44,
   },
-  input: {
-    backgroundColor: colors.gray50,
-    borderRadius: 20,
-    color: colors.text,
-    flex: 1,
-    fontSize: typography.sizes.md,
-    maxHeight: 100,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  inputContainer: {
+  loadingContainer: {
     alignItems: 'center',
-    backgroundColor: colors.white,
-    borderTopColor: colors.border,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-  },
-  keyboardAvoidingView: {
     flex: 1,
+    justifyContent: 'center',
   },
   loadingText: {
     color: colors.mutedTextLight,
     fontSize: typography.sizes.sm,
+    marginTop: spacing.sm,
   },
   messageBubble: {
     borderRadius: 16,
@@ -359,18 +307,6 @@ const styles = StyleSheet.create({
   },
   messagesContainerEmpty: {
     justifyContent: 'center',
-  },
-  sendButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 20,
-    height: 40,
-    justifyContent: 'center',
-    marginLeft: spacing.sm,
-    width: 40,
-  },
-  sendButtonDisabled: {
-    backgroundColor: colors.gray100,
   },
   statusBadge: {
     alignItems: 'center',

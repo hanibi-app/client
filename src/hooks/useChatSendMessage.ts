@@ -7,12 +7,7 @@ import { useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/
 
 import { sendChatMessage, type ChatMessage, type SendChatMessageRequest } from '@/api/chat';
 
-/**
- * 채팅 메시지 쿼리 키 생성 함수
- * 추후 GET /api/v1/chat/:deviceId/messages 연동 시 사용할 수 있습니다.
- */
-export const CHAT_MESSAGES_QUERY_KEY = (deviceId: string) =>
-  ['chat', deviceId, 'messages'] as const;
+import { chatMessagesQueryKey } from './useChatMessages';
 
 /**
  * 채팅 메시지 전송 훅
@@ -55,34 +50,55 @@ export const CHAT_MESSAGES_QUERY_KEY = (deviceId: string) =>
  * }
  * ```
  */
+export interface UseSendChatMessageOptions {
+  deviceId: string;
+}
+
+export function useSendChatMessage({ deviceId }: UseSendChatMessageOptions) {
+  const queryClient = useQueryClient();
+
+  return useMutation<ChatMessage, Error, SendChatMessageRequest>({
+    mutationFn: (body) => sendChatMessage(deviceId, body),
+    onSuccess: (newMessage) => {
+      // 1) 캐시에 바로 추가 (optimistic update)
+      queryClient.setQueryData<ChatMessage[] | undefined>(
+        chatMessagesQueryKey(deviceId, 50),
+        (old) => {
+          if (!old) return [newMessage];
+          // 이미 ASC 정렬된 상태라고 가정하고, 새 메시지를 끝에 추가
+          return [...old, newMessage];
+        },
+      );
+
+      // 2) 다른 limit 값들도 업데이트 (선택적)
+      queryClient.setQueryData<ChatMessage[] | undefined>(
+        chatMessagesQueryKey(deviceId, 100),
+        (old) => {
+          if (!old) return [newMessage];
+          return [...old, newMessage];
+        },
+      );
+    },
+    onError: (error) => {
+      // 서버 에러 메시지 로깅
+      console.error('[useSendChatMessage] 메시지 전송 실패:', error);
+      // 필요 시 별도 토스트/알림
+    },
+  });
+}
+
+/**
+ * @deprecated useSendChatMessage를 사용하세요
+ * 기존 코드 호환성을 위해 유지
+ */
 export function useChatSendMessage(
   deviceId: string,
   options?: Omit<UseMutationOptions<ChatMessage, Error, SendChatMessageRequest>, 'mutationFn'>,
 ) {
-  const queryClient = useQueryClient();
-
-  return useMutation<ChatMessage, Error, SendChatMessageRequest>({
-    mutationFn: (payload) => sendChatMessage(deviceId, payload),
-    onSuccess: (data, variables, context) => {
-      // 성공 시 채팅 메시지 쿼리 캐시 무효화 (추후 GET API 연동 시 자동 갱신)
-      queryClient.invalidateQueries({
-        queryKey: CHAT_MESSAGES_QUERY_KEY(deviceId),
-      });
-
-      // 옵션으로 전달된 onSuccess 콜백 실행
-      if (options?.onSuccess) {
-        options.onSuccess(data, variables, context);
-      }
-    },
-    onError: (error, variables, context) => {
-      // 서버 에러 메시지 로깅
-      console.error('[useChatSendMessage] 메시지 전송 실패:', error);
-
-      // 옵션으로 전달된 onError 콜백 실행
-      if (options?.onError) {
-        options.onError(error, variables, context);
-      }
-    },
-    ...options,
-  });
+  const { mutate, ...rest } = useSendChatMessage({ deviceId });
+  return {
+    ...rest,
+    mutate,
+    sendMessage: mutate,
+  };
 }

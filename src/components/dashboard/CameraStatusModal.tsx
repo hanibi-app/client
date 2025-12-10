@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import {
   ActivityIndicator,
+  Image,
   Modal,
   Platform,
   Pressable,
@@ -21,6 +22,7 @@ type CameraStatusModalProps = {
   status: CameraConnectionStatus;
   isChecking: boolean;
   errorMessage: string | null;
+  cameraImage?: number | { uri: string };
   onClose: () => void;
   onPrimaryAction: () => void;
   onLinkPress: () => void;
@@ -33,6 +35,7 @@ export const CameraStatusModal = ({
   status,
   isChecking,
   errorMessage,
+  cameraImage,
   onClose,
   onPrimaryAction,
   onLinkPress,
@@ -99,10 +102,16 @@ export const CameraStatusModal = ({
             <View style={styles.modalBadgeDot} />
             <Text style={styles.modalBadgeText}>처리 현황을 확인하세요</Text>
           </View>
-          <View style={styles.modalIconWrapper}>
-            <FontAwesome name="video-camera" size={48} color={colors.mutedText} />
-            <View style={styles.modalIconSlash} />
-          </View>
+          {cameraImage ? (
+            <View style={styles.modalImageWrapper}>
+              <Image source={cameraImage} style={styles.modalImage} resizeMode="cover" />
+            </View>
+          ) : (
+            <View style={styles.modalIconWrapper}>
+              <FontAwesome name="video-camera" size={48} color={colors.mutedText} />
+              <View style={styles.modalIconSlash} />
+            </View>
+          )}
           <Text style={styles.modalTitle}>{title}</Text>
           <Text style={styles.modalDescription}>{description}</Text>
           {errorMessage ? (
@@ -206,6 +215,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: spacing.lg,
     width: 64,
+  },
+  modalImage: {
+    height: '100%',
+    width: '100%',
+  },
+  modalImageWrapper: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    borderRadius: 16,
+    height: 200,
+    justifyContent: 'center',
+    marginTop: spacing.lg,
+    overflow: 'hidden',
+    width: '100%',
   },
   modalLinkText: {
     color: colors.primary,

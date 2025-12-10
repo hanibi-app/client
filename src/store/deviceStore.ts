@@ -65,10 +65,11 @@ export const useDeviceStore = create<DeviceState>((set) => ({
 
 /**
  * 현재 기기 ID를 가져오는 헬퍼 훅
- * currentDeviceId가 null이면 기본값(또는 첫 번째 페어링된 기기)을 반환합니다.
+ * currentDeviceId가 null이면 fallbackDeviceId를 반환합니다.
+ * fallbackDeviceId도 없으면 빈 문자열을 반환합니다 (요청하지 않음).
  *
  * @param fallbackDeviceId currentDeviceId가 null일 때 사용할 기본 기기 ID
- * @returns 현재 기기 ID (null이 아님을 보장)
+ * @returns 현재 기기 ID (없으면 빈 문자열)
  */
 export function useCurrentDeviceId(fallbackDeviceId?: string): string {
   const currentDeviceId = useDeviceStore((state) => state.currentDeviceId);
@@ -83,6 +84,6 @@ export function useCurrentDeviceId(fallbackDeviceId?: string): string {
     return fallbackDeviceId;
   }
 
-  // 둘 다 없으면 기본값 반환 (기존 하드코딩된 값과 호환성 유지)
-  return 'HANIBI-ESP32-001';
+  // 둘 다 없으면 빈 문자열 반환 (요청하지 않음)
+  return '';
 }

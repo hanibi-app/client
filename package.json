@@ -6,6 +6,8 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
+    "ios:clean": "expo run:ios --clean",
+    "ios:device": "expo run:ios --device",
     "web": "expo start --web",
     "test": "jest --runInBand",
     "typecheck": "tsc --noEmit",
@@ -13,7 +15,10 @@
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "simulator:list": "xcrun simctl list devices",
+    "simulator:reset": "node scripts/reset-ios-simulator.js",
+    "simulator:erase": "xcrun simctl erase all"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -50,6 +55,7 @@
     "react-native-svg": "^15.12.1",
     "react-native-svg-transformer": "^1.5.2",
     "react-native-web": "~0.21.0",
+    "socket.io-client": "^4.8.1",
     "victory-native": "^36.9.2",
     "zustand": "^5.0.8"
   },

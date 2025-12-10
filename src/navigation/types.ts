@@ -47,6 +47,10 @@ export type HomeStackParamList = {
   [HOME_STACK_ROUTES.CHARACTER_NAME_EDIT]: undefined;
   [HOME_STACK_ROUTES.PAIR_DEVICE]: undefined;
   [HOME_STACK_ROUTES.RANKING]: undefined;
+  [HOME_STACK_ROUTES.CHAT]: {
+    deviceId: string;
+    deviceName?: string;
+  };
 };
 
 // Dashboard Stack ParamList (대시보드 스택 네비게이터)

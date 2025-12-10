@@ -5,16 +5,16 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useIsFocused } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
-  Animated,
-  Easing,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
+    Animated,
+    Easing,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+    useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, Rect, Stop, LinearGradient as SvgLinearGradient } from 'react-native-svg';
@@ -24,19 +24,15 @@ import AppButton from '@/components/common/AppButton';
 import HanibiCharacter2D from '@/components/common/HanibiCharacter2D';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { CameraStatusModal } from '@/components/dashboard/CameraStatusModal';
+import { DeviceStatusCard } from '@/components/device/DeviceStatusCard';
 import { useSensorLatest } from '@/features/dashboard/hooks/useSensorLatest';
-import {
-  SensorStatus,
-  calculateHealthScore,
-  getGasStatus,
-  getHumidityStatus,
-  getTemperatureStatus,
-} from '@/features/dashboard/utils/healthScore';
+import { SensorStatus, calculateHealthScore } from '@/features/dashboard/utils/healthScore';
+import { useDevices } from '@/features/devices/hooks';
 import { EcoScorePreviewCard } from '@/features/reports/components/EcoScorePreviewCard';
 import { WeeklySummarySection } from '@/features/reports/components/WeeklySummarySection';
 import { useCameraStatus } from '@/hooks/useCameraStatus';
 import { DashboardStackParamList } from '@/navigation/types';
-import { useCurrentDeviceId } from '@/store/deviceStore';
+import { useDeviceStore } from '@/store/deviceStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
@@ -423,18 +419,26 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const [isHealthScoreModalVisible, setIsHealthScoreModalVisible] = useState(false);
   const { cameraStatus, isChecking, error: cameraError, refresh } = useCameraStatus();
 
-  // 현재 선택된 기기 ID 가져오기 (deviceStore에서)
-  // 기본값으로 기존 하드코딩된 값 사용 (호환성 유지)
-  const deviceId = useCurrentDeviceId('HANIBI-ESP32-001');
+  // 페어링된 기기 목록 조회
+  const { data: devices } = useDevices();
+
+  // 현재 선택된 기기 ID 가져오기
+  // 우선순위: 1) deviceStore의 currentDeviceId, 2) 페어링된 첫 번째 기기
+  // 계정에 등록된 기기가 없으면 요청하지 않음
+  const currentDeviceIdFromStore = useDeviceStore((state) => state.currentDeviceId);
+  const firstDeviceId = devices && devices.length > 0 ? devices[0].deviceId : null;
+  const deviceId = currentDeviceIdFromStore || firstDeviceId;
 
   // 센서 데이터 조회 (화면이 포커스되어 있을 때만 폴링 - 최적화)
+  // deviceId가 있을 때만 조회
   const {
     data: sensorData,
     isLoading: isSensorLoading,
     isError: isSensorError,
     refetch: refetchSensor,
-  } = useSensorLatest(deviceId, {
-    refetchInterval: isFocused ? 15000 : false, // 포커스되어 있을 때만 15초마다 폴링
+  } = useSensorLatest(deviceId || undefined, {
+    refetchInterval: isFocused && deviceId ? 15000 : false, // 포커스되어 있고 deviceId가 있을 때만 15초마다 폴링
+    enabled: !!deviceId, // deviceId가 있을 때만 조회
   });
 
   // 상태 바 너비 계산 (패딩 제외)
@@ -603,11 +607,12 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const dummyHealthScore100 = DEBUG_MODE ? 45 : 0;
 
   // 건강 점수 계산 (0~40점)
+  // null 값은 0으로 처리 (기존 로직 호환성 유지)
   const healthScore = calculateHealthScore({
-    temperature: sensorData.temperature,
-    humidity: sensorData.humidity,
-    weight: sensorData.weight,
-    gas: sensorData.gas,
+    temperature: sensorData.temperature ?? 0,
+    humidity: sensorData.humidity ?? 0,
+    weight: sensorData.weight ?? 0,
+    gas: sensorData.gas ?? 0,
   });
 
   // 100점 기준으로 변환 (0~40점 → 0~100점)
@@ -620,11 +625,15 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   // 화살표 위치는 100점 기준 점수에 따라 계산
   const indicatorPosition = getStatusBarPosition(healthScore100);
 
-  // 각 센서별 상태
-  const tempStatus = getTemperatureStatus(sensorData.temperature);
-  const humidityStatus = getHumidityStatus(sensorData.humidity);
-  const gasStatus = getGasStatus(sensorData.gas);
-  const weightStatus: SensorStatus = sensorData.weight > 0 ? 'SAFE' : 'WARNING';
+  // 각 센서별 상태 (메트릭 카드 주석 처리로 인해 현재 사용하지 않음)
+  // null인 경우 기본값 0을 사용 (WARNING 상태로 처리됨)
+  // const tempStatus = getTemperatureStatus(sensorData.temperature ?? 0);
+  // const humidityStatus = getHumidityStatus(sensorData.humidity ?? 0);
+  // const gasStatus = getGasStatus(sensorData.gas ?? 0);
+  // const weightStatus: SensorStatus =
+  //   sensorData.weight !== null && sensorData.weight !== undefined && sensorData.weight > 0
+  //     ? 'SAFE'
+  //     : 'WARNING';
 
   return (
     <View style={styles.container}>
@@ -647,8 +656,8 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
           <View style={styles.titleContainer}>
             <Text style={styles.titleText}>한니비의</Text>
             <View style={styles.titleRow}>
-              <Text style={[styles.titleText, styles.titleHighlight]}>건강 분석 결과예</Text>
-              <Text style={styles.titleText}>요</Text>
+              <Text style={[styles.titleText, styles.titleHighlight]}>건강 분석 결과</Text>
+              <Text style={styles.titleText}>예요</Text>
             </View>
           </View>
           <Pressable onPress={handleCamera} style={styles.cameraButton}>
@@ -659,6 +668,11 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
         </View>
         {/* 구분선 */}
         <View style={styles.divider} />
+
+        {/* 디바이스 상태 카드 */}
+        <View style={styles.deviceStatusCardContainer}>
+          <DeviceStatusCard deviceId={deviceId} />
+        </View>
 
         {/* 생명점수 섹션 */}
         <View style={styles.scoreSection}>
@@ -733,8 +747,8 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
         </View>
 
         {/* 메트릭 카드들 */}
+        {/*
         <View style={styles.metricsGrid}>
-          {/* 체온 */}
           <View style={styles.metricCard}>
             <View style={styles.metricHeader}>
               <View
@@ -748,11 +762,14 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
               <Text style={styles.metricLabel}>체온 (온도)</Text>
             </View>
             <Text style={styles.metricValue}>
-              {isSensorLoading ? '—' : `${Math.round(sensorData.temperature)} °C`}
+              {isSensorLoading
+                ? '—'
+                : sensorData.temperature !== null
+                  ? `${Math.round(sensorData.temperature)} °C`
+                  : '--'}
             </Text>
           </View>
 
-          {/* 수분컨디션 */}
           <View style={styles.metricCard}>
             <View style={styles.metricHeader}>
               <View
@@ -766,11 +783,14 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
               <Text style={styles.metricLabel}>수분컨디션 (습도)</Text>
             </View>
             <Text style={styles.metricValue}>
-              {isSensorLoading ? '—' : `${Math.round(sensorData.humidity)} %`}
+              {isSensorLoading
+                ? '—'
+                : sensorData.humidity !== null
+                  ? `${Math.round(sensorData.humidity)} %`
+                  : '--'}
             </Text>
           </View>
 
-          {/* 급식량 */}
           <View style={styles.metricCard}>
             <View style={styles.metricHeader}>
               <View
@@ -784,11 +804,14 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
               <Text style={styles.metricLabel}>급식량 (무게)</Text>
             </View>
             <Text style={styles.metricValue}>
-              {isSensorLoading ? '—' : `${sensorData.weight.toFixed(1)} kg`}
+              {isSensorLoading
+                ? '—'
+                : sensorData.weight !== null
+                  ? `${sensorData.weight.toFixed(1)} kg`
+                  : '--'}
             </Text>
           </View>
 
-          {/* 향기지수 */}
           <View style={styles.metricCard}>
             <View style={styles.metricHeader}>
               <View
@@ -802,10 +825,15 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
               <Text style={styles.metricLabel}>향기지수 (VOC)</Text>
             </View>
             <Text style={styles.metricValue}>
-              {isSensorLoading ? '—' : `${Math.round(sensorData.gas)} ppb`}
+              {isSensorLoading
+                ? '—'
+                : sensorData.gas !== null
+                  ? `${Math.round(sensorData.gas)} ppb`
+                  : '--'}
             </Text>
           </View>
         </View>
+        */}
 
         {/* 안내 텍스트 */}
         <View style={styles.infoSection}>
@@ -905,10 +933,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    flex: 1,
     paddingBottom: spacing.xl,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.sm,
+  },
+  deviceStatusCardContainer: {
+    marginTop: spacing.lg,
   },
   divider: {
     backgroundColor: colors.border,
@@ -986,44 +1016,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  metricCard: {
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    elevation: 2,
-    padding: spacing.xl,
-    shadowColor: colors.black,
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    width: '48%',
-  },
-  metricHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  metricLabel: {
-    color: colors.text,
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
-    marginLeft: spacing.xs,
-  },
-  metricValue: {
-    color: colors.text,
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    textAlign: 'center',
-    width: '100%',
-  },
-  metricsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-    justifyContent: 'space-between',
-    marginTop: spacing.xl,
-  },
+  // 메트릭 카드 스타일 (주석 처리로 인해 현재 사용하지 않음)
+  // metricCard: {
+  //   alignItems: 'center',
+  //   backgroundColor: colors.white,
+  //   borderRadius: 12,
+  //   elevation: 2,
+  //   padding: spacing.xl,
+  //   shadowColor: colors.black,
+  //   shadowOffset: { height: 2, width: 0 },
+  //   shadowOpacity: 0.1,
+  //   shadowRadius: 4,
+  //   width: '48%',
+  // },
+  // metricHeader: {
+  //   alignItems: 'center',
+  //   flexDirection: 'row',
+  //   justifyContent: 'center',
+  //   marginBottom: spacing.md,
+  // },
+  // metricLabel: {
+  //   color: colors.text,
+  //   fontSize: typography.sizes.sm,
+  //   fontWeight: typography.weights.medium,
+  //   marginLeft: spacing.xs,
+  // },
+  // metricValue: {
+  //   color: colors.text,
+  //   fontSize: typography.sizes.xl,
+  //   fontWeight: typography.weights.bold,
+  //   textAlign: 'center',
+  //   width: '100%',
+  // },
+  // metricsGrid: {
+  //   flexDirection: 'row',
+  //   flexWrap: 'wrap',
+  //   gap: spacing.md,
+  //   justifyContent: 'space-between',
+  //   marginTop: spacing.xl,
+  // },
   questionMarkButton: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -1091,11 +1122,12 @@ const styles = StyleSheet.create({
     overflow: 'visible',
     width: '100%',
   },
-  statusDot: {
-    borderRadius: 4,
-    height: 8,
-    width: 8,
-  },
+  // statusDot: 메트릭 카드 주석 처리로 인해 현재 사용하지 않음
+  // statusDot: {
+  //   borderRadius: 4,
+  //   height: 8,
+  //   width: 8,
+  // },
   statusLabelText: {
     color: colors.mutedText,
     flex: 1,

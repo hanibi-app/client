@@ -7,10 +7,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { Device, UpdateDeviceRequest, getDeviceById, updateDevice } from '@/api/devices';
 import {
-  Device as DeviceApiType,
-  PairDevicePayload,
-  UpdateDevicePayload,
-  devicesApi,
+    Device as DeviceApiType,
+    PairDevicePayload,
+    UpdateDevicePayload,
+    devicesApi,
 } from '@/api/devicesApi';
 import { useAuthStore } from '@/store/authStore';
 
@@ -95,8 +95,8 @@ export function useDevice(
     queryKey: deviceQueryKey(deviceId),
     queryFn: () => devicesApi.getDevice(deviceId),
     enabled: options?.enabled !== false && !!deviceId && !!accessToken, // deviceId와 토큰이 있을 때만 조회
-    staleTime: 60 * 1000, // 60초간 캐시 유지 (최적화)
-    refetchInterval: options?.refetchInterval ?? 30000, // 기본 30초마다 자동 refetch (최적화)
+    staleTime: 20 * 1000, // 20초간 캐시 유지 (429 에러 방지)
+    refetchInterval: options?.refetchInterval ?? false, // 기본값은 자동 refetch 없음 (필요시에만 명시적으로 설정)
     retry: 1,
   });
 }

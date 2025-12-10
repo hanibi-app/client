@@ -12,39 +12,48 @@ type ProgressBarProps = {
   progress: number;
   description: string;
   textColor?: string;
+  isWaiting?: boolean; // 대기 중일 때 true
 };
 
 export const ProgressBar = ({
   progress,
   description,
   textColor = colors.text,
+  isWaiting = false,
 }: ProgressBarProps) => {
   const { progressWidth, waveOffset } = useProgressWaveAnimation(progress);
 
   return (
     <View style={styles.container}>
       <View style={styles.progressBarBackground}>
-        <Animated.View style={[styles.progressBarFill, { width: progressWidth }]}>
-          <Animated.View style={[styles.progressBarGradient, { left: waveOffset }]}>
-            <LinearGradient
-              colors={[
-                '#6BE092',
-                '#FFD700',
-                '#6BE092',
-                '#FFD700',
-                '#6BE092',
-                '#FFD700',
-                '#6BE092',
-                '#FFD700',
-                '#6BE092',
-              ]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              locations={[0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1]}
-              style={StyleSheet.absoluteFill}
-            />
+        {!isWaiting && (
+          <Animated.View style={[styles.progressBarFill, { width: progressWidth }]}>
+            <Animated.View style={[styles.progressBarGradient, { left: waveOffset }]}>
+              <LinearGradient
+                colors={[
+                  '#6BE092',
+                  '#FFD700',
+                  '#6BE092',
+                  '#FFD700',
+                  '#6BE092',
+                  '#FFD700',
+                  '#6BE092',
+                  '#FFD700',
+                  '#6BE092',
+                ]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                locations={[0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1]}
+                style={StyleSheet.absoluteFill}
+              />
+            </Animated.View>
           </Animated.View>
-        </Animated.View>
+        )}
+        {isWaiting && (
+          <View style={[styles.progressBarFill, styles.waitingBar]}>
+            <View style={styles.waitingBarContent} />
+          </View>
+        )}
       </View>
       <Text style={[styles.progressText, { color: textColor }]}>{description}</Text>
     </View>
@@ -79,5 +88,14 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.bold,
     marginTop: spacing.md,
     textAlign: 'center',
+  },
+  waitingBar: {
+    width: '100%',
+  },
+  waitingBarContent: {
+    backgroundColor: colors.mutedText + '40', // 반투명 회색
+    borderRadius: 12,
+    height: '100%',
+    width: '100%',
   },
 });

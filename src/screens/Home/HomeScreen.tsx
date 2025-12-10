@@ -6,15 +6,15 @@ import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  Animated,
-  Easing,
-  Pressable,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
+    Animated,
+    Easing,
+    Pressable,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TextInput,
+    useWindowDimensions,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -27,15 +27,19 @@ import { DecorativeBackground } from '@/components/home/DecorativeBackground';
 import { HomeMessageCard } from '@/components/home/HomeMessageCard';
 import { NameCard } from '@/components/home/NameCard';
 import { ProgressBar } from '@/components/home/ProgressBar';
+import { HOME_STACK_ROUTES } from '@/constants/routes';
 import { useDevice, useDevices, usePairDevice } from '@/features/devices/hooks';
 import { useMe, useUpdateProfile } from '@/features/user/hooks';
+import { useFoodSessions } from '@/hooks/useFoodSessions';
 import { HomeStackParamList } from '@/navigation/types';
 import { getPairedDevice, setPairedDevice } from '@/services/storage/deviceStorage';
 import { useAppState } from '@/state/useAppState';
+import { useChatBadgeStore } from '@/store/chatBadgeStore';
 import { useLoadingStore } from '@/store/loadingStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
+import { calculateProcessingProgress } from '@/utils/processingProgress';
 
 const DEFAULT_EDIT_ACTION_WIDTH = 64;
 
@@ -61,13 +65,22 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   // 첫 번째 기기 정보 조회 (연결 상태, 마지막 신호 등)
   const firstDeviceId = devices && devices.length > 0 ? devices[0].deviceId : null;
 
-  // 페어링된 기기의 실시간 상태 조회 (화면이 포커스되어 있을 때만 폴링 - 최적화)
+  // 페어링된 기기의 실시간 상태 조회
+  // 로컬에 페어링 정보가 있고, 서버에도 등록되어 있는 기기만 조회
   const pairedDeviceId = localPairedDevice?.deviceId;
+  const isPairedDeviceRegistered = pairedDeviceId
+    ? devices?.some((d) => d.deviceId === pairedDeviceId)
+    : false;
 
-  // 중복 조회 방지: pairedDeviceId가 있으면 그것만 조회, 없으면 firstDeviceId 조회
-  const targetDeviceId = pairedDeviceId || firstDeviceId || '';
-  const { data: deviceDetail, refetch: refetchDevice } = useDevice(targetDeviceId, {
-    refetchInterval: isFocused ? 30000 : false, // 포커스되어 있을 때만 30초마다 폴링
+  // 서버에 등록된 기기만 조회
+  // 우선순위: 1) 로컬 페어링 기기 (서버에 등록된 경우만), 2) 서버의 첫 번째 기기
+  const targetDeviceId =
+    (pairedDeviceId && isPairedDeviceRegistered ? pairedDeviceId : null) || firstDeviceId || '';
+  
+  // 기기 상태 조회 - 진행률 바를 위해 빠르게 갱신
+  // 서버에 등록된 기기가 있을 때만 조회
+  const { data: deviceDetail } = useDevice(targetDeviceId, {
+    refetchInterval: isFocused && targetDeviceId ? 15000 : false, // 포커스되어 있고 기기가 있을 때만 15초마다 폴링
     enabled: !!targetDeviceId, // deviceId가 있을 때만 조회
   });
 
@@ -75,6 +88,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const pairedDeviceDetail = deviceDetail;
 
   const { startLoading, stopLoading } = useLoadingStore();
+  const { getHasNewChat } = useChatBadgeStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(characterName);
   const [isPairingModalVisible, setIsPairingModalVisible] = useState(false);
@@ -122,8 +136,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   useEffect(() => {
     if (!isPairingModalVisible) {
       loadLocalDevice();
-      // 페어링 모달이 닫힐 때 자동 탐색 플래그 리셋 (새로 페어링했을 수 있음)
-      hasAutoDiscoveredRef.current = false;
     }
   }, [isPairingModalVisible]);
 
@@ -149,6 +161,23 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   // 서버에서 기기 목록을 불러오는 동안에도 로컬 정보를 사용하여 페어링 상태 유지
   const isPaired = localPairedDevice !== null;
 
+  // 채팅 뱃지 상태 확인
+  const currentDeviceIdForChat = localPairedDevice?.deviceId || firstDeviceId || '';
+  const hasNewChat = currentDeviceIdForChat ? getHasNewChat(currentDeviceIdForChat) : false;
+
+  // 채팅 화면으로 이동 핸들러
+  const handleOpenChat = () => {
+    if (!currentDeviceIdForChat) {
+      // 기기가 없으면 페어링 모달 열기
+      handleOpenPairingModal();
+      return;
+    }
+    navigation.navigate(HOME_STACK_ROUTES.CHAT, {
+      deviceId: currentDeviceIdForChat,
+      deviceName: localPairedDevice?.deviceName || deviceDetail?.deviceName || undefined,
+    });
+  };
+
   // 페어링된 기기의 연결 상태 확인
   // 우선순위: 1) pairedDeviceDetail (실시간 조회), 2) devices 배열, 3) null
   const pairedDeviceStatus = localPairedDevice
@@ -157,6 +186,14 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       null
     : null;
   const isPairedDeviceOnline = pairedDeviceStatus === 'ONLINE';
+
+  // 음식 투입 세션 조회 (최근 1개만) - 진행률 바를 위해 빠르게 갱신
+  const targetDeviceIdForSession = localPairedDevice?.deviceId || firstDeviceId || '';
+  const { data: sessions } = useFoodSessions(targetDeviceIdForSession, {
+    refetchInterval: isFocused ? 10000 : false, // 포커스되어 있을 때만 10초마다 폴링 (진행률 바 빠른 업데이트)
+    enabled: !!targetDeviceIdForSession,
+  });
+  const latestSession = sessions && sessions.length > 0 ? sessions[0] : null;
 
   // 화면 포커스 시 기기 상태 갱신 (최적화: staleTime 체크 후 필요시에만 refetch)
   useFocusEffect(
@@ -228,8 +265,55 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     }
   }, [isPaired, speechBubbleScaleAnim, speechBubbleTranslateYAnim]);
 
-  // 진행률 계산 (30% 남음 = 70% 진행)
-  const progress = 70;
+  // 진행률 계산 - 실시간 업데이트를 위한 상태
+  const isProcessing = pairedDeviceDetail?.deviceStatus === 'PROCESSING';
+  const isInputInProgress = latestSession?.status === 'in_progress';
+
+  // 진행률을 실시간으로 업데이트하기 위한 상태
+  const [currentProgress, setCurrentProgress] = useState(0);
+  const [currentRemainingPercent, setCurrentRemainingPercent] = useState(0);
+
+  // 진행률 계산 및 실시간 업데이트
+  useEffect(() => {
+    if (isProcessing) {
+      const calculateProgress = () => {
+        // 세션이 있으면 세션 사용, 없으면 deviceDetail의 updatedAt을 fallback으로 사용
+        const fallbackStartTime = pairedDeviceDetail?.updatedAt;
+        const progressData = calculateProcessingProgress(latestSession, fallbackStartTime);
+        if (progressData) {
+          setCurrentProgress(progressData.progress);
+          setCurrentRemainingPercent(progressData.remainingPercent);
+        } else {
+          setCurrentProgress(0);
+          setCurrentRemainingPercent(0);
+        }
+      };
+
+      // 즉시 계산
+      calculateProgress();
+
+      // 1초마다 실시간 업데이트 (진행률 바 빠른 업데이트)
+      const interval = setInterval(calculateProgress, 1000);
+
+      return () => clearInterval(interval);
+    } else {
+      setCurrentProgress(0);
+      setCurrentRemainingPercent(0);
+    }
+  }, [isProcessing, latestSession, pairedDeviceDetail?.updatedAt]);
+
+  const progress = currentProgress;
+  const remainingPercent = currentRemainingPercent;
+
+  // 진행률 설명 텍스트
+  // 우선순위: 1) 투입 중, 2) 처리 중 (진행률 표시 또는 처리 중), 3) 대기 중
+  const progressDescription = isInputInProgress
+    ? '투입 중'
+    : isProcessing
+      ? progress > 0
+        ? `다 먹기까지 ${Math.round(remainingPercent)}% 남음`
+        : '처리 중' // 진행률 계산이 안되도 처리 중 표시
+      : '대기 중';
 
   const handleEditPress = () => {
     setEditValue(characterName);
@@ -404,22 +488,28 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           }
           title={
             isPaired
-              ? isPairedDeviceOnline
-                ? '너무 더워서 힘들어요 😩'
-                : '기기가 오프라인이에요'
-              : '기기가 연결되지 않았어요'
+              ? isPairedDeviceRegistered
+                ? isPairedDeviceOnline
+                  ? '너무 더워서 힘들어요 😩'
+                  : '네트워크 문제가 발생했어요'
+                : '기기를 서버에 등록해주세요'
+              : '기기를 페어링해주세요'
           }
           description={
             isPaired ? (
-              isPairedDeviceOnline ? (
-                <Text>
-                  <Text style={styles.temperatureHighlight}>온도</Text> 한 번만 확인해 주세요!
-                </Text>
+              isPairedDeviceRegistered ? (
+                isPairedDeviceOnline ? (
+                  <Text>
+                    <Text style={styles.temperatureHighlight}>온도</Text> 한 번만 확인해 주세요!
+                  </Text>
+                ) : (
+                  <Text>전원과 네트워크를 확인한 뒤{'\n'}다시 시도해 주세요</Text>
+                )
               ) : (
-                <Text>전원과 네트워크를 확인한 뒤{'\n'}다시 시도해 주세요</Text>
+                <Text>설정에서 서버 동기화를{'\n'}진행해주세요</Text>
               )
             ) : (
-              <Text>한니비 기기를 페어링하면{'\n'}실시간으로 건강 상태를 확인할 수 있어요</Text>
+              <Text>기기를 페어링하려면{'\n'}네트워크 연결이 필요해요</Text>
             )
           }
         />
@@ -429,6 +519,86 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <Pressable onPress={handleOpenDeviceListModal} style={styles.characterPressable}>
             <HanibiCharacter2D level="medium" animated={true} size={CHARACTER_SIZE} />
           </Pressable>
+          {/* 채팅 아이콘 버튼 - 캐릭터 우측 상단 */}
+          {isPaired && (
+            <Pressable
+              onPress={handleOpenChat}
+              style={[
+                styles.chatButton,
+                {
+                  top: CHARACTER_SIZE / 2 - 40,
+                  right: SCREEN_WIDTH / 2 - CHARACTER_SIZE / 2 - 20,
+                },
+              ]}
+            >
+              <MaterialIcons name="chat-bubble" size={28} color={colors.primary} />
+              {/* 새 메시지 뱃지 */}
+              {hasNewChat && <View style={styles.chatBadge} />}
+            </Pressable>
+          )}
+          {/* 상태 태그들 - 캐릭터 위에 배치 */}
+          {isPaired && latestSession && (
+            <View
+              style={[
+                styles.statusTagsContainer,
+                {
+                  top: -CHARACTER_SIZE / 2 - 80,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.statusTag,
+                  latestSession.status === 'in_progress'
+                    ? styles.sessionTagInProgress
+                    : styles.sessionTagCompleted,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusTagText,
+                    {
+                      color:
+                        latestSession.status === 'in_progress' ? colors.warning : colors.success,
+                    },
+                  ]}
+                >
+                  {latestSession.status === 'in_progress' ? '투입 중' : '투입 완료'}
+                </Text>
+              </View>
+              {pairedDeviceDetail?.deviceStatus && (
+                <View
+                  style={[
+                    styles.statusTag,
+                    {
+                      backgroundColor:
+                        pairedDeviceDetail.deviceStatus === 'PROCESSING'
+                          ? colors.primary + '20'
+                          : colors.gray100,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusTagText,
+                      {
+                        color:
+                          pairedDeviceDetail.deviceStatus === 'PROCESSING'
+                            ? colors.primary
+                            : colors.text,
+                      },
+                    ]}
+                  >
+                    {pairedDeviceDetail.deviceStatus === 'PROCESSING'
+                      ? '처리 중'
+                      : pairedDeviceDetail.deviceStatus === 'IDLE'
+                        ? '대기 중'
+                        : pairedDeviceDetail.deviceStatus}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
           {/* 페어링 안됨 표시 말풍선 - 캐릭터 위에 배치 */}
           {!isPaired && (
             <Pressable onPress={handleOpenPairingModal}>
@@ -493,8 +663,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
           <ProgressBar
             progress={progress}
-            description="다 먹기까지 30% 남음"
+            description={progressDescription}
             textColor={PROGRESS_TEXT_COLOR}
+            isWaiting={!isProcessing && !isInputInProgress}
           />
         </View>
       </SafeAreaView>
@@ -597,6 +768,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  chatBadge: {
+    backgroundColor: colors.danger,
+    borderRadius: 6,
+    height: 12,
+    position: 'absolute',
+    right: 4,
+    top: 4,
+    width: 12,
+    // TODO: 추후 unreadCount를 받으면 숫자 뱃지로 확장 가능
+  },
+  chatButton: {
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: 24,
+    elevation: 4,
+    height: 48,
+    justifyContent: 'center',
+    position: 'absolute',
+    shadowColor: colors.black,
+    shadowOffset: { height: 2, width: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    width: 48,
+    zIndex: 10,
+  },
   container: {
     flex: 1,
   },
@@ -635,6 +831,12 @@ const styles = StyleSheet.create({
     flex: 1,
     zIndex: 1,
   },
+  sessionTagCompleted: {
+    backgroundColor: colors.success + '20',
+  },
+  sessionTagInProgress: {
+    backgroundColor: colors.warning + '20',
+  },
   speechBubble: {
     alignItems: 'center',
     position: 'relative',
@@ -661,6 +863,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     position: 'absolute',
+    zIndex: 10,
+  },
+  statusTag: {
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  statusTagText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.bold,
+  },
+  statusTagsContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
+    left: 0,
+    position: 'absolute',
+    right: 0,
     zIndex: 10,
   },
   temperatureHighlight: {

@@ -151,6 +151,7 @@ export default function SettingsScreen() {
   const [pendingToggle, setPendingToggle] = useState<string | null>(null);
   const { data: devices } = useDevices();
   const [isUnpairModalVisible, setIsUnpairModalVisible] = useState(false);
+  const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
   const [versionTapCount, setVersionTapCount] = useState(0);
   const versionTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -402,34 +403,31 @@ export default function SettingsScreen() {
     // 2초 후 카운트 리셋
     versionTapTimeoutRef.current = setTimeout(() => {
       setVersionTapCount(0);
-    }, 2000);
+    }, 2000) as unknown as ReturnType<typeof setTimeout>;
   }, [versionTapCount, navigation]);
 
   const onLogoutPress = useCallback(() => {
-    Alert.alert('로그아웃', '정말 로그아웃하시겠어요?', [
-      {
-        text: '취소',
-        style: 'cancel',
-      },
-      {
-        text: '로그아웃',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            // useLogoutNavigation 훅이 모든 로그아웃 로직을 처리합니다:
-            // 1. 로그아웃 API 호출
-            // 2. 토큰 및 전역 상태 초기화
-            // 3. 루트 네비게이터를 Login 화면으로 안전하게 RESET
-            await handleLogout();
-            console.log('[SettingsScreen] 로그아웃 완료');
-          } catch (error) {
-            console.error('[SettingsScreen] 로그아웃 실패:', error);
-            // 에러는 useLogoutNavigation 내부에서 처리됨
-          }
-        },
-      },
-    ]);
+    setIsLogoutModalVisible(true);
+  }, []);
+
+  const handleLogoutConfirm = useCallback(async () => {
+    setIsLogoutModalVisible(false);
+    try {
+      // useLogoutNavigation 훅이 모든 로그아웃 로직을 처리합니다:
+      // 1. 로그아웃 API 호출
+      // 2. 토큰 및 전역 상태 초기화
+      // 3. 루트 네비게이터를 Login 화면으로 안전하게 RESET
+      await handleLogout();
+      console.log('[SettingsScreen] 로그아웃 완료');
+    } catch (error) {
+      console.error('[SettingsScreen] 로그아웃 실패:', error);
+      // 에러는 useLogoutNavigation 내부에서 처리됨
+    }
   }, [handleLogout]);
+
+  const handleLogoutCancel = useCallback(() => {
+    setIsLogoutModalVisible(false);
+  }, []);
 
   const handleDeleteAccount = useCallback(() => {
     Alert.alert('계정 탈퇴', '정말 계정을 탈퇴하시겠어요?\n탈퇴한 계정은 복구할 수 없어요.', [
@@ -748,9 +746,7 @@ export default function SettingsScreen() {
             key: 'authStatus',
             type: 'link',
             label: '인증 상태 확인',
-            description: accessToken
-              ? `✅ 로그인됨 (토큰: ${accessToken.substring(0, 20)}...)`
-              : '❌ 로그인 안됨',
+            description: accessToken ? '✅ 로그인됨' : '❌ 로그인 안됨',
             onPress: () => {
               logAuthState();
               Alert.alert(
@@ -867,6 +863,15 @@ export default function SettingsScreen() {
           );
         })}
       </ScrollView>
+
+      {/* 로그아웃 확인 모달 */}
+      <ModalPopup
+        visible={isLogoutModalVisible}
+        title="로그아웃"
+        description="정말 로그아웃하시겠어요?"
+        onConfirm={handleLogoutConfirm}
+        onCancel={handleLogoutCancel}
+      />
 
       {/* 페어링 해제 모달 */}
       <ModalPopup

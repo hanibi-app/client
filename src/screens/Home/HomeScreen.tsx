@@ -13,8 +13,8 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  useWindowDimensions,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -27,12 +27,14 @@ import { DecorativeBackground } from '@/components/home/DecorativeBackground';
 import { HomeMessageCard } from '@/components/home/HomeMessageCard';
 import { NameCard } from '@/components/home/NameCard';
 import { ProgressBar } from '@/components/home/ProgressBar';
+import { HOME_STACK_ROUTES } from '@/constants/routes';
 import { useDevice, useDevices, usePairDevice } from '@/features/devices/hooks';
 import { useMe, useUpdateProfile } from '@/features/user/hooks';
 import { useFoodSessions } from '@/hooks/useFoodSessions';
 import { HomeStackParamList } from '@/navigation/types';
 import { getPairedDevice, setPairedDevice } from '@/services/storage/deviceStorage';
 import { useAppState } from '@/state/useAppState';
+import { useChatBadgeStore } from '@/store/chatBadgeStore';
 import { useLoadingStore } from '@/store/loadingStore';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
@@ -69,7 +71,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   // 중복 조회 방지: pairedDeviceId가 있으면 그것만 조회, 없으면 firstDeviceId 조회
   const targetDeviceId = pairedDeviceId || firstDeviceId || '';
   // 기기 상태 조회 - 진행률 바를 위해 빠르게 갱신
-  const { data: deviceDetail, refetch: refetchDevice } = useDevice(targetDeviceId, {
+  const { data: deviceDetail } = useDevice(targetDeviceId, {
     refetchInterval: isFocused ? 15000 : false, // 포커스되어 있을 때만 15초마다 폴링 (진행률 바 빠른 업데이트)
     enabled: !!targetDeviceId, // deviceId가 있을 때만 조회
   });
@@ -78,6 +80,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const pairedDeviceDetail = deviceDetail;
 
   const { startLoading, stopLoading } = useLoadingStore();
+  const { getHasNewChat } = useChatBadgeStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(characterName);
   const [isPairingModalVisible, setIsPairingModalVisible] = useState(false);
@@ -149,6 +152,23 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   // 로컬에 페어링 정보가 있으면 페어링된 것으로 간주 (오프라인 모드 지원)
   // 서버에서 기기 목록을 불러오는 동안에도 로컬 정보를 사용하여 페어링 상태 유지
   const isPaired = localPairedDevice !== null;
+
+  // 채팅 뱃지 상태 확인
+  const currentDeviceIdForChat = localPairedDevice?.deviceId || firstDeviceId || '';
+  const hasNewChat = currentDeviceIdForChat ? getHasNewChat(currentDeviceIdForChat) : false;
+
+  // 채팅 화면으로 이동 핸들러
+  const handleOpenChat = () => {
+    if (!currentDeviceIdForChat) {
+      // 기기가 없으면 페어링 모달 열기
+      handleOpenPairingModal();
+      return;
+    }
+    navigation.navigate(HOME_STACK_ROUTES.CHAT, {
+      deviceId: currentDeviceIdForChat,
+      deviceName: localPairedDevice?.deviceName || deviceDetail?.deviceName || undefined,
+    });
+  };
 
   // 페어링된 기기의 연결 상태 확인
   // 우선순위: 1) pairedDeviceDetail (실시간 조회), 2) devices 배열, 3) null
@@ -485,6 +505,23 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <Pressable onPress={handleOpenDeviceListModal} style={styles.characterPressable}>
             <HanibiCharacter2D level="medium" animated={true} size={CHARACTER_SIZE} />
           </Pressable>
+          {/* 채팅 아이콘 버튼 - 캐릭터 우측 상단 */}
+          {isPaired && (
+            <Pressable
+              onPress={handleOpenChat}
+              style={[
+                styles.chatButton,
+                {
+                  top: CHARACTER_SIZE / 2 - 40,
+                  right: SCREEN_WIDTH / 2 - CHARACTER_SIZE / 2 - 20,
+                },
+              ]}
+            >
+              <MaterialIcons name="chat-bubble" size={28} color={colors.primary} />
+              {/* 새 메시지 뱃지 */}
+              {hasNewChat && <View style={styles.chatBadge} />}
+            </Pressable>
+          )}
           {/* 상태 태그들 - 캐릭터 위에 배치 */}
           {isPaired && latestSession && (
             <View
@@ -716,6 +753,31 @@ const styles = StyleSheet.create({
   characterPressable: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  chatBadge: {
+    backgroundColor: colors.danger,
+    borderRadius: 6,
+    height: 12,
+    position: 'absolute',
+    right: 4,
+    top: 4,
+    width: 12,
+    // TODO: 추후 unreadCount를 받으면 숫자 뱃지로 확장 가능
+  },
+  chatButton: {
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: 24,
+    elevation: 4,
+    height: 48,
+    justifyContent: 'center',
+    position: 'absolute',
+    shadowColor: colors.black,
+    shadowOffset: { height: 2, width: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    width: 48,
+    zIndex: 10,
   },
   container: {
     flex: 1,

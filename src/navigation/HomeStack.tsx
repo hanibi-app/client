@@ -3,6 +3,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { HOME_STACK_ROUTES } from '@/constants/routes';
+import ChatScreen from '@/screens/Chat/ChatScreen';
 import CharacterCustomizeScreen from '@/screens/Home/CharacterCustomizeScreen';
 import CharacterNameEditScreen from '@/screens/Home/CharacterNameEditScreen';
 import HomeScreen from '@/screens/Home/HomeScreen';
@@ -45,6 +46,13 @@ export default function HomeStack() {
       <Stack.Screen
         name={HOME_STACK_ROUTES.RANKING}
         component={RankingScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name={HOME_STACK_ROUTES.CHAT}
+        component={ChatScreen}
         options={{
           headerShown: false,
         }}

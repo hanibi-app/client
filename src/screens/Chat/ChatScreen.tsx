@@ -160,7 +160,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         {/* 상단 헤더 (기기 상태 바) */}
-        <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+        <View style={styles.header}>
           <Pressable onPress={handleBack} style={styles.backButton}>
             <MaterialIcons name="arrow-back" size={24} color={colors.text} />
           </Pressable>

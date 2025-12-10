@@ -2,11 +2,13 @@ import React from 'react';
 
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import type { UiReportType } from '@/constants/reportTypes';
 import { colors } from '@/theme/Colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 
-export type ReportTabType = 'temp' | 'humidity' | 'weight' | 'voc';
+// 하위 호환성을 위해 ReportTabType을 UiReportType의 별칭으로 유지
+export type ReportTabType = UiReportType;
 
 export type ReportTabsProps = {
   activeTab: ReportTabType;
@@ -14,10 +16,10 @@ export type ReportTabsProps = {
 };
 
 const TABS: Array<{ id: ReportTabType; label: string; subtitle: string }> = [
-  { id: 'temp', label: '체온', subtitle: '(온도)' },
+  { id: 'temperature', label: '체온', subtitle: '(온도)' },
   { id: 'humidity', label: '수분 컨디션', subtitle: '(습도)' },
   { id: 'weight', label: '급식량', subtitle: '(무게)' },
-  { id: 'voc', label: '향기지수', subtitle: '(VOC)' },
+  { id: 'gas', label: '향기지수', subtitle: '(VOC)' },
 ];
 
 export default function ReportTabs({ activeTab, onTabChange }: ReportTabsProps) {

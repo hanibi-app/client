@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { AxiosError } from 'axios';
 import {
   Animated,
   Easing,
@@ -16,6 +17,9 @@ import { VictoryAxis, VictoryChart, VictoryLine, VictoryTheme } from 'victory-na
 
 import AppHeader from '@/components/common/AppHeader';
 import ReportTabs, { ReportTabType } from '@/components/common/ReportTabs';
+import ToastMessage from '@/components/common/ToastMessage';
+import type { UiReportType } from '@/constants/reportTypes';
+import { REPORT_TYPE_LABELS, mapUiTypeToApiType } from '@/constants/reportTypes';
 import { useSensorReport } from '@/features/reports/hooks/useSensorReport';
 import { DashboardStackParamList } from '@/navigation/types';
 import { DEBUG_DEVICE_ID, useCurrentDeviceId } from '@/store/deviceStore';
@@ -48,17 +52,6 @@ type ReportData = {
 // 시간 범위 타입 (API는 '1일', '1주', '1개월' 형식을 기대)
 type TimeRange = '1일' | '1주일' | '1개월' | '1년';
 
-// ReportTabType을 API 타입으로 변환하는 함수
-const mapTabTypeToApiType = (tabType: ReportTabType): string => {
-  const mapping: Record<ReportTabType, string> = {
-    temp: 'temperature',
-    humidity: 'humidity',
-    weight: 'weight',
-    voc: 'voc',
-  };
-  return mapping[tabType];
-};
-
 // TimeRange를 API 형식으로 변환하는 함수
 const mapTimeRangeToApiRange = (range: TimeRange): string => {
   const mapping: Record<TimeRange, string> = {
@@ -72,10 +65,10 @@ const mapTimeRangeToApiRange = (range: TimeRange): string => {
 
 // 탭별 제목 및 단위
 const TAB_CONFIG: Record<
-  ReportTabType,
+  UiReportType,
   { title: string; subtitle: string; unit: string; yAxisLabel: string }
 > = {
-  temp: {
+  temperature: {
     title: '온도 변화',
     subtitle: '시간대별 상태 리포트',
     unit: '°C',
@@ -93,7 +86,7 @@ const TAB_CONFIG: Record<
     unit: 'kg',
     yAxisLabel: '무게',
   },
-  voc: {
+  gas: {
     title: '향기지수 변화',
     subtitle: '시간대별 상태 리포트',
     unit: 'ppb',
@@ -106,7 +99,7 @@ const TAB_CONFIG: Record<
  * 디버그 모드에서 사용할 시계열 데이터를 생성합니다.
  * QA 테스트를 위해 즉시 표시되도록 최적화했습니다.
  */
-const generateDummyData = (type: ReportTabType, range: TimeRange): ReportData => {
+const generateDummyData = (type: UiReportType, range: TimeRange): ReportData => {
   const now = new Date();
   const dataPoints: ReportDataPoint[] = [];
 
@@ -131,10 +124,10 @@ const generateDummyData = (type: ReportTabType, range: TimeRange): ReportData =>
 
   // 타입별 기본값 설정
   let baseValue: number;
-  if (type === 'temp') baseValue = 25;
+  if (type === 'temperature') baseValue = 25;
   else if (type === 'humidity') baseValue = 50;
   else if (type === 'weight') baseValue = 1.2;
-  else baseValue = 100; // voc
+  else baseValue = 100; // gas
 
   // 데이터 포인트 생성 (최적화: 샘플링 및 배치 처리)
   const values: number[] = [];
@@ -209,26 +202,70 @@ const generateDummyData = (type: ReportTabType, range: TimeRange): ReportData =>
 export default function ReportsScreen({ navigation }: ReportsScreenProps) {
   const insets = useSafeAreaInsets();
   const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
-  const [activeTab, setActiveTab] = useState<ReportTabType>('temp');
+  const [activeTab, setActiveTab] = useState<ReportTabType>('temperature');
   const [timeRange, setTimeRange] = useState<TimeRange>('1일');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // 현재 기기 ID 확인 (디버그 모드 감지용)
   const currentDeviceId = useCurrentDeviceId();
   const isDebugMode = currentDeviceId === DEBUG_DEVICE_ID;
 
-  // API 타입으로 변환
-  const apiType = mapTabTypeToApiType(activeTab);
+  // API 타입으로 변환 (UI 타입을 API path 타입으로)
+  const apiPathType = mapUiTypeToApiType(activeTab);
   const apiRange = mapTimeRangeToApiRange(timeRange);
+
+  // 디버그: API 타입 변환 로깅
+  useEffect(() => {
+    if (__DEV__) {
+      console.log(
+        `[ReportsScreen] 탭 변경: typeRaw=${activeTab}, type=${apiPathType}, range=${apiRange}`,
+      );
+    }
+  }, [activeTab, apiPathType, apiRange]);
 
   // 디버그 모드가 아닐 때만 실제 API 호출
   const {
     data: apiReportData,
     isLoading: isApiLoading,
     isError: isApiError,
+    error: apiError,
     refetch: refetchApi,
-  } = useSensorReport(apiType, apiRange, {
+  } = useSensorReport(activeTab, apiRange, {
     enabled: !isDebugMode, // 디버그 모드일 때는 API 호출 비활성화
   });
+
+  // API 에러 로깅 및 사용자 알림
+  useEffect(() => {
+    if (isApiError && apiError) {
+      const pathType = mapUiTypeToApiType(activeTab);
+      const reportLabel = REPORT_TYPE_LABELS[activeTab];
+
+      console.error(
+        `[ReportsScreen] API 호출 실패: typeRaw=${activeTab}, type=${pathType}, range=${apiRange}`,
+        apiError,
+      );
+
+      // 사용자에게 에러 메시지 표시
+      setToastMessage(`${reportLabel} 데이터를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.`);
+
+      // 3초 후 토스트 메시지 자동 제거
+      const timer = setTimeout(() => {
+        setToastMessage(null);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isApiError, apiError, activeTab, apiRange]);
+
+  // API 데이터 로깅 (디버그용)
+  useEffect(() => {
+    if (apiReportData && __DEV__) {
+      const pathType = mapUiTypeToApiType(activeTab);
+      console.log(
+        `[ReportsScreen] API 데이터 수신: typeRaw=${activeTab}, type=${pathType}, range=${apiRange}, dataPoints=${apiReportData.dataPoints.length}`,
+      );
+    }
+  }, [apiReportData, activeTab, apiRange]);
 
   // refetch를 위한 강제 리렌더링용 상태
   const [refreshKey, setRefreshKey] = useState(0);
@@ -310,7 +347,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
   let yMax: number;
   let yStep: number;
 
-  if (activeTab === 'temp') {
+  if (activeTab === 'temperature') {
     yMin = 15;
     yMax = 39;
     yStep = 3;
@@ -328,6 +365,52 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
     yStep = Math.ceil((yMax - yMin) / 8);
   }
 
+  // 시간 문자열을 파싱하여 Date 객체로 변환하는 헬퍼 함수
+  const parseTimeString = (timeStr: string, referenceDate?: string): Date => {
+    // ISO String 형식인지 확인
+    const isoDate = new Date(timeStr);
+    if (!isNaN(isoDate.getTime())) {
+      return isoDate;
+    }
+
+    // referenceDate가 있으면 사용, 없으면 현재 날짜 사용
+    let baseDate: Date;
+    if (referenceDate) {
+      // "2025.12.10" 형식을 파싱
+      const dateMatch = referenceDate.match(/(\d+)\.(\d+)\.(\d+)/);
+      if (dateMatch) {
+        const year = parseInt(dateMatch[1], 10);
+        const month = parseInt(dateMatch[2], 10) - 1; // 월은 0부터 시작
+        const day = parseInt(dateMatch[3], 10);
+        baseDate = new Date(year, month, day);
+      } else {
+        baseDate = new Date();
+      }
+    } else {
+      baseDate = new Date();
+    }
+
+    // "HH시" 형식 (예: "16시")
+    const hourMatch = timeStr.match(/(\d+)시/);
+    if (hourMatch) {
+      const hour = parseInt(hourMatch[1], 10);
+      baseDate.setHours(hour, 0, 0, 0);
+      return baseDate;
+    }
+
+    // "HH:mm" 형식 (예: "16:00" 또는 "17:54")
+    const timeMatch = timeStr.match(/(\d+):(\d+)/);
+    if (timeMatch) {
+      const hour = parseInt(timeMatch[1], 10);
+      const minute = parseInt(timeMatch[2], 10);
+      baseDate.setHours(hour, minute, 0, 0);
+      return baseDate;
+    }
+
+    // 파싱 실패 시 현재 시간 반환
+    return new Date();
+  };
+
   // X축 라벨 포맷팅 함수 (범위별로 다른 형식, timestamp 활용)
   const formatXAxisLabel = (
     dataPoint: { time: string; timestamp?: number },
@@ -338,19 +421,39 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
     if (dataPoint.timestamp) {
       date = new Date(dataPoint.timestamp);
     } else {
-      // time 문자열이 ISO String 형식인지 확인
-      const isoDate = new Date(dataPoint.time);
-      if (!isNaN(isoDate.getTime())) {
-        // ISO String 형식이면 그대로 사용
-        date = isoDate;
-      } else {
-        // HH:mm 형식이면 시간만 추출
-        const hour = parseInt(dataPoint.time.split(':')[0], 10);
-        date = new Date();
-        date.setHours(hour, 0, 0, 0);
-      }
+      date = parseTimeString(dataPoint.time);
     }
 
+    const hour = date.getHours();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    if (range === '1일') {
+      // 1일: "오전12시", "오전6시" 형식
+      if (hour === 0) return '오전12시';
+      if (hour === 6) return '오전6시';
+      if (hour === 12) return '오후12시';
+      if (hour === 18) return '오후6시';
+      if (hour < 12) return `오전${hour}시`;
+      return `오후${hour - 12}시`;
+    } else if (range === '1주일') {
+      // 1주일: "월", "화", "수" 형식 (요일만)
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      return days[date.getDay()];
+    } else if (range === '1개월') {
+      // 1개월: "1/1", "1/5", "1/10" 형식 (월/일)
+      return `${month}/${day}`;
+    } else {
+      // 1년: "1월", "3월", "5월" 형식 (홀수 월만)
+      return `${month}월`;
+    }
+  };
+
+  // Summary 시간 포맷팅 함수 (그래프와 동일한 형식으로 변환)
+  const formatSummaryTime = (timeStr: string, range: TimeRange): string => {
+    // reportData.summary.referenceDate를 사용하여 정확한 날짜로 파싱
+    const referenceDate = reportData?.summary?.referenceDate;
+    const date = parseTimeString(timeStr, referenceDate);
     const hour = date.getHours();
     const month = date.getMonth() + 1;
     const day = date.getDate();
@@ -607,7 +710,16 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
         </View>
       ) : isError || !reportData ? (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>데이터를 불러오지 못했습니다.</Text>
+          <Text style={styles.errorText}>
+            {apiError instanceof AxiosError && apiError.response?.status === 500
+              ? '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
+              : '데이터를 불러오지 못했습니다.'}
+          </Text>
+          {apiError instanceof AxiosError && apiError.response?.status === 500 && (
+            <Text style={styles.errorSubtext}>
+              온도 데이터를 불러오는 중 서버에 문제가 발생했습니다.
+            </Text>
+          )}
           <Pressable onPress={handleRefresh} style={styles.retryButton}>
             <Text style={styles.retryButtonText}>다시 시도</Text>
           </Pressable>
@@ -645,7 +757,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                   }}
                   tickFormat={(t) => {
                     const unit =
-                      activeTab === 'temp'
+                      activeTab === 'temperature'
                         ? '°C'
                         : activeTab === 'humidity'
                           ? '%'
@@ -708,7 +820,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
           <View style={styles.summaryContainer}>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>
-                {activeTab === 'temp'
+                {activeTab === 'temperature'
                   ? '현재 온도'
                   : activeTab === 'humidity'
                     ? '현재 습도'
@@ -725,7 +837,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>
-                {activeTab === 'temp'
+                {activeTab === 'temperature'
                   ? '최고 온도'
                   : activeTab === 'humidity'
                     ? '최고 습도'
@@ -738,12 +850,14 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                   {reportData.summary.max.value}
                   {config.unit}
                 </Text>
-                <Text style={styles.summaryTime}>{reportData.summary.max.time}</Text>
+                <Text style={styles.summaryTime}>
+                  {formatSummaryTime(reportData.summary.max.time, timeRange)}
+                </Text>
               </View>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>
-                {activeTab === 'temp'
+                {activeTab === 'temperature'
                   ? '최저 온도'
                   : activeTab === 'humidity'
                     ? '최저 습도'
@@ -756,12 +870,14 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                   {reportData.summary.min.value}
                   {config.unit}
                 </Text>
-                <Text style={styles.summaryTime}>{reportData.summary.min.time}</Text>
+                <Text style={styles.summaryTime}>
+                  {formatSummaryTime(reportData.summary.min.time, timeRange)}
+                </Text>
               </View>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>
-                {activeTab === 'temp'
+                {activeTab === 'temperature'
                   ? '평균 온도'
                   : activeTab === 'humidity'
                     ? '평균 습도'
@@ -784,6 +900,13 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
             </View>
           </View>
         </ScrollView>
+      )}
+
+      {/* 토스트 메시지 */}
+      {toastMessage && (
+        <View style={[styles.toastContainer, { bottom: insets.bottom + spacing.lg }]}>
+          <ToastMessage message={toastMessage} type="error" testID="report-error-toast" />
+        </View>
       )}
     </View>
   );
@@ -812,10 +935,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: spacing.xxl,
   },
+  errorSubtext: {
+    color: colors.mutedText,
+    fontSize: typography.sizes.sm,
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
   errorText: {
     color: colors.mutedText,
     fontSize: typography.sizes.md,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   headerContainer: {
@@ -947,5 +1076,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 0,
     marginTop: spacing.lg,
+  },
+  toastContainer: {
+    left: spacing.lg,
+    position: 'absolute',
+    right: spacing.lg,
+    zIndex: 1000,
   },
 });

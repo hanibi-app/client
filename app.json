@@ -43,12 +43,6 @@
         "projectId": "4286111e-bb4e-4ac6-b0df-6927ae50fbf7"
       }
     },
-    "owner": "hywznn",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/4286111e-bb4e-4ac6-b0df-6927ae50fbf7"
-    }
+    "owner": "hywznn"
   }
 }
